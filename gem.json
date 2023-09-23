@@ -1,0 +1,29 @@
+{
+    "gem_name": "TestGem",
+    "version": "1.0.0",
+    "display_name": "TestGem",
+    "license": "MIT",
+    "license_url": "",
+    "origin": "NanaYellen",
+    "origin_url": "",
+    "type": "Code",
+    "summary": "This Gem is created to test the default Gem Template",
+    "canonical_tags": [
+        "Gem"
+    ],
+    "user_tags": [
+        "TestGem"
+    ],
+    "platforms": [
+        "Linux",
+        "Windows"
+    ],
+    "icon_path": "",
+    "requirements": "",
+    "documentation_url": "",
+    "dependencies": [],
+    "repo_uri": "",
+    "compatible_engines": [],
+    "engine_api_dependencies": [],
+    "restricted": "TestGem"
+}
