@@ -7,9 +7,6 @@
 #include <AzFramework/Physics/CharacterBus.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
-//#include <PhysXCharacters/API/CharacterController.h>
-
-
 namespace TestGem
 {
 	// Define the action we want. In this case, notify when forward key is pressed
