@@ -4,6 +4,7 @@
 #include <Clients/TestGemSystemComponent.h>
 #include <Clients/MyComponent.h>
 #include <Clients/PlayerControllerComponent.h>
+#include <Clients/RaycastTest.h>
 
 namespace TestGem
 {
@@ -23,7 +24,8 @@ namespace TestGem
             m_descriptors.insert(m_descriptors.end(), {
                 TestGemSystemComponent::CreateDescriptor(),
                 MyComponent::CreateDescriptor(),
-                PlayerControllerComponent::CreateDescriptor()
+                PlayerControllerComponent::CreateDescriptor(),
+                RaycastTest::CreateDescriptor()
                 });
         }
 

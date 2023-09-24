@@ -7,6 +7,7 @@
 #include <AzFramework/Physics/CharacterBus.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
+
 namespace TestGem
 {
 	// Define the action we want. In this case, notify when forward key is pressed
@@ -54,7 +55,7 @@ namespace TestGem
 		AZ::Entity* GetActiveCamera();
 		
 		void ProcessInput();
-		//void CheckGrounded(/*const float& deltaTime*/);
+		void CheckGrounded();
 		void UpdateVelocity();
 		AZ::Vector3 m_velocity = AZ::Vector3::CreateZero();
 

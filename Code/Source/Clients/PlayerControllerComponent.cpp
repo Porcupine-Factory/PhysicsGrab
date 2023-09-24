@@ -182,16 +182,15 @@ namespace TestGem
 		auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
 		return ca->FindEntity(activeCameraId);
 	}
-	/*
-	void PlayerControllerComponent::CheckGrounded(/)
-	{
-		AZ::Vector3 current_Translation = GetEntity()->GetTransform()->GetLocalTranslation();
+/*
+	void PlayerControllerComponent::CheckGrounded()
+	{	
 		auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
-
+		//AZ::Vector3 current_Translation = GetEntity()->GetTransform()->GetLocalTranslation();
 		AzPhysics::RayCastRequest request;
-		request.m_start = current_Translation;
-		request.m_direction = AZ::Vector3(0.0f, 0.0f, -1.0f);
-		request.m_distance = 0.2f;
+		request.m_start = AZ::Vector3(-100.0f, 0.0f, 0.0f);
+		request.m_direction = AZ::Vector3(1.0f, 0.0f, 0.0f);
+		request.m_distance = 200.0f;
 
 		AzPhysics::SceneQueryHits result = sceneInterface->QueryScene(AzPhysics::DefaultPhysicsSceneName, &request);
 		auto numHits = result.size();
@@ -200,8 +199,9 @@ namespace TestGem
 			AZ_Printf("", "Grounded");
 		else
 			AZ_Printf("", "NOT Grounded");
+
 	}
-	*/
+*/	
 	void PlayerControllerComponent::UpdateRotation()
 	{
 		AZ::Vector3 current_yaw_Rotation = GetEntity()->GetTransform()->GetLocalRotation();
