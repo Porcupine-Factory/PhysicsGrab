@@ -2,7 +2,7 @@
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
-//#include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
+#include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <AzCore/Component/ComponentApplicationBus.h>
 #include <AzFramework/Physics/CharacterBus.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
@@ -57,6 +57,7 @@ namespace TestGem
 		void ProcessInput();
 		void CheckGrounded();
 		void UpdateVelocity();
+		void HandleGravity(/*const float& deltaTime*/);
 		AZ::Vector3 m_velocity = AZ::Vector3::CreateZero();
 
 		void UpdateRotation();
@@ -72,21 +73,12 @@ namespace TestGem
 		float m_left = 0.f;
 		float m_pitch = 0.f;
 		float m_yaw = 0.f;
+
+		float m_initialDownwardVelocity = 0.f;
+		float m_updatedDownwardVelocity = 0.f;
+		float m_gravity = -9.8f;
+		bool m_grounded = true;
+
+		AZ::Vector3 m_applyGravity = AZ::Vector3::CreateZero();
 	};
 } // namespace TestGem
-	
-	
-	/*// An example of a simple O3DE component
-	class MyComponent : public AZ::Component
-	{
-	public:
-		AZ_COMPONENT(MyComponent, "{6C4B7FC6-F4CD-4DBA-99FD-99F7AA2CE8F0}");
-
-		// AZ::Component overrides
-		void Activate() override {}
-		void Deactivate() override {}
-
-		// Provide runtime reflection, if any
-		static void Reflect(AZ::ReflectContext* reflection);
-	};
-}*/

@@ -4,6 +4,8 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Components/CameraBus.h>
+#include <AzFramework/Physics/SystemBus.h>
+#include <System/PhysXSystem.h>
 
 namespace TestGem
 {
@@ -182,26 +184,57 @@ namespace TestGem
 		auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
 		return ca->FindEntity(activeCameraId);
 	}
-/*
+
 	void PlayerControllerComponent::CheckGrounded()
 	{	
+		// Get our entity's local translation
+		AZ::Vector3 currentTranslation = GetEntity()->GetTransform()->GetLocalTranslation();
+
+		// Perform a raycast query to check if entity is grounded
 		auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
-		//AZ::Vector3 current_Translation = GetEntity()->GetTransform()->GetLocalTranslation();
+
 		AzPhysics::RayCastRequest request;
-		request.m_start = AZ::Vector3(-100.0f, 0.0f, 0.0f);
-		request.m_direction = AZ::Vector3(1.0f, 0.0f, 0.0f);
-		request.m_distance = 200.0f;
+		request.m_start = currentTranslation;
+		request.m_direction = AZ::Vector3(0.0f, 0.0f, -1.0f);
+		request.m_distance = 0.3f;
 
-		AzPhysics::SceneQueryHits result = sceneInterface->QueryScene(AzPhysics::DefaultPhysicsSceneName, &request);
-		auto numHits = result.size();
+		AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
+		AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-		if (numHits > 0)
-			AZ_Printf("", "Grounded");
-		else
-			AZ_Printf("", "NOT Grounded");
+		m_grounded = hits ? true : false;
 
+		// Print entity's grounded state
+		AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
 	}
-*/	
+	
+	void PlayerControllerComponent::HandleGravity(/*const float& deltaTime*/)
+	{
+		/* Prints Z velocity to monitor gravity
+		AZ::Vector3 currentVelocity = AZ::Vector3::CreateZero();
+
+		Physics::CharacterRequestBus::EventResult(currentVelocity, GetEntityId(),
+			&Physics::CharacterRequestBus::Events::GetVelocity);
+
+		AZ_Printf("", "currentVelocity.GetZ() = %.10f", currentVelocity.GetZ());
+		*/
+
+		// Applies gravity via AddVelocityForTick in Z direction
+		m_initialDownwardVelocity = m_gravity/* * deltaTime*/;
+
+		if (m_grounded)
+		{
+			m_updatedDownwardVelocity = 0.f;
+		}
+		else
+		{
+			m_updatedDownwardVelocity += m_initialDownwardVelocity;
+			m_applyGravity = AZ::Vector3(0.f, 0.f, m_updatedDownwardVelocity);
+			Physics::CharacterRequestBus::Event(GetEntityId(),
+				&Physics::CharacterRequestBus::Events::AddVelocityForTick, m_applyGravity);
+		}
+	}
+
+
 	void PlayerControllerComponent::UpdateRotation()
 	{
 		AZ::Vector3 current_yaw_Rotation = GetEntity()->GetTransform()->GetLocalRotation();
@@ -265,34 +298,9 @@ namespace TestGem
 	void PlayerControllerComponent::ProcessInput(
 		/*const PlayerInput& input*/)
 	{
+		CheckGrounded();
+		HandleGravity(/*deltaTime*/);
 		UpdateRotation();
 		UpdateVelocity();
-		//CheckGrounded();
 	}
 }  //namespace Testgem
-	
-
-
-/*void MyComponent::Reflect(AZ::ReflectContext* reflection)
-{
-	//AZ_UNUSED(reflection);
-	auto sc = azrtti_cast<AZ::SerializeContext*>(reflection);
-	if (!sc) return;
-
-	sc->Class<MyComponent, Component>()
-		->Version(1);
-
-	AZ::EditContext* ec = sc->GetEditContext();
-	if (!ec) return;
-
-	using namespace AZ::Edit::Attributes;
-
-		// reflection of this component for O3DE Editor
-
-		ec->Class<MyComponent>("My Component", "[Test new component]")
-		->ClassElement(AZ::Edit::ClassElements::EditorData, "")
-		->Attribute(AppearsInAddComponentMenu, AZ_CRC("Game"))
-		->Attribute(Category, "TestGem");
-}
-*/
-
