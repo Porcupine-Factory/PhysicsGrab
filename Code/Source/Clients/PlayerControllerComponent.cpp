@@ -19,6 +19,7 @@ namespace TestGem
 				->Field("Speed", &PlayerControllerComponent::m_speed)
 				->Field("Pitch Sensitivity", &PlayerControllerComponent::m_pitch_sensitivity)
 				->Field("Yaw Sensitivity", &PlayerControllerComponent::m_yaw_sensitivity)
+				->Field("Gravity", &PlayerControllerComponent::m_gravity)
 				->Version(1);
 
 			if (AZ::EditContext* ec = sc->GetEditContext())
@@ -39,7 +40,10 @@ namespace TestGem
 						"Camera Yaw Rotate Input", "Camera yaw rotation control")
 					->DataElement(nullptr, 
 						&PlayerControllerComponent::m_speed, 
-						"Speed", "Player's Speed");
+						"Speed", "Player's Speed")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_gravity,
+						"Gravity", "Downward acceleration on the player character");
 			}
 		}
 	}
@@ -170,8 +174,10 @@ namespace TestGem
 		}
 	}
 
-	void PlayerControllerComponent::OnTick(float, AZ::ScriptTimePoint)
+	void PlayerControllerComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
 	{
+		CheckGrounded();
+		HandleGravity(deltaTime);
 		ProcessInput();
 	}
 
@@ -204,23 +210,23 @@ namespace TestGem
 		m_grounded = hits ? true : false;
 
 		// Print entity's grounded state
-		AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
+		//AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
 	}
 	
-	void PlayerControllerComponent::HandleGravity(/*const float& deltaTime*/)
+	void PlayerControllerComponent::HandleGravity(const float& deltaTime)
 	{
-		/* Prints Z velocity to monitor gravity
-		AZ::Vector3 currentVelocity = AZ::Vector3::CreateZero();
-
+		//Prints Z velocity to monitor gravity
+		/*
+		AZ::Vector3 gravityVelocity = AZ::Vector3::CreateZero();
 		Physics::CharacterRequestBus::EventResult(currentVelocity, GetEntityId(),
 			&Physics::CharacterRequestBus::Events::GetVelocity);
 
-		AZ_Printf("", "currentVelocity.GetZ() = %.10f", currentVelocity.GetZ());
+		AZ_Printf("", "gravityVelocity.GetZ() = %.10f", gravityVelocity.GetZ());
 		*/
 
 		// Applies gravity via AddVelocityForTick in Z direction
-		m_initialDownwardVelocity = m_gravity/* * deltaTime*/;
-
+		m_initialDownwardVelocity = m_gravity * deltaTime;
+		m_applyGravity = AZ::Vector3(0.f, 0.f, m_updatedDownwardVelocity);
 		if (m_grounded)
 		{
 			m_updatedDownwardVelocity = 0.f;
@@ -228,21 +234,18 @@ namespace TestGem
 		else
 		{
 			m_updatedDownwardVelocity += m_initialDownwardVelocity;
-			m_applyGravity = AZ::Vector3(0.f, 0.f, m_updatedDownwardVelocity);
-			Physics::CharacterRequestBus::Event(GetEntityId(),
-				&Physics::CharacterRequestBus::Events::AddVelocityForTick, m_applyGravity);
 		}
+		//AZ_Printf("", "m_updatedDownwardVelocity = %.10f", m_updatedDownwardVelocity)
+		//AZ_Printf("", "m_updatedDownwardVelocity = %.10f", m_applyGravity.GetZ())
 	}
-
 
 	void PlayerControllerComponent::UpdateRotation()
 	{
 		AZ::Vector3 current_yaw_Rotation = GetEntity()->GetTransform()->GetLocalRotation();
 		AZ::Vector3 current_pitch_Rotation = GetActiveCamera()->GetTransform()->GetLocalRotation();
 
-		//AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_delta_yaw = AZ::Vector3(0.f, 0.f, m_yaw);
-		AZ::Vector3 m_delta_pitch = AZ::Vector3(m_pitch, 0.f, 0.f);
+		m_delta_yaw = AZ::Vector3(0.f, 0.f, m_yaw);
+		m_delta_pitch = AZ::Vector3(m_pitch, 0.f, 0.f);
 
 		m_delta_yaw *= m_yaw_sensitivity;
 		m_delta_pitch *= m_pitch_sensitivity;
@@ -269,37 +272,48 @@ namespace TestGem
 	{
 
 		// Getting our Entity's local rotation (Vector3) and setting just the Z component (float) to currentHeading
-		const float currentHeading = GetEntity()->GetTransform()->GetLocalRotation().GetZ();
+		m_currentHeading = GetEntity()->GetTransform()->GetLocalRotation().GetZ();
 		
-		//const float currentHeadingE = GetEntity()->GetTransform()->
-		//	GetWorldRotationQuaternion().GetEulerRadians().GetZ();
+		/*
+		const float currentHeadingE = GetEntity()->GetTransform()->
+			GetWorldRotationQuaternion().GetEulerRadians().GetZ();
 
-		//AZ_Printf("", "Get Local Rotation Heading = %.10f", currentHeading);
-
+		AZ_Printf("", "Get Local Rotation Heading = %.10f", m_currentHeading);
+		*/
 		const float rightLeft = m_right + m_left;
 		const float forwardBack = m_forward + m_backward;
 
-		AZ::Vector3 move = AZ::Vector3::CreateZero();
-
 		move = AZ::Vector3(rightLeft, forwardBack, 0.f);
-		AZ::Vector3 moveNormalized = move.GetNormalized();
+		moveNormalized = move.GetNormalizedSafe();
+		m_velocity = AZ::Quaternion::CreateRotationZ(m_currentHeading).TransformVector(moveNormalized * m_speed);
 
 		// Print raw input vector length values  to 10 decimal places
 		// AZ_Printf("", "rawMovement = %.10f", move.GetLength());
 		// Print normalized input vector length values to 10 decimal places
 		// AZ_Printf("", "normalizedMovement = %.10f", moveNormalized.GetLength());
 
-		m_velocity = AZ::Quaternion::CreateRotationZ(currentHeading).TransformVector(moveNormalized * m_speed);
+		//Prints X or Y velocity 
+		/*
+		AZ::Vector3 xyVelocity = AZ::Vector3::CreateZero();
+		Physics::CharacterRequestBus::EventResult(currentVelocity, GetEntityId(),
+			&Physics::CharacterRequestBus::Events::GetVelocity);
 
-		Physics::CharacterRequestBus::Event(GetEntityId(),
-			&Physics::CharacterRequestBus::Events::AddVelocityForTick, m_velocity);
+		AZ_Printf("", "xyVelocity.GetX() = %.10f", xyVelocity.GetX());
+		AZ_Printf("", "xyVelocity.GetY() = %.10f", xyVelocity.GetY());
+		*/
 	}
 
-	void PlayerControllerComponent::ProcessInput(
-		/*const PlayerInput& input*/)
+	void PlayerControllerComponent::ProcessInput()
 	{
-		CheckGrounded();
-		HandleGravity(/*deltaTime*/);
+
+		//AZ_Printf("", "m_velocity vector Length = %.10f", m_velocity.GetLength())
+
+		// Updating character's velocity to include gravity
+		m_velocity += m_applyGravity;
+
+		Physics::CharacterRequestBus::Event(GetEntityId(),
+			&Physics::CharacterRequestBus::Events::AddVelocityForTick, (m_velocity));
+		
 		UpdateRotation();
 		UpdateVelocity();
 	}

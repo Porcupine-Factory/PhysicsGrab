@@ -2,11 +2,11 @@
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
+#include <AzCore/Math/Quaternion.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <AzCore/Component/ComponentApplicationBus.h>
 #include <AzFramework/Physics/CharacterBus.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
-
 
 namespace TestGem
 {
@@ -23,7 +23,6 @@ namespace TestGem
 		RotatePitchEventId("rotate pitch");
 	const StartingPointInput::InputEventNotificationId
 		RotateYawEventId("rotate yaw");
-	
 
 	// Inherit from StartingPointInput::InputEventNotificationBus::MultiHandler
 	class PlayerControllerComponent
@@ -54,14 +53,19 @@ namespace TestGem
 		AZ::Entity* m_activeCameraEntity = nullptr;
 		AZ::Entity* GetActiveCamera();
 		
-		void ProcessInput();
 		void CheckGrounded();
 		void UpdateVelocity();
-		void HandleGravity(/*const float& deltaTime*/);
+		void ProcessInput();
+		void HandleGravity(const float& deltaTime);
+
+		AZ::Vector3 m_applyGravity = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_velocity = AZ::Vector3::CreateZero();
+		AZ::Vector3 move = AZ::Vector3::CreateZero();
+		AZ::Vector3 moveNormalized = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 
 		void UpdateRotation();
-		//AZ::Vector3 m_yaw_delta = AZ::Vector3::CreateZero();
 
 		float m_pitch_sensitivity = 0.04f;
 		float m_yaw_sensitivity = 0.04f;
@@ -74,11 +78,11 @@ namespace TestGem
 		float m_pitch = 0.f;
 		float m_yaw = 0.f;
 
+		float m_currentHeading = 0.f;
 		float m_initialDownwardVelocity = 0.f;
 		float m_updatedDownwardVelocity = 0.f;
 		float m_gravity = -9.8f;
 		bool m_grounded = true;
 
-		AZ::Vector3 m_applyGravity = AZ::Vector3::CreateZero();
 	};
 } // namespace TestGem
