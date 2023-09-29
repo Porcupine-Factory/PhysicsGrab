@@ -17,9 +17,13 @@ namespace TestGem
 		{
 			sc->Class<PlayerControllerComponent, AZ::Component>()
 				->Field("Speed", &PlayerControllerComponent::m_speed)
+				->Field("Sprint Multiplier", &PlayerControllerComponent::m_sprintSpeed)
 				->Field("Pitch Sensitivity", &PlayerControllerComponent::m_pitch_sensitivity)
 				->Field("Yaw Sensitivity", &PlayerControllerComponent::m_yaw_sensitivity)
-				->Field("Gravity", &PlayerControllerComponent::m_gravity)
+				->Field("Max Jump Height", &PlayerControllerComponent::m_maxJumpHeight)
+				->Field("Max Jump Time", &PlayerControllerComponent::m_maxJumpTime)
+				->Field("Fall Multiplier", &PlayerControllerComponent::m_fallMultiplier)
+				->Field("Short Jump Multiplier", &PlayerControllerComponent::m_variableJump)
 				->Version(1);
 
 			if (AZ::EditContext* ec = sc->GetEditContext())
@@ -42,8 +46,21 @@ namespace TestGem
 						&PlayerControllerComponent::m_speed, 
 						"Speed", "Player's Speed")
 					->DataElement(nullptr,
-						&PlayerControllerComponent::m_gravity,
-						"Gravity", "Downward acceleration on the player character");
+						&PlayerControllerComponent::m_sprintSpeed,
+						"Sprint Multiplier", "Sprint speed scale factor")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_maxJumpHeight,
+						"Max Jump Height", "Maximum character jump height")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_maxJumpTime,
+						"Max Jump Time", "Time to max jump height")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_fallMultiplier,
+						"Fall Multiplier", "Scale for how fast the character falls")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_variableJump,
+						"Short Jump Multiplier", "Scales gravity to create shorter jump when jump key is released");
+
 			}
 		}
 	}
@@ -62,6 +79,12 @@ namespace TestGem
 		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(RotateYawEventId);
 		AZ::TickBus::Handler::BusConnect();
+		InputEventNotificationBus::MultiHandler::BusConnect(SprintEventId);
+		AZ::TickBus::Handler::BusConnect();
+		InputEventNotificationBus::MultiHandler::BusConnect(JumpEventId);
+		AZ::TickBus::Handler::BusConnect();
+
+		setupJumpVariables();
 	}
 
 	void PlayerControllerComponent::Deactivate()
@@ -81,25 +104,25 @@ namespace TestGem
 		if (*inputId == MoveFwdEventId)
 		{
 			m_forward = value;
-			//AZ_Printf("Player", "forward value %f", value);
+			//AZ_Printf("Player", "forward pressed value %f", value);
 		}
 
 		if (*inputId == MoveBackEventId)
 		{
 			m_backward = value;
-			//AZ_Printf("Player", "backward value %f", value);
+			//AZ_Printf("Player", "backward pressed value %f", value);
 		}
 
 		if (*inputId == MoveRightEventId)
 		{
 			m_right = value;
-			//AZ_Printf("Player", "right value %f", value);
+			//AZ_Printf("Player", "right pressed value %f", value);
 		}
 
 		if (*inputId == MoveLeftEventId)
 		{
 			m_left = value;
-			//AZ_Printf("Player", "left value %f", value);
+			//AZ_Printf("Player", "left pressed value %f", value);
 		}
 
 		if (*inputId == RotatePitchEventId)
@@ -112,6 +135,20 @@ namespace TestGem
 		{
 			m_yaw = value;
 			//AZ_Printf("Player", "yaw value %f", value);
+		}
+
+		if (*inputId == SprintEventId)
+		{
+			m_sprintPressed = value;
+			m_isSprintPressed = true;
+			//AZ_Printf("Player", "sprint pressed value %f", value);
+		}
+
+		if (*inputId == JumpEventId)
+		{
+			m_jump = value;
+			m_isJumpPressed = true;
+			//AZ_Printf("Player", "jump pressed value %f", value);
 		}
 	}
 	// Recieve the input event in OnReleased method
@@ -125,34 +162,48 @@ namespace TestGem
 		if (*inputId == MoveFwdEventId)
 		{
 			m_forward = value;
-			//AZ_Printf("Player", "forward value %f", value);
+			//AZ_Printf("Player", "forward released value %f", value);
 		}
 		if (*inputId == MoveBackEventId)
 		{
 			m_backward = value;
-			//AZ_Printf("Player", "back value %f", value);
+			//AZ_Printf("Player", "back released value %f", value);
 		}
 		if (*inputId == MoveRightEventId)
 		{
 			m_right = value;
-			//AZ_Printf("Player", "right value %f", value);
+			//AZ_Printf("Player", "right released value %f", value);
 		}
 		if (*inputId == MoveLeftEventId)
 		{
 			m_left = value;
-			//AZ_Printf("Player", "left value %f", value);
+			//AZ_Printf("Player", "left released value %f", value);
 		}
 
 		if (*inputId == RotatePitchEventId)
 		{
 			m_pitch = value;
-			//AZ_Printf("Player", "pitch value %f", value);
+			//AZ_Printf("Player", "pitch released value %f", value);
 		}
 
 		if (*inputId == RotateYawEventId)
 		{
 			m_yaw = value;
-			//AZ_Printf("Player", "yaw value %f", value);
+			//AZ_Printf("Player", "yaw released value %f", value);
+		}
+
+		if (*inputId == SprintEventId)
+		{
+			m_sprintPressed = value;
+			m_isSprintPressed = false;
+			//AZ_Printf("Player", "sprint released value %f", value);
+		}
+
+		if (*inputId == JumpEventId)
+		{
+			m_jump = value;
+			m_isJumpPressed = false;
+			//AZ_Printf("Player", "jump released value %f", value);
 		}
 	}
 
@@ -168,6 +219,7 @@ namespace TestGem
 		{
 			m_pitch = value;
 		}
+
 		else if (*inputId == RotateYawEventId)
 		{
 			m_yaw = value;
@@ -176,9 +228,7 @@ namespace TestGem
 
 	void PlayerControllerComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
 	{
-		CheckGrounded();
-		HandleGravity(deltaTime);
-		ProcessInput();
+		ProcessInput(deltaTime);
 	}
 
 	AZ::Entity* PlayerControllerComponent::GetActiveCamera()
@@ -189,6 +239,13 @@ namespace TestGem
 
 		auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
 		return ca->FindEntity(activeCameraId);
+	}
+
+	void PlayerControllerComponent::setupJumpVariables()
+	{
+		float timeToApex = (m_maxJumpTime / 2);
+		m_gravity = (-2 * m_maxJumpHeight) / (timeToApex * timeToApex);
+		m_initialJumpVelocity = (2 * m_maxJumpHeight) / timeToApex;
 	}
 
 	void PlayerControllerComponent::CheckGrounded()
@@ -202,7 +259,7 @@ namespace TestGem
 		AzPhysics::RayCastRequest request;
 		request.m_start = currentTranslation;
 		request.m_direction = AZ::Vector3(0.0f, 0.0f, -1.0f);
-		request.m_distance = 0.3f;
+		request.m_distance = 0.01f;
 
 		AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
 		AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
@@ -213,30 +270,39 @@ namespace TestGem
 		//AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
 	}
 	
-	void PlayerControllerComponent::HandleGravity(const float& deltaTime)
+	void PlayerControllerComponent::handleGravity()
 	{
-		//Prints Z velocity to monitor gravity
-		/*
-		AZ::Vector3 gravityVelocity = AZ::Vector3::CreateZero();
-		Physics::CharacterRequestBus::EventResult(currentVelocity, GetEntityId(),
+		AZ::Vector3 zVelocity = AZ::Vector3::CreateZero();
+		Physics::CharacterRequestBus::EventResult(zVelocity, GetEntityId(),
 			&Physics::CharacterRequestBus::Events::GetVelocity);
-
-		AZ_Printf("", "gravityVelocity.GetZ() = %.10f", gravityVelocity.GetZ());
-		*/
+		
+		// Prints the Entity's velocity on Z
+		//AZ_Printf("", "zVelocity.GetZ() = %.10f", zVelocity.GetZ());
+	
+		bool isFalling = zVelocity.GetZ() <= 0.f;
+		//AZ_Printf("", "%s", isFalling ? "Falling" : "NOT Falling");
 
 		// Applies gravity via AddVelocityForTick in Z direction
-		m_initialDownwardVelocity = m_gravity * deltaTime;
+		m_initialDownwardVelocity = m_gravity/* * deltaTime*/;
 		m_applyGravity = AZ::Vector3(0.f, 0.f, m_updatedDownwardVelocity);
 		if (m_grounded)
 		{
 			m_updatedDownwardVelocity = 0.f;
+		}
+		else if (isFalling && !m_grounded && m_isJumpPressed)
+		{
+			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_fallMultiplier);
+		}
+		else if (!m_isJumpPressed && !m_grounded)
+		{
+			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_variableJump);
 		}
 		else
 		{
 			m_updatedDownwardVelocity += m_initialDownwardVelocity;
 		}
 		//AZ_Printf("", "m_updatedDownwardVelocity = %.10f", m_updatedDownwardVelocity)
-		//AZ_Printf("", "m_updatedDownwardVelocity = %.10f", m_applyGravity.GetZ())
+		//AZ_Printf("", "m_applyGravity = %.10f", m_applyGravity.GetZ())
 	}
 
 	void PlayerControllerComponent::UpdateRotation()
@@ -285,7 +351,17 @@ namespace TestGem
 
 		move = AZ::Vector3(rightLeft, forwardBack, 0.f);
 		moveNormalized = move.GetNormalizedSafe();
-		m_velocity = AZ::Quaternion::CreateRotationZ(m_currentHeading).TransformVector(moveNormalized * m_speed);
+
+		if (m_isSprintPressed)
+		{
+			//AZ_Printf("", "%s", m_isSprintPressed ? "Sprinting" : "NOT Sprinting");
+			m_velocity = AZ::Quaternion::CreateRotationZ(m_currentHeading).TransformVector(moveNormalized * m_speed * m_sprintSpeed);
+		}
+
+		else
+		{
+			m_velocity = AZ::Quaternion::CreateRotationZ(m_currentHeading).TransformVector(moveNormalized * m_speed);
+		}
 
 		// Print raw input vector length values  to 10 decimal places
 		// AZ_Printf("", "rawMovement = %.10f", move.GetLength());
@@ -302,19 +378,46 @@ namespace TestGem
 		AZ_Printf("", "xyVelocity.GetY() = %.10f", xyVelocity.GetY());
 		*/
 	}
-
-	void PlayerControllerComponent::ProcessInput()
+	void PlayerControllerComponent::handleJump()
+	{
+		if (!m_isJumping && m_grounded && m_isJumpPressed)
+		{
+			//AZ_Printf("", "Jump Button Pressed!")
+			m_isJumping = true;
+			//float updatedjumpVelocity = (m_jump * m_initialJumpVelocity * deltaTime);
+			m_applyJump = AZ::Vector3(0.f, 0.f, m_initialJumpVelocity/* * deltaTime*/);
+		}
+			else if (!m_isJumpPressed && m_isJumping & m_grounded)
+			{
+				m_isJumping = false;
+			}
+			else if (m_grounded && !m_isJumpPressed && !m_isJumping)
+			{
+				m_applyJump = AZ::Vector3(0.f, 0.f, 0.f);
+			}
+	}
+	void PlayerControllerComponent::ProcessInput(const float& deltaTime)
 	{
 
 		//AZ_Printf("", "m_velocity vector Length = %.10f", m_velocity.GetLength())
+		//AZ_Printf("", "m_isJumpPressed = %s", m_isJumpPressed ? "true" : "false");
+		//AZ_Printf("", "m_isJumping = %s", m_isJumping ? "true" : "false");
+		//AZ_Printf("", "m_applyJump.GetZ() = %.10f", m_applyJump.GetZ());
+		//AZ_Printf("", "m_applyGravity.GetZ() = %.10f", m_applyGravity.GetZ));
+		//AZ_Printf("", "m_velocity.GetZ() = %.10f", m_velocity.GetZ());
 
 		// Updating character's velocity to include gravity
-		m_velocity += m_applyGravity;
+		m_velocity += ((m_applyGravity + m_applyJump) * deltaTime);
+
+		//AZ_Printf("", "m_velocity.GetZ() = %.10f", m_velocity.GetZ());
 
 		Physics::CharacterRequestBus::Event(GetEntityId(),
 			&Physics::CharacterRequestBus::Events::AddVelocityForTick, (m_velocity));
 		
 		UpdateRotation();
 		UpdateVelocity();
+		CheckGrounded();
+		handleGravity();
+		handleJump();
 	}
 }  //namespace Testgem

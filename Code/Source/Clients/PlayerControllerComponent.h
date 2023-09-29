@@ -23,6 +23,10 @@ namespace TestGem
 		RotatePitchEventId("rotate pitch");
 	const StartingPointInput::InputEventNotificationId
 		RotateYawEventId("rotate yaw");
+	const StartingPointInput::InputEventNotificationId
+		SprintEventId("sprint");
+	const StartingPointInput::InputEventNotificationId
+		JumpEventId("jump");
 
 	// Inherit from StartingPointInput::InputEventNotificationBus::MultiHandler
 	class PlayerControllerComponent
@@ -55,10 +59,13 @@ namespace TestGem
 		
 		void CheckGrounded();
 		void UpdateVelocity();
-		void ProcessInput();
-		void HandleGravity(const float& deltaTime);
+		void setupJumpVariables();
+		void ProcessInput(const float& deltaTime);
+		void handleGravity();
+		void handleJump();
 
 		AZ::Vector3 m_applyGravity = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_applyJump = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_velocity = AZ::Vector3::CreateZero();
 		AZ::Vector3 move = AZ::Vector3::CreateZero();
 		AZ::Vector3 moveNormalized = AZ::Vector3::CreateZero();
@@ -71,17 +78,28 @@ namespace TestGem
 		float m_yaw_sensitivity = 0.04f;
 
 		float m_speed = 5.f;
+		float m_sprintSpeed = 1.5f;
+		float m_sprintPressed = 0.f;
 		float m_forward = 0.f;
 		float m_backward = 0.f;
 		float m_right = 0.f;
 		float m_left = 0.f;
 		float m_pitch = 0.f;
 		float m_yaw = 0.f;
+		float m_jump = 0.f;
 
 		float m_currentHeading = 0.f;
 		float m_initialDownwardVelocity = 0.f;
 		float m_updatedDownwardVelocity = 0.f;
-		float m_gravity = -9.8f;
+		float m_initialJumpVelocity = 0.f;
+		float m_gravity = 0.f;
+		float m_fallMultiplier = 1.f;
+		float m_variableJump = 3.f;
+		float m_maxJumpHeight = 4000.f;
+		float m_maxJumpTime = 33.f;
+		bool m_isSprintPressed = false;
+		bool m_isJumpPressed = false;
+		bool m_isJumping = false;
 		bool m_grounded = true;
 
 	};
