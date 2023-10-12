@@ -27,6 +27,13 @@ namespace TestGem
 	private:
 		void RaycastCheck();
 
+		AzPhysics::CollisionGroups::Id m_groundedCollisionGroupId = AzPhysics::CollisionGroups::Id();
+		AzPhysics::CollisionGroup m_groundedCollisionGroup = AzPhysics::CollisionGroup::All;
+
 		bool m_grounded = true;
+
+		float m_groundCheckRadius = 0.2f;
+		float m_sphereCastDistance = 0.001f;
+		float m_sphereCastDirection = -1.0f;
 	};
 }

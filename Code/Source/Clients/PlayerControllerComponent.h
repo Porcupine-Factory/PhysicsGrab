@@ -72,6 +72,9 @@ namespace TestGem
 		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 
+		AzPhysics::CollisionGroups::Id m_groundedCollisionGroupId = AzPhysics::CollisionGroups::Id();
+		AzPhysics::CollisionGroup m_groundedCollisionGroup = AzPhysics::CollisionGroup::All;
+
 		void UpdateRotation();
 
 		float m_pitch_sensitivity = 0.04f;
@@ -93,12 +96,14 @@ namespace TestGem
 		float m_updatedDownwardVelocity = 0.f;
 		float m_initialJumpVelocity = 0.f;
 		float m_gravity = 0.f;
-		float m_fallMultiplier = 1.f;
-		float m_variableJump = 3.f;
-		float m_maxJumpHeight = 4000.f;
-		float m_maxJumpTime = 33.f;
+		float m_fallMultiplier = 0.85f;
+		float m_variableJump = 2.2f;
+		float m_maxJumpHeight = 5750.f;
+		float m_maxJumpTime = 35.f;
+		float m_groundCheckRadius = 0.2f;
 		bool m_isSprintPressed = false;
 		bool m_isJumpPressed = false;
+		bool m_isJumpHeld = false;
 		bool m_isJumping = false;
 		bool m_grounded = true;
 

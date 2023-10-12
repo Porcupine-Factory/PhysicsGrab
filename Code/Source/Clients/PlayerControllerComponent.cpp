@@ -4,6 +4,7 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Components/CameraBus.h>
+#include <AzFramework/Physics/CollisionBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
@@ -24,6 +25,8 @@ namespace TestGem
 				->Field("Max Jump Time", &PlayerControllerComponent::m_maxJumpTime)
 				->Field("Fall Multiplier", &PlayerControllerComponent::m_fallMultiplier)
 				->Field("Short Jump Multiplier", &PlayerControllerComponent::m_variableJump)
+				->Field("Ground Check Radius", &PlayerControllerComponent::m_groundCheckRadius)
+				->Field("Grounded Collision Group", &PlayerControllerComponent::m_groundedCollisionGroupId)
 				->Version(1);
 
 			if (AZ::EditContext* ec = sc->GetEditContext())
@@ -59,8 +62,13 @@ namespace TestGem
 						"Fall Multiplier", "Scale for how fast the character falls")
 					->DataElement(nullptr,
 						&PlayerControllerComponent::m_variableJump,
-						"Short Jump Multiplier", "Scales gravity to create shorter jump when jump key is released");
-
+						"Short Jump Multiplier", "Scales gravity to create shorter jump when jump key is released")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_groundCheckRadius,
+						"Ground Check Radius", "Sphere Cast radius used for ground check")
+					->DataElement(nullptr,
+						&PlayerControllerComponent::m_groundedCollisionGroupId,
+						"Grounded Collision Group", "The collision group which will be used for the ground detection.");
 			}
 		}
 	}
@@ -83,6 +91,9 @@ namespace TestGem
 		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(JumpEventId);
 		AZ::TickBus::Handler::BusConnect();
+
+		Physics::CollisionRequestBus::BroadcastResult(
+			m_groundedCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_groundedCollisionGroupId);
 
 		setupJumpVariables();
 	}
@@ -203,6 +214,7 @@ namespace TestGem
 		{
 			m_jump = value;
 			m_isJumpPressed = false;
+			m_isJumpHeld = false;
 			//AZ_Printf("Player", "jump released value %f", value);
 		}
 	}
@@ -219,10 +231,17 @@ namespace TestGem
 		{
 			m_pitch = value;
 		}
-
+		
 		else if (*inputId == RotateYawEventId)
 		{
 			m_yaw = value;
+		}
+
+		else if (*inputId == JumpEventId)
+		{
+			m_isJumpPressed = false;
+			m_isJumpHeld = true;
+			//AZ_Printf("Player", "jump released value %f", value);
 		}
 	}
 
@@ -250,24 +269,25 @@ namespace TestGem
 
 	void PlayerControllerComponent::CheckGrounded()
 	{	
-		// Get our entity's local translation
-		AZ::Vector3 currentTranslation = GetEntity()->GetTransform()->GetLocalTranslation();
+		// Get our entity's local transform and offset it along Z axis by m_groundCheckRadius distance
+		AZ::Transform currentTransform = AZ::Transform::CreateIdentity();
+		currentTransform.SetTranslation(GetEntity()->GetTransform()->GetLocalTM().GetTranslation() + AZ::Vector3::CreateAxisZ(m_groundCheckRadius));
 
-		// Perform a raycast query to check if entity is grounded
+		// Perform a spherecast query to check if entity is grounded
 		auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
 
-		AzPhysics::RayCastRequest request;
-		request.m_start = currentTranslation;
-		request.m_direction = AZ::Vector3(0.0f, 0.0f, -1.0f);
-		request.m_distance = 0.01f;
+        AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(m_groundCheckRadius,
+			currentTransform,
+            AZ::Vector3(0.0f, 0.0f, -1.0f),
+            0.0001f,
+            AzPhysics::SceneQuery::QueryType::StaticAndDynamic,
+            m_groundedCollisionGroup,
+            nullptr);
 
-		AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
-		AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
-
+        AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
+        AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
+		
 		m_grounded = hits ? true : false;
-
-		// Print entity's grounded state
-		//AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
 	}
 	
 	void PlayerControllerComponent::handleGravity()
@@ -283,19 +303,20 @@ namespace TestGem
 		//AZ_Printf("", "%s", isFalling ? "Falling" : "NOT Falling");
 
 		// Applies gravity via AddVelocityForTick in Z direction
-		m_initialDownwardVelocity = m_gravity/* * deltaTime*/;
+		m_initialDownwardVelocity = m_gravity;
 		m_applyGravity = AZ::Vector3(0.f, 0.f, m_updatedDownwardVelocity);
+
 		if (m_grounded)
 		{
 			m_updatedDownwardVelocity = 0.f;
 		}
-		else if (isFalling && !m_grounded && m_isJumpPressed)
+		else if (isFalling && !m_grounded && (m_isJumpPressed || m_isJumpHeld))
 		{
 			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_fallMultiplier);
 		}
-		else if (!m_isJumpPressed && !m_grounded)
+		else if (!m_isJumpHeld && !m_isJumpPressed && !m_grounded)
 		{
-			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_variableJump);
+			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_fallMultiplier * m_variableJump);
 		}
 		else
 		{
@@ -337,7 +358,7 @@ namespace TestGem
 	void PlayerControllerComponent::UpdateVelocity()
 	{
 
-		// Getting our Entity's local rotation (Vector3) and setting just the Z component (float) to currentHeading
+		// Get our Entity's local rotation (Vector3) and setting just the Z component (float) to currentHeading
 		m_currentHeading = GetEntity()->GetTransform()->GetLocalRotation().GetZ();
 		
 		/*
@@ -380,36 +401,38 @@ namespace TestGem
 	}
 	void PlayerControllerComponent::handleJump()
 	{
+		
+
 		if (!m_isJumping && m_grounded && m_isJumpPressed)
 		{
-			//AZ_Printf("", "Jump Button Pressed!")
 			m_isJumping = true;
-			//float updatedjumpVelocity = (m_jump * m_initialJumpVelocity * deltaTime);
-			m_applyJump = AZ::Vector3(0.f, 0.f, m_initialJumpVelocity/* * deltaTime*/);
+			m_applyJump = AZ::Vector3(0.f, 0.f, m_initialJumpVelocity);
 		}
-			else if (!m_isJumpPressed && m_isJumping & m_grounded)
-			{
-				m_isJumping = false;
-			}
-			else if (m_grounded && !m_isJumpPressed && !m_isJumping)
-			{
-				m_applyJump = AZ::Vector3(0.f, 0.f, 0.f);
-			}
+		
+		else if (!m_isJumpPressed && m_isJumping && m_grounded)
+		{
+			m_isJumping = false;
+		
+		}
+		
+		else if (!m_isJumping && m_grounded)
+		{
+			m_applyJump = AZ::Vector3(0.f, 0.f, 0.f);
+		}
+
 	}
 	void PlayerControllerComponent::ProcessInput(const float& deltaTime)
 	{
-
 		//AZ_Printf("", "m_velocity vector Length = %.10f", m_velocity.GetLength())
-		//AZ_Printf("", "m_isJumpPressed = %s", m_isJumpPressed ? "true" : "false");
-		//AZ_Printf("", "m_isJumping = %s", m_isJumping ? "true" : "false");
+		//AZ_Printf("Player", "jump pressed value %f", m_jump);
 		//AZ_Printf("", "m_applyJump.GetZ() = %.10f", m_applyJump.GetZ());
-		//AZ_Printf("", "m_applyGravity.GetZ() = %.10f", m_applyGravity.GetZ));
+		//AZ_Printf("", "m_isJumpPressed = %s", m_isJumpPressed ? "true" : "false");
+		//AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
+		//AZ_Printf("", "m_isJumping = %s", m_isJumping ? "true" : "false");
 		//AZ_Printf("", "m_velocity.GetZ() = %.10f", m_velocity.GetZ());
 
 		// Updating character's velocity to include gravity
 		m_velocity += ((m_applyGravity + m_applyJump) * deltaTime);
-
-		//AZ_Printf("", "m_velocity.GetZ() = %.10f", m_velocity.GetZ());
 
 		Physics::CharacterRequestBus::Event(GetEntityId(),
 			&Physics::CharacterRequestBus::Events::AddVelocityForTick, (m_velocity));
