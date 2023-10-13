@@ -5,6 +5,7 @@
 #include <Clients/MyComponent.h>
 #include <Clients/PlayerControllerComponent.h>
 #include <Clients/RaycastTest.h>
+#include <Clients/HeadBob.h>
 
 namespace TestGem
 {
@@ -25,7 +26,8 @@ namespace TestGem
                 TestGemSystemComponent::CreateDescriptor(),
                 MyComponent::CreateDescriptor(),
                 PlayerControllerComponent::CreateDescriptor(),
-                RaycastTest::CreateDescriptor()
+                RaycastTest::CreateDescriptor(),
+                HeadBob::CreateDescriptor()
                 });
         }
 

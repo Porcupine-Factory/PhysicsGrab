@@ -7,6 +7,8 @@ set(FILES
     Source/Clients/MyComponent.h
     Source/Clients/RaycastTest.cpp
     Source/Clients/RaycastTest.h
+    Source/Clients/HeadBob.cpp
+    Source/Clients/HeadBob.h
     Source/Clients/PlayerControllerComponent.cpp
     Source/Clients/PlayerControllerComponent.h
 )

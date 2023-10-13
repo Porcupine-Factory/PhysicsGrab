@@ -100,7 +100,6 @@ namespace TestGem
 
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
-       
 
         m_grounded = hits ? true : false;
 
