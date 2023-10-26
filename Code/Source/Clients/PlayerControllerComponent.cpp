@@ -24,7 +24,7 @@ namespace TestGem
 				->Field("Max Jump Height", &PlayerControllerComponent::m_maxJumpHeight)
 				->Field("Max Jump Time", &PlayerControllerComponent::m_maxJumpTime)
 				->Field("Fall Multiplier", &PlayerControllerComponent::m_fallMultiplier)
-				->Field("Short Jump Multiplier", &PlayerControllerComponent::m_variableJump)
+				->Field("Short Jump Multiplier", &PlayerControllerComponent::m_shortJump)
 				->Field("Ground Check Radius", &PlayerControllerComponent::m_groundCheckRadius)
 				->Field("Grounded Collision Group", &PlayerControllerComponent::m_groundedCollisionGroupId)
 				->Version(1);
@@ -61,7 +61,7 @@ namespace TestGem
 						&PlayerControllerComponent::m_fallMultiplier,
 						"Fall Multiplier", "Scale for how fast the character falls")
 					->DataElement(nullptr,
-						&PlayerControllerComponent::m_variableJump,
+						&PlayerControllerComponent::m_shortJump,
 						"Short Jump Multiplier", "Scales gravity to create shorter jump when jump key is released")
 					->DataElement(nullptr,
 						&PlayerControllerComponent::m_groundCheckRadius,
@@ -76,19 +76,12 @@ namespace TestGem
 	void PlayerControllerComponent::Activate()
 	{
 		InputEventNotificationBus::MultiHandler::BusConnect(MoveFwdEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(MoveBackEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(MoveLeftEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(MoveRightEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(RotatePitchEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(RotateYawEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(SprintEventId);
-		AZ::TickBus::Handler::BusConnect();
 		InputEventNotificationBus::MultiHandler::BusConnect(JumpEventId);
 		AZ::TickBus::Handler::BusConnect();
 
@@ -316,7 +309,7 @@ namespace TestGem
 		}
 		else if (!m_isJumpHeld && !m_isJumpPressed && !m_grounded)
 		{
-			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_fallMultiplier * m_variableJump);
+			m_updatedDownwardVelocity += (m_initialDownwardVelocity * m_fallMultiplier * m_shortJump);
 		}
 		else
 		{

@@ -11,4 +11,7 @@ set(FILES
     Source/Clients/HeadBob.h
     Source/Clients/PlayerControllerComponent.cpp
     Source/Clients/PlayerControllerComponent.h
+    Source/Clients/CameraShake.cpp
+    Source/Clients/CameraShake.h
 )
+

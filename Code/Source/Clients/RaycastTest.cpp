@@ -45,28 +45,28 @@ namespace TestGem
             }
         }
     }
-	void RaycastTest::Activate()
-	{
-		AZ::TickBus::Handler::BusConnect();
+    void RaycastTest::Activate()
+    {
+        AZ::TickBus::Handler::BusConnect();
 
         //Physics::CharacterNotificationBus::Handler::BusConnect(GetEntityId());
 
         Physics::CollisionRequestBus::BroadcastResult(
             m_groundedCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_groundedCollisionGroupId);
-	}
+    }
 
-	void RaycastTest::Deactivate()
-	{
-		AZ::TickBus::Handler::BusDisconnect();
-	}
+    void RaycastTest::Deactivate()
+    {
+        AZ::TickBus::Handler::BusDisconnect();
+    }
 
-	void RaycastTest::OnTick(float, AZ::ScriptTimePoint)
-	{
-		RaycastCheck();
-	}
+    void RaycastTest::OnTick(float, AZ::ScriptTimePoint)
+    {
+        RaycastCheck();
+    }
 
-	void RaycastTest::RaycastCheck()
-	{   
+    void RaycastTest::RaycastCheck()
+    {
         // Get our entity's local translation   
         //AZ::Vector3 currentTranslation = GetEntity()->GetTransform()->GetLocalTranslation();
 
@@ -82,7 +82,7 @@ namespace TestGem
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
         */
-        
+
         // Get our entity's local transform and offset it along Z axis by m_groundCheckRadius distance
         AZ::Transform currentTransform = AZ::Transform::CreateIdentity();
         currentTransform.SetTranslation(GetEntity()->GetTransform()->GetLocalTM().GetTranslation() + AZ::Vector3::CreateAxisZ(m_groundCheckRadius));
@@ -105,7 +105,7 @@ namespace TestGem
 
         // Print entity's grounded state
         AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
-	}
+    }
 }
 
 

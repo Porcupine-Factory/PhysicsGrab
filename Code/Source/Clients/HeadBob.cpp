@@ -51,8 +51,6 @@ namespace TestGem
 	void HeadBob::Activate()
 	{
 		AZ::TickBus::Handler::BusConnect();
-
-        GetEntity()->GetTransform()->GetLocalRotation();
 	}
 
 	void HeadBob::Deactivate()
@@ -93,9 +91,9 @@ namespace TestGem
         //AZ_Printf("", "m_walkingTime = %.10f", m_walkingTime);
 
         //Prints camera's target local position.
-        //AZ_Printf("", "Target X = %.10f", targetCameraPosition.GetX());
+        AZ_Printf("", "Target X = %.10f", targetCameraPosition.GetX());
         //AZ_Printf("", "Target Y = %.10f", targetCameraPosition.GetY());
-        //AZ_Printf("", "Target Z = %.10f", targetCameraPosition.GetZ());
+        AZ_Printf("", "Target Z = %.10f", targetCameraPosition.GetZ());
 
         // Get camera's current local position.
         AZ::Vector3 currentCameraPosition = GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation();

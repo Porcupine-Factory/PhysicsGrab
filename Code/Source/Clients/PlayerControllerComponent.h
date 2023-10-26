@@ -97,7 +97,7 @@ namespace TestGem
 		float m_initialJumpVelocity = 0.f;
 		float m_gravity = 0.f;
 		float m_fallMultiplier = 0.85f;
-		float m_variableJump = 2.2f;
+		float m_shortJump = 2.2f;
 		float m_maxJumpHeight = 5750.f;
 		float m_maxJumpTime = 35.f;
 		float m_groundCheckRadius = 0.2f;

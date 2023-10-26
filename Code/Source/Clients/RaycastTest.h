@@ -8,7 +8,7 @@
 namespace TestGem
 {
 	// An example of a simple O3DE component
-	class RaycastTest 
+	class RaycastTest
 		: public AZ::Component
 		, public AZ::TickBus::Handler
 	{

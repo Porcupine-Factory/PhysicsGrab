@@ -14,7 +14,7 @@ namespace TestGem
 	public:
 		AZ_COMPONENT(HeadBob, "{AC40FA49-B4E9-414C-ACA2-A74290A83EBD}");
 
-		// Provide runtime reflection, if any
+		// Provide runtime reflection
 		static void Reflect(AZ::ReflectContext* rc);
 
 		// AZ::Component overrides
