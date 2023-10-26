@@ -3,7 +3,6 @@
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzCore/Math/Random.h>
-#include <GradientSignal/PerlinImprovedNoise.h>
 #include <External/FastNoise/FastNoise.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
@@ -39,7 +38,6 @@ namespace TestGem
 		AZStd::string m_strShake = "Camera Shake";
 
 		void Shake(const float& deltaTime);
-		float GenPerlin(int genSeed);
 		float GenFastNoise(int genSeed);
 
 		AZ::Transform m_activeCameraTransform = AZ::Transform::CreateIdentity();

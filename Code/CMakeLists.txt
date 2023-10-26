@@ -52,7 +52,6 @@ ly_add_target(
             AZ::AzFramework
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
-	    Gem::GradientSignal.Static
 	    Gem::FastNoise.Static
 )
 
@@ -123,7 +122,6 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                 AZ::AzToolsFramework
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
 		Gem::StartingPointInput.Static
-		Gem::GradientSignal.Static
 		Gem::FastNoise.Static
     )
 

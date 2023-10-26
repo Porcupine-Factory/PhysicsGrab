@@ -97,9 +97,7 @@ namespace TestGem
 
 		AZ::TickBus::Handler::BusConnect();
 
-        //Physics::CharacterNotificationBus::Handler::BusConnect(GetEntityId());
-
-        // When the entity is activated, set our shake time remaining to m_shakeTime
+        // When the entity is activated, set our current trauma level (m_trauma) to m_traumaInitial
         m_trauma = m_traumaInitial;
 	}
 
@@ -198,15 +196,6 @@ namespace TestGem
 
         if(m_trauma > 0)
         { 
-            
-            /*
-            // PerlinImprovedNoise Perlin Algorithm
-            AZ::Vector3 shakeTranslation = AZ::Vector3(GenPerlin(m_Random) * m_xTranslationAmplitude, 
-                GenPerlin(m_Random + 2) * m_yTranslationAmplitude, 
-                GenPerlin(m_Random + 3) * m_zTranslationAmplitude);
-            */
-
-            // FastNoise Perlin Algorithm
             // Create a Vector3 with Perlin Noise values and amplitude multipliers for each axis. Used for translation. 
             m_shakeTranslation = AZ::Vector3(GenFastNoise(m_Random) * m_xTranslationAmplitude,
                 GenFastNoise(m_Random + 2) * m_yTranslationAmplitude,
@@ -228,7 +217,7 @@ namespace TestGem
 
             m_trauma = AZ::GetMax(m_trauma - m_traumaDecay * deltaTime, 0.f);
 
-            AZ_Printf("", "m_trauma = %.10f", m_trauma)
+            //AZ_Printf("", "m_trauma = %.10f", m_trauma)
 
         }
         
@@ -240,10 +229,10 @@ namespace TestGem
             // NOTE: Camera does not reset back to original position. It still retains ztranslation, and xRotation values from shake. Need a better way 
             // of storing the original positions. 
 
-            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently disabled.
+            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
             GetActiveCamera()->GetTransform()->SetLocalTranslation(currentCameraTranslation.Lerp(zCameraTranslation, 1.f));
 
-            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently disabled.
+            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
             GetActiveCamera()->GetTransform()->SetLocalRotation(currentCameraRotation.Lerp(xCameraRotation, 1.f));
         } 
     }
@@ -259,20 +248,6 @@ namespace TestGem
 
         //AZ_Printf("", "Perlin FAST Number = %.10f", m_perlinFastNoise);
         return m_perlinFastNoise;
-    }
-
-    float CameraShake::GenPerlin(int genSeed)
-    {
-
-        // Creating object "testNumber" and invoking constructor "PerlinImprovedNoise" which applies a seed to the Perlin Noise algorithm
-        GradientSignal::PerlinImprovedNoise testNumber = GradientSignal::PerlinImprovedNoise::PerlinImprovedNoise(genSeed);
-
-        // Assigning the Perlin Noise value to m_perlinNoise and extending the range from [0,1] to [-1,1]
-        m_perlinNoise = testNumber.GradientSignal::PerlinImprovedNoise::GenerateNoise(m_currentTime * m_freq, m_currentTime * m_freq, m_currentTime * m_freq) * 2.f - 1.f;
-
-        //AZ_Printf("", "Perlin Number = %.10f", m_perlinNoise);
-
-        return m_perlinNoise;
     }
 }
 
