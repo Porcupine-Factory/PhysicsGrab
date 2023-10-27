@@ -44,6 +44,8 @@ namespace TestGem
 
 		bool m_initiateShake = false;
 
+		AZ::Vector3 m_currentCameraTranslation = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_currentCameraRotation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_shakeTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_shakeRotation = AZ::Vector3::CreateZero();
 

@@ -26,14 +26,14 @@ namespace TestGem
                 ->Field("Speed", &CameraShake::m_freq)
 
                 // Translational Shake group
-                ->Field("Shake Strength - X Translation", &CameraShake::m_xTranslationAmplitude)
-                ->Field("Shake Strength - Y Translation", &CameraShake::m_yTranslationAmplitude)
-                ->Field("Shake Strength - Z Translation", &CameraShake::m_zTranslationAmplitude)
+                ->Field("X Translation Strength", &CameraShake::m_xTranslationAmplitude)
+                ->Field("Y Translation Strength", &CameraShake::m_yTranslationAmplitude)
+                ->Field("Z Translation Strength", &CameraShake::m_zTranslationAmplitude)
 
                 // Rotational Shake group
-                ->Field("Shake Strength - X Rotation", &CameraShake::m_xRotationAmplitude)
-                ->Field("Shake Strength - Y Rotation", &CameraShake::m_yRotationAmplitude)
-                ->Field("Shake Strength - Z Rotation", &CameraShake::m_zRotationAmplitude)
+                ->Field("X Rotation Strength", &CameraShake::m_xRotationAmplitude)
+                ->Field("Y Rotation Strength", &CameraShake::m_yRotationAmplitude)
+                ->Field("Z Rotation Strength", &CameraShake::m_zRotationAmplitude)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -137,19 +137,15 @@ namespace TestGem
         }
     }
 
-	void CameraShake::OnTick(float deltaTime, AZ::ScriptTimePoint)
-	{
+    void CameraShake::OnTick(float deltaTime, AZ::ScriptTimePoint)
+    {
 
         if (m_initiateShake)
         {
             //AZ_Printf("", "Initiate Camera Shake!", "");
             Shake(deltaTime);
         }
-
-        //AZ_Printf("", "X Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetX());
-        //AZ_Printf("", "Y Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetY());
-        //AZ_Printf("", "Z Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetZ());
-	}
+    }
 
     AZ::Entity* CameraShake::GetActiveCamera() const
     {
@@ -165,30 +161,30 @@ namespace TestGem
     {
         m_currentTime += deltaTime;
 
-        AZ::SimpleLcgRandom testRandom;
-        m_Random = testRandom.GetRandom();
+        AZ::SimpleLcgRandom getSeed;
+        m_Random = getSeed.GetRandom();
 
         // Getting our Camera's current local translation
-        AZ::Vector3 currentCameraTranslation = GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation();
+        m_currentCameraTranslation = GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation();
+
         // Grabbing the Z local translation of the camera to add to the camera shake
-        AZ::Vector3 zCameraTranslation = AZ::Vector3(0.f, 0.f, currentCameraTranslation.GetZ());
+        AZ::Vector3 zCameraTranslation = AZ::Vector3(0.f, 0.f, m_currentCameraTranslation.GetZ());
 
         // Subtracting the translation caused by shake to get a "clean" version of our current local camera translation
-        AZ::Vector3 adjustedCameraTranslation = currentCameraTranslation - m_shakeTranslation;
+        AZ::Vector3 adjustedCameraTranslation = m_currentCameraTranslation - m_shakeTranslation;
 
         // Grabbing only the Z local translation of adjustedCameraTranslation to be used when setting our new translation with shake. 
         // This allows you to control the zheight of the camera while simultaniously allowing camera shake
         AZ::Vector3 zadjustedCameraTranslation = AZ::Vector3(0.f, 0.f, adjustedCameraTranslation.GetZ());
+        
+        // Getting our Camera's current rotation using Euler Radians to make the math a bit easier
+        m_currentCameraRotation = GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians();
 
-        // Getting our Camera's current rotation via quaternions
-        AZ::Quaternion currentCameraRotationQuat = AZ::Quaternion(GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation());
-        // Converting our Camera's rotation to Euler Radians to make the math a bit easier
-        AZ::Vector3 currentCameraRotation = currentCameraRotationQuat.GetEulerRadians();
         // Grabbing the x local rotation of the camera to use when setting our camera position back after stopping shake
-        AZ::Vector3 xCameraRotation = AZ::Vector3(currentCameraRotation.GetX(), 0.f, 0.f);
+        AZ::Vector3 xCameraRotation = AZ::Vector3(m_currentCameraRotation.GetX(), 0.f, 0.f);
         
         // Subtracting the rotation caused by shake to get a "clean" version of our current local camera rotation
-        AZ::Vector3 adjustedCameraRotation = currentCameraRotation - m_shakeRotation;
+        AZ::Vector3 adjustedCameraRotation = m_currentCameraRotation - m_shakeRotation;
         
         // Grabbing only the X local rotation of adjustedCameraRotation to be used when setting our new rotation with shake. 
         // This allows you to control the pitch of the camera while simultaniously allowing camera shake
@@ -215,40 +211,43 @@ namespace TestGem
             // Set our active camera's rotation to the current camera rotation pSlus the shake values
             GetActiveCamera()->GetTransform()->SetLocalRotation(xadjustedCameraRotation + m_shakeRotation);
 
+            // Reducing the trauma amount over time. GetMax() ensures trauma is never less than 0
             m_trauma = AZ::GetMax(m_trauma - m_traumaDecay * deltaTime, 0.f);
 
             //AZ_Printf("", "m_trauma = %.10f", m_trauma)
-
         }
         
         else
         {
             m_initiateShake = false;
             m_trauma = m_traumaInitial;
+            
+            // Reset our shake/noise vectors back to 0
+            m_shakeTranslation = AZ::Vector3::CreateZero();
+            m_shakeRotation = AZ::Vector3::CreateZero();
+
 
             // NOTE: Camera does not reset back to original position. It still retains ztranslation, and xRotation values from shake. Need a better way 
             // of storing the original positions. 
+            
+            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
+            GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(zCameraTranslation, 1.f));
 
             // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
-            GetActiveCamera()->GetTransform()->SetLocalTranslation(currentCameraTranslation.Lerp(zCameraTranslation, 1.f));
-
-            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
-            GetActiveCamera()->GetTransform()->SetLocalRotation(currentCameraRotation.Lerp(xCameraRotation, 1.f));
+            GetActiveCamera()->GetTransform()->SetLocalRotation(m_currentCameraRotation.Lerp(xCameraRotation, 1.f));
         } 
     }
 
-    float CameraShake::GenFastNoise(int genSeed)
+    float CameraShake::GenFastNoise(int Seed)
     {
-        FastNoise testSeed; 
-        testSeed.SetNoiseType(FastNoise::Perlin);
-        testSeed.SetSeed(genSeed);
-        testSeed.SetFrequency(m_freq);
+        FastNoise noiseValues; 
+        noiseValues.SetNoiseType(FastNoise::Perlin);
+        noiseValues.SetSeed(Seed);
+        noiseValues.SetFrequency(m_freq);
 
-        m_perlinFastNoise = testSeed.GetPerlin(m_currentTime, m_currentTime);
+        m_perlinFastNoise = noiseValues.GetPerlin(m_currentTime, m_currentTime);
 
         //AZ_Printf("", "Perlin FAST Number = %.10f", m_perlinFastNoise);
         return m_perlinFastNoise;
     }
 }
-
-
