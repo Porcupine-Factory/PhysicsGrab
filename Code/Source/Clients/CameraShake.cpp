@@ -4,8 +4,6 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Components/CameraBus.h>
-#include <AzFramework/Physics/SystemBus.h>
-#include <System/PhysXSystem.h>
 
 namespace TestGem
 {
@@ -145,6 +143,23 @@ namespace TestGem
             //AZ_Printf("", "Initiate Camera Shake!", "");
             Shake(deltaTime);
         }
+        else
+        {
+            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
+            //GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(AZ::Vector3(0.f, 0.f, m_currentCameraTranslation.GetZ()), 0.4f));
+
+            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
+            //GetActiveCamera()->GetTransform()->SetLocalRotation(m_currentCameraRotation.Lerp(AZ::Vector3(m_currentCameraRotation.GetX(), 0.f, 0.f), 0.4f));
+        }
+        //AZ_Printf("", "X Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetX());
+        //AZ_Printf("", "Y Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetY());
+        //AZ_Printf("", "Z Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetZ());
+
+        //AZ_Printf("", "Z Camera Local Rotation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians().GetZ());
+
+        AZ_Printf("", "X Camera Local Translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation().GetX());
+        AZ_Printf("", "Y Camera Local Translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation().GetY());
+        AZ_Printf("", "Z Camera Local translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation().GetZ());
     }
 
     AZ::Entity* CameraShake::GetActiveCamera() const

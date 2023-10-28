@@ -4,8 +4,6 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Components/CameraBus.h>
-#include <AzFramework/Physics/SystemBus.h>
-#include <System/PhysXSystem.h>
 
 namespace TestGem
 {
@@ -42,9 +40,9 @@ namespace TestGem
                         "Vertical Amplitude", "Distance of headbob along up/down axis")
                     ->DataElement(nullptr,
                         &HeadBob::m_headBobSmoothing,
-                        "Smoothing", "Headbob smoothing.")
+                        "Smoothing", "Headbob smoothing. Lower values will decrease headbob percieved feel.")
                     ->DataElement(0,
-                        &HeadBob::m_headEntityId, "Head Entity Id", "Head entity to reference.");
+                        &HeadBob::m_headEntityId, "Head Entity Id", "Head entity to reference. Make this the parent of the camera.");
             }
         }
     }
@@ -154,20 +152,5 @@ namespace TestGem
             // Combine offsets relative to the head's position and calculate the camera's target position
             m_offset = AZ::Vector3(((headTranslation + AZ::Vector3::CreateAxisX()) * AZ::Vector3(horizontalOffset, 0.f, 0.f)) + ((headTranslation/headTranslation.GetZ()) * AZ::Vector3(0.f, 0.f, verticalOffset))); 
         }
-
-        // Prints the active Entity's name
-        //AZ_Printf("", "Current Entity = %s", GetEntity()->GetName().c_str());
-
-        // Prints the active Entity's ID
-        //AZ_Printf("", "Current Id = %s", GetEntityId().ToString().c_str());
-        
-        // Prints m_headEntityPointer name
-        //AZ_Printf("", "Pointer Entity Name = %s", m_headEntityPointer->GetName().c_str());
-
-        // Prints m_headEntityPointer Entitys ID 
-        //AZ_Printf("", "Pointer EntityId = %s", m_headEntityId.ToString().c_str());
-
     }
 }
-
-

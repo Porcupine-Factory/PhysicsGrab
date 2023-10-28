@@ -39,10 +39,10 @@ namespace TestGem
 		AZ::Vector3 m_offset = AZ::Vector3::CreateZero();
 
 		float m_walkingTime = 0.f;
-		float m_bobFreqency = 5.f;
-		float m_bobHorzAmplitude = 0.1f;
-		float m_bobVertAmplitude = 0.1f;
-		float m_headBobSmoothing = 0.1f;
+		float m_bobFreqency = 7.f;
+		float m_bobHorzAmplitude = 0.025f;
+		float m_bobVertAmplitude = 0.06f;
+		float m_headBobSmoothing = 0.2f;
 
 		bool m_isWalking = false;
 	};
