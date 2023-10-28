@@ -1,35 +1,12 @@
 {
-  "gem_name": "TestGem",
-  "display_name": "TestGem",
-  "license": "MIT",
+  "repo_name": "TestGem",
   "origin": "NanaYellen",
-  "origin_uri": "https://gitlab.com/NanaYellen/testgem.git",
-  "last_updated": "2023-10-28",
-  "type": "Code",
-  "summary": "The TestGem provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
-  "canonical_tags": [
-    "Gem"
-  ],
-  "user_tags": [
-    "Gameplay",
-    "Simulation",
-    "Utility"
-  ],
-  "platforms": [
-    "Linux",
-    "Windows"
-  ],
-  "icon_path": "",
-  "requirements": "This gem requires the FastNoise, PhysX, and Starting Point Input gems",
-  "documentation_url": "",
-  "dependencies": [
-    "PhysX",
-    "StartingPointInput",
-    "FastNoise"
-  ],
   "repo_uri": "https://gitlab.com/NanaYellen/testgem.git",
-  "compatible_engines": [],
-  "engine_api_dependencies": [],
-  "restricted": "TestGem"
+  "summary": "The TestGem provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
+  "additional_info": "",
+  "last_updated": "2023-10-28",
+  "gems": [
+    "https://gitlab.com/NanaYellen/testgem.git"
+  ]
 }
  

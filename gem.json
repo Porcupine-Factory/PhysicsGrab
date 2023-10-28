@@ -6,6 +6,7 @@
   "license_url": "",
   "origin": "NanaYellen",
   "origin_uri": "https://gitlab.com/NanaYellen/testgem.git",
+  "sha256": "",
   "last_updated": "2023-10-28",
   "type": "Code",
   "summary": "The TestGem provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
