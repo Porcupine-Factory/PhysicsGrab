@@ -77,10 +77,10 @@ namespace TestGem
 
 		void UpdateRotation();
 
-		float m_pitch_sensitivity = 0.04f;
-		float m_yaw_sensitivity = 0.04f;
+		float m_pitch_sensitivity = -0.004f;
+		float m_yaw_sensitivity = -0.016f;
 
-		float m_speed = 5.f;
+		float m_speed = 4.f;
 		float m_sprintSpeed = 1.5f;
 		float m_sprintPressed = 0.f;
 		float m_forward = 0.f;

@@ -3,15 +3,17 @@
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzFramework/Physics/CharacterBus.h>
-
+#include <AzFramework/Components/CameraBus.h>
 
 namespace TestGem
 {
 	class HeadBob 
 		: public AZ::Component
 		, public AZ::TickBus::Handler
+		, Camera::CameraNotificationBus::Handler
 	{
 	public:
+
 		AZ_COMPONENT(HeadBob, "{AC40FA49-B4E9-414C-ACA2-A74290A83EBD}");
 
 		// Provide runtime reflection
@@ -23,19 +25,17 @@ namespace TestGem
 
 		void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 		
-		AZ::EntityId m_headEntityId;
-		AZ::Entity* GetEntityPtr() const;
+		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
 
 	private:
-		AZ::Entity* m_activeCameraEntity = nullptr;
-		AZ::Entity* GetActiveCamera();
-		AZ::Entity* m_headEntityPointer = nullptr;
+
+		void OnCameraAdded(const AZ::EntityId& cameraId);
+
+		AZ::Entity* m_cameraEntity = nullptr;
 
 		void CalculateHeadbobOffset();
 
-		AZ::Transform m_headTransform = AZ::Transform::CreateIdentity();
-		AZ::Transform m_cameraTransform = AZ::Transform::CreateIdentity();
-
+		AZ::Vector3 m_originalCameraTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_offset = AZ::Vector3::CreateZero();
 
 		float m_walkingTime = 0.f;

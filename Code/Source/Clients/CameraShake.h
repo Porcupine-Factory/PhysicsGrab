@@ -33,6 +33,8 @@ namespace TestGem
 	private:
 		AZ::Entity* m_activeCameraEntity = nullptr;
 		AZ::Entity* GetActiveCamera() const;
+		AZ::Entity* m_getCameraId = nullptr;
+		AZ::Entity* OnCameraAdded() const;
 
 		StartingPointInput::InputEventNotificationId m_shakeEventId;
 		AZStd::string m_strShake = "Camera Shake";

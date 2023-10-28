@@ -3,7 +3,6 @@
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
-#include <AzFramework/Components/CameraBus.h>
 
 namespace TestGem
 {
@@ -16,7 +15,6 @@ namespace TestGem
                 ->Field("Horizontal Amplitude", &HeadBob::m_bobHorzAmplitude)
                 ->Field("Vertical Amplitude", &HeadBob::m_bobVertAmplitude)
                 ->Field("Smoothing", &HeadBob::m_headBobSmoothing)
-                ->Field("HeadEntityId", &HeadBob::m_headEntityId)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -40,34 +38,31 @@ namespace TestGem
                         "Vertical Amplitude", "Distance of headbob along up/down axis")
                     ->DataElement(nullptr,
                         &HeadBob::m_headBobSmoothing,
-                        "Smoothing", "Headbob smoothing. Lower values will decrease headbob percieved feel.")
-                    ->DataElement(0,
-                        &HeadBob::m_headEntityId, "Head Entity Id", "Head entity to reference. Make this the parent of the camera.");
+                        "Smoothing", "Headbob smoothing. Lower values will decrease headbob percieved feel.");
             }
         }
     }
 	void HeadBob::Activate()
 	{
+        Camera::CameraNotificationBus::Handler::BusConnect();
 		AZ::TickBus::Handler::BusConnect();
 	}
 
 	void HeadBob::Deactivate()
 	{
 		AZ::TickBus::Handler::BusDisconnect();
+        Camera::CameraNotificationBus::Handler::BusDisconnect();
 	}
 
-    AZ::Entity* HeadBob::GetActiveCamera()
+    void HeadBob::OnCameraAdded(const AZ::EntityId& cameraId)
     {
-        AZ::EntityId activeCameraId;
-        Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId,
-            &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
-
-        auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
-        return ca->FindEntity(activeCameraId);
+        m_cameraEntity = GetEntityPtr(cameraId);
+        m_originalCameraTranslation = m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation();
     }
 
 	void HeadBob::OnTick(float deltaTime, AZ::ScriptTimePoint)
 	{
+
         CalculateHeadbobOffset();
 
         AZ::Vector3 targetCameraPosition = AZ::Vector3::CreateZero();
@@ -76,69 +71,43 @@ namespace TestGem
         if (!m_isWalking)
         {
             m_walkingTime = 0.f;
-            targetCameraPosition = AZ::Vector3::CreateZero();
+            targetCameraPosition = AZ::Vector3(0.f, 0.f, m_originalCameraTranslation.GetZ());
         }
         // Calculate camera's new target position by adding offset. 
         else 
         {
             m_walkingTime += deltaTime;
-            targetCameraPosition = (m_headEntityPointer->GetTransform()->GetLocalTM().GetTranslation() - AZ::Vector3(0.f, 0.f, m_headEntityPointer->GetTransform()->GetLocalTM().GetTranslation().GetZ())) + m_offset;
+            targetCameraPosition = m_originalCameraTranslation + m_offset;
         }
 
-        // Prints accumulated walking time.
-        //AZ_Printf("", "m_walkingTime = %.10f", m_walkingTime);
-
-        //Prints camera's target local position.
-        AZ_Printf("", "Target X = %.10f", targetCameraPosition.GetX());
-        //AZ_Printf("", "Target Y = %.10f", targetCameraPosition.GetY());
-        AZ_Printf("", "Target Z = %.10f", targetCameraPosition.GetZ());
-
         // Get camera's current local position.
-        AZ::Vector3 currentCameraPosition = GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation();
-
-        // Prints camera's current local position.
-        //AZ_Printf("", "Current X = %.10f", currentCameraPosition.GetX());
-        //AZ_Printf("", "Current Y = %.10f", currentCameraPosition.GetY());
-        //AZ_Printf("", "Current Z = %.10f", currentCameraPosition.GetZ());
+        AZ::Vector3 currentCameraPosition = m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation();
 
         // Interpolate camera's position from currentCameraPosition to targetCameraPosition, using m_headBobSmoothing as the interpolant.
-        GetActiveCamera()->GetTransform()->SetLocalTranslation(currentCameraPosition.Lerp(targetCameraPosition, m_headBobSmoothing));
+        m_cameraEntity->GetTransform()->SetLocalTranslation(currentCameraPosition.Lerp(targetCameraPosition, m_headBobSmoothing));
 
         // Snap camera's current position to target position if it is close enough.
         if ((currentCameraPosition - targetCameraPosition).GetLength() <= 0.001)
         {
-            GetActiveCamera()->GetTransform()->SetLocalTranslation(targetCameraPosition);
+            m_cameraEntity->GetTransform()->SetLocalTranslation(targetCameraPosition);
         }    
 	}
 
-    AZ::Entity* HeadBob::GetEntityPtr() const
+    AZ::Entity* HeadBob::GetEntityPtr(AZ::EntityId pointer) const
     {
         auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
-        return ca->FindEntity(m_headEntityId);
+        return ca->FindEntity(pointer);
     }
     
     void HeadBob::CalculateHeadbobOffset()
     {
-        m_headEntityPointer = GetEntityPtr();
-
         AZ::Vector3 currentVelocity = AZ::Vector3::CreateZero();
 
         Physics::CharacterRequestBus::EventResult(currentVelocity, GetEntityId(),
             &Physics::CharacterRequestBus::Events::GetVelocity);
 
+        // Character is only in a walking state if current velocity in X or Y are NOT 0. Current Z velocity must also be 0 (not jumping). 
         m_isWalking = (((currentVelocity.GetX() != 0.f) || (currentVelocity.GetY() != 0.f)) && currentVelocity.GetZ() == 0.f);
-        
-        // Print entity's walking state
-        //AZ_Printf("", "%s", m_isWalking ? "Walking" : "NOT Walking");
-        //AZ_Printf("", "X Velocity = %.10f", currentVelocity.GetX());
-        //AZ_Printf("", "Y Velocity = %.10f", currentVelocity.GetY());
-        
-        AZ::Vector3 headTranslation = m_headEntityPointer->GetTransform()->GetLocalTM().GetTranslation();
-
-        // Print's "head" entity's local position.
-        //AZ_Printf("", "X headTranslation = %.10f", headTranslation.GetX());
-        //AZ_Printf("", "Y headTranslation = %.10f", headTranslation.GetY());
-        //AZ_Printf("", "Z headTranslation = %.10f", headTranslation.GetZ());
 
         float horizontalOffset = 0.f;
         float verticalOffset = 0.f;
@@ -149,8 +118,8 @@ namespace TestGem
             horizontalOffset = cos(m_walkingTime * m_bobFreqency) * m_bobHorzAmplitude;
             verticalOffset = sin(m_walkingTime * m_bobFreqency * 2) * m_bobVertAmplitude;
 
-            // Combine offsets relative to the head's position and calculate the camera's target position
-            m_offset = AZ::Vector3(((headTranslation + AZ::Vector3::CreateAxisX()) * AZ::Vector3(horizontalOffset, 0.f, 0.f)) + ((headTranslation/headTranslation.GetZ()) * AZ::Vector3(0.f, 0.f, verticalOffset))); 
+            // Combine offsets relative to the camera's original position and calculate the camera's target position
+            m_offset = AZ::Vector3(((m_originalCameraTranslation + AZ::Vector3::CreateAxisX()) * AZ::Vector3(horizontalOffset, 0.f, 0.f)) + ((m_originalCameraTranslation / m_originalCameraTranslation.GetZ()) * AZ::Vector3(0.f, 0.f, verticalOffset)));
         }
     }
 }
