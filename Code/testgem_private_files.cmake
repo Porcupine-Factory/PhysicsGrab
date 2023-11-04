@@ -13,5 +13,7 @@ set(FILES
     Source/Clients/PlayerControllerComponent.h
     Source/Clients/CameraShake.cpp
     Source/Clients/CameraShake.h
+    Source/Clients/Grab.cpp
+    Source/Clients/Grab.h
 )
 

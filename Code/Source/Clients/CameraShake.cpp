@@ -137,12 +137,7 @@ namespace TestGem
 
     void CameraShake::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
-
-        if (m_initiateShake)
-        {
-            //AZ_Printf("", "Initiate Camera Shake!", "");
-            Shake(deltaTime);
-        }
+        Shake(deltaTime);
     }
 
     AZ::Entity* CameraShake::GetActiveCamera() const
@@ -157,6 +152,11 @@ namespace TestGem
 
     void CameraShake::Shake(const float& deltaTime)
     {
+        if (!m_initiateShake)
+        {
+            return;
+        }
+
         m_currentTime += deltaTime;
 
         AZ::SimpleLcgRandom getSeed;

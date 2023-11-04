@@ -38,7 +38,7 @@ namespace TestGem
                         "Vertical Amplitude", "Distance of headbob along up/down axis")
                     ->DataElement(nullptr,
                         &HeadBob::m_headBobSmoothing,
-                        "Smoothing", "Headbob smoothing. Lower values will decrease headbob percieved feel.");
+                        "Smoothing", "Headbob smoothing. Lower values will decrease headbob intensity.");
             }
         }
     }
@@ -81,7 +81,7 @@ namespace TestGem
         }
 
         // Get camera's current local position.
-        AZ::Vector3 currentCameraPosition = m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation();
+        AZ::Vector3 currentCameraPosition = m_cameraEntity->GetTransform()->GetLocalTranslation();
 
         // Interpolate camera's position from currentCameraPosition to targetCameraPosition, using m_headBobSmoothing as the interpolant.
         m_cameraEntity->GetTransform()->SetLocalTranslation(currentCameraPosition.Lerp(targetCameraPosition, m_headBobSmoothing));
@@ -120,6 +120,7 @@ namespace TestGem
 
             // Combine offsets relative to the camera's original position and calculate the camera's target position
             m_offset = AZ::Vector3(((m_originalCameraTranslation + AZ::Vector3::CreateAxisX()) * AZ::Vector3(horizontalOffset, 0.f, 0.f)) + ((m_originalCameraTranslation / m_originalCameraTranslation.GetZ()) * AZ::Vector3(0.f, 0.f, verticalOffset)));
+            //m_offset = AZ::Vector3(((m_originalCameraTranslation + AZ::Vector3::CreateAxisX(horizontalOffset))) + ((m_originalCameraTranslation / m_originalCameraTranslation.GetZ()) * AZ::Vector3::CreateAxisX(verticalOffset)));
         }
     }
 }

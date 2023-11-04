@@ -1,0 +1,53 @@
+diff --git a/Code/CMakeLists.txt b/Code/CMakeLists.txt
+index 51a4308..2266857 100644
+--- a/Code/CMakeLists.txt
++++ b/Code/CMakeLists.txt
+@@ -53,6 +53,7 @@ ly_add_target(
+ 	    Gem::StartingPointInput.Static
+ 	    Gem::PhysX.Static
+ 	    Gem::FastNoise.Static
++	    Gem::FirstPersonController
+ )
+ 
+ # Here add ${gem_name} target, it depends on the Private Object library and Public API interface
+@@ -123,6 +124,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
+ 		Gem::StartingPointInput.Static
+ 		Gem::FastNoise.Static
++		Gem::FirstPersonController
+     )
+ 
+     ly_add_target(
+diff --git a/Code/Source/Clients/HeadBob.h b/Code/Source/Clients/HeadBob.h
+index d81bf5d..9ec9efb 100644
+--- a/Code/Source/Clients/HeadBob.h
++++ b/Code/Source/Clients/HeadBob.h
+@@ -2,8 +2,10 @@
+ #include <AzCore/Component/Component.h>
+ #include <AzCore/Component/TickBus.h>
+ #include <AzCore/Math/Vector3.h>
++#include <AzCore/Component/ComponentApplicationBus.h>
+ #include <AzFramework/Physics/CharacterBus.h>
+ #include <AzFramework/Components/CameraBus.h>
++#include <FirstPersonController/FirstPersonControllerComponentBus.h>
+ 
+ namespace TestGem
+ {
+@@ -46,4 +48,4 @@ namespace TestGem
+ 
+ 		bool m_isWalking = false;
+ 	};
+-}
+\ No newline at end of file
++}
+diff --git a/Code/testgem_api_files.cmake b/Code/testgem_api_files.cmake
+index 0e73962..07b24e4 100644
+--- a/Code/testgem_api_files.cmake
++++ b/Code/testgem_api_files.cmake
+@@ -1,5 +1,5 @@
+ 
+ set(FILES
+     Include/TestGem/TestGemBus.h
+-	${LY_EXTRAGEMS_PATH}/TimeDistortion/1.0.0/Code/Source/Clients/TimeDistortionComponent.h
++	${LY_PROJECTS}/../../Gems/FirstPersonController/0.0.0/Code/Include/FirstPersonController/FirstPersonControllerComponentBus.h
+ )

@@ -53,6 +53,7 @@ ly_add_target(
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
 	    Gem::FastNoise.Static
+	    Gem::FirstPersonController
 )
 
 # Here add ${gem_name} target, it depends on the Private Object library and Public API interface
@@ -123,6 +124,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
 		Gem::StartingPointInput.Static
 		Gem::FastNoise.Static
+		Gem::FirstPersonController
     )
 
     ly_add_target(

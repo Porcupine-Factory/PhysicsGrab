@@ -33,8 +33,6 @@ namespace TestGem
 	private:
 		AZ::Entity* m_activeCameraEntity = nullptr;
 		AZ::Entity* GetActiveCamera() const;
-		AZ::Entity* m_getCameraId = nullptr;
-		AZ::Entity* OnCameraAdded() const;
 
 		StartingPointInput::InputEventNotificationId m_shakeEventId;
 		AZStd::string m_strShake = "Camera Shake";
@@ -53,15 +51,15 @@ namespace TestGem
 
 		int m_Random = 0;
 
-		float m_traumaInitial = 1.35f;
+		float m_traumaInitial = 1.25f;
 		float m_trauma = 0.f;
 		float m_traumaDecay = 2.f;
-		float m_freq = 21.f;
-		float m_xTranslationAmplitude = 0.01f;
+		float m_freq = 20.f;
+		float m_xTranslationAmplitude = 0.0f;
 		float m_yTranslationAmplitude = 0.f;
-		float m_zTranslationAmplitude = 0.01f;
+		float m_zTranslationAmplitude = 0.0f;
 		float m_xRotationAmplitude = 0.04f;
-		float m_yRotationAmplitude = 0.03f;
+		float m_yRotationAmplitude = 0.01f;
 		float m_zRotationAmplitude = 0.04f;
 		float m_perlinFastNoise;
 		float m_currentTime = 0.f;

@@ -2,8 +2,10 @@
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
+#include <AzCore/Component/ComponentApplicationBus.h>
 #include <AzFramework/Physics/CharacterBus.h>
 #include <AzFramework/Components/CameraBus.h>
+#include <FirstPersonController/FirstPersonControllerComponentBus.h>
 
 namespace TestGem
 {
