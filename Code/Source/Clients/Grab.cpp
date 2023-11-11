@@ -251,9 +251,6 @@ namespace TestGem
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        // Print entity's collision state
-        //AZ_Printf("", "%s", hits ? "Colliding with Object" : "");
-
         m_grabEntityIds.clear();
 
         if (!hits)
@@ -261,25 +258,12 @@ namespace TestGem
             return;
         }
 
-        // Create a vector of every object hit from spherecast 
-        //for (AzPhysics::SceneQueryHit hit : hits.m_hits)
-            //m_grabEntityIds.push_back(hit.m_entityId);
-
         // Takes the first object hit in m_hits vector and assigns it to m_grabEntityIds vector
-        //AzPhysics::SceneQueryHit firstHitObject = hits.m_hits.at(0);
-        //m_grabEntityIds.push_back(firstHitObject.m_entityId);
         m_grabEntityIds.push_back(hits.m_hits.at(0).m_entityId);
-
-        //AZ_Printf("", "m_grabEntityIds.size() = %d", m_grabEntityIds.size());
-        //AZ_Printf("", "m_grabEntityId.at(0) = %s", m_grabEntityIds.at(0).ToString().c_str());
-        //AZ_Printf("", "m_grabEntityId name = %s", GetEntityPtr(m_grabEntityIds.at(0))->GetName().c_str());
 
         if (!m_rotateKey)
         {
             m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_minGrabDistance, m_maxGrabDistance);
-
-            // Print grabbed object's distance from the camera
-            //AZ_Printf("", "m_grabDistance = %.10f", m_grabDistance);
         }
 
         else 
@@ -326,9 +310,5 @@ namespace TestGem
         Physics::RigidBodyRequestBus::Event(objectId,
             &Physics::RigidBodyRequests::SetAngularVelocity,
             AZ::Vector3::CreateAxisX(m_grabDistanceKey) * m_rotateScale);
-
-        //AZ_Printf("", "Object Rotation X = %.10f", GetEntityPtr(objectId)->GetTransform()->GetWorldRotation().GetX());
-        //AZ_Printf("", "Object Rotation Y = %.10f", GetEntityPtr(objectId)->GetTransform()->GetWorldRotation().GetY());
-        //AZ_Printf("", "Object Rotation Z = %.10f", GetEntityPtr(objectId)->GetTransform()->GetWorldRotation().GetZ());
     }
 }
