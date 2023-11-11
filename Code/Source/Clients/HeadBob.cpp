@@ -67,11 +67,14 @@ namespace TestGem
 
         AZ::Vector3 targetCameraPosition = AZ::Vector3::CreateZero();
 
+        m_rightLocalVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+        m_upLocalVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
+
         // Set walking time and target camera position to zero if player character is not moving.
         if (!m_isWalking)
         {
             m_walkingTime = 0.f;
-            targetCameraPosition = AZ::Vector3(0.f, 0.f, m_originalCameraTranslation.GetZ());
+            targetCameraPosition = AZ::Vector3::CreateAxisZ(m_originalCameraTranslation.GetZ());
         }
         // Calculate camera's new target position by adding offset. 
         else 
@@ -85,12 +88,12 @@ namespace TestGem
 
         // Interpolate camera's position from currentCameraPosition to targetCameraPosition, using m_headBobSmoothing as the interpolant.
         m_cameraEntity->GetTransform()->SetLocalTranslation(currentCameraPosition.Lerp(targetCameraPosition, m_headBobSmoothing));
-
         // Snap camera's current position to target position if it is close enough.
         if ((currentCameraPosition - targetCameraPosition).GetLength() <= 0.001)
         {
             m_cameraEntity->GetTransform()->SetLocalTranslation(targetCameraPosition);
         }    
+
 	}
 
     AZ::Entity* HeadBob::GetEntityPtr(AZ::EntityId pointer) const
@@ -118,9 +121,8 @@ namespace TestGem
             horizontalOffset = cos(m_walkingTime * m_bobFreqency) * m_bobHorzAmplitude;
             verticalOffset = sin(m_walkingTime * m_bobFreqency * 2) * m_bobVertAmplitude;
 
-            // Combine offsets relative to the camera's original position and calculate the camera's target position
-            m_offset = AZ::Vector3(((m_originalCameraTranslation + AZ::Vector3::CreateAxisX()) * AZ::Vector3(horizontalOffset, 0.f, 0.f)) + ((m_originalCameraTranslation / m_originalCameraTranslation.GetZ()) * AZ::Vector3(0.f, 0.f, verticalOffset)));
-            //m_offset = AZ::Vector3(((m_originalCameraTranslation + AZ::Vector3::CreateAxisX(horizontalOffset))) + ((m_originalCameraTranslation / m_originalCameraTranslation.GetZ()) * AZ::Vector3::CreateAxisX(verticalOffset)));
+            // Combine offsets with the camera's local up and right vectors and calculate the camera's target position
+            m_offset = m_rightLocalVector * horizontalOffset + m_upLocalVector * verticalOffset;
         }
     }
 }

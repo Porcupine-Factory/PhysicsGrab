@@ -27,8 +27,8 @@ namespace TestGem
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
                 ->Field("Default Grab Distance", &Grab::m_grabInitialDistance)
-                ->Field("Min Grab Distance", &Grab::m_mingrabDistance)
-                ->Field("Max Grab Distance", &Grab::m_maxgrabDistance)
+                ->Field("Min Grab Distance", &Grab::m_minGrabDistance)
+                ->Field("Max Grab Distance", &Grab::m_maxGrabDistance)
                 ->Field("Throw Strength", &Grab::m_throwStrength)
                 ->Field("Grab Strength", &Grab::m_grabStrength)
                 ->Field("Rotate Scale", &Grab::m_rotateScale)
@@ -88,10 +88,10 @@ namespace TestGem
                         &Grab::m_grabInitialDistance,
                         "Default Grab Distance", "Distance the grabbed object will default to when letting go of the object")
                     ->DataElement(nullptr,
-                        &Grab::m_mingrabDistance,
+                        &Grab::m_minGrabDistance,
                         "Min Grab Distance", "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
                     ->DataElement(nullptr,
-                        &Grab::m_maxgrabDistance,
+                        &Grab::m_maxGrabDistance,
                         "Max Grab Distance", "Maximum allowable grab distance. Grabbed object cannot get further than this distance.");
             }
         }
@@ -227,12 +227,13 @@ namespace TestGem
         {
             // Reset current grabbed distance to m_grabInitialDistance if grab key is not pressed
             m_grabDistance = m_grabInitialDistance;
+            isThrowing = false;
             return;
         }
 
         // Get our local forward vector relative to the camera transform
         m_forwardVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
-       
+        
         // Get our Camera's world transform
         m_cameraTransform = m_cameraEntity->GetTransform()->GetWorldTM();
 
@@ -255,44 +256,52 @@ namespace TestGem
 
         m_grabEntityIds.clear();
 
-        if (hits)
+        if (!hits)
         {
-            // Create a vector of objects hit by spherecast 
-            for (AzPhysics::SceneQueryHit hit : hits.m_hits)
-                m_grabEntityIds.push_back(hit.m_entityId);
-
-            //AZ_Printf("", "m_grabEntityIds.size() = %d", m_grabEntityIds.size());
-            //AZ_Printf("", "m_grabEntityId.at(0) = %s", m_grabEntityIds.at(0).ToString().c_str());
-            //AZ_Printf("", "m_grabEntityId name = %s", GetEntityPtr(m_grabEntityIds.at(0))->GetName().c_str());
-
-            if (!m_rotateKey)
-            {
-                m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_mingrabDistance, m_maxgrabDistance);
-
-                // Print grabbed object's distance from the camera
-                //AZ_Printf("", "m_grabDistance = %.10f", m_grabDistance);
-            }
-
-            else 
-            {
-                RotateObject(m_grabEntityIds.at(0));
-            }
-
-            m_grabReference = m_cameraEntity->GetTransform()->GetWorldTM();
-            m_grabReference.SetTranslation(m_cameraEntity->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
-
-            m_grabbedObject = GetEntityPtr(m_grabEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
-
-            if (m_throwKey)
-            {
-                ThrowObject(m_grabEntityIds.at(0), deltaTime);
-            }
-
-            else
-            {
-                HoldObject(m_grabEntityIds.at(0), deltaTime);
-            }              
+            return;
         }
+
+        // Create a vector of every object hit from spherecast 
+        //for (AzPhysics::SceneQueryHit hit : hits.m_hits)
+            //m_grabEntityIds.push_back(hit.m_entityId);
+
+        // Takes the first object hit in m_hits vector and assigns it to m_grabEntityIds vector
+        //AzPhysics::SceneQueryHit firstHitObject = hits.m_hits.at(0);
+        //m_grabEntityIds.push_back(firstHitObject.m_entityId);
+        m_grabEntityIds.push_back(hits.m_hits.at(0).m_entityId);
+
+        //AZ_Printf("", "m_grabEntityIds.size() = %d", m_grabEntityIds.size());
+        //AZ_Printf("", "m_grabEntityId.at(0) = %s", m_grabEntityIds.at(0).ToString().c_str());
+        //AZ_Printf("", "m_grabEntityId name = %s", GetEntityPtr(m_grabEntityIds.at(0))->GetName().c_str());
+
+        if (!m_rotateKey)
+        {
+            m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_minGrabDistance, m_maxGrabDistance);
+
+            // Print grabbed object's distance from the camera
+            //AZ_Printf("", "m_grabDistance = %.10f", m_grabDistance);
+        }
+
+        else 
+        {
+            RotateObject(m_grabEntityIds.at(0));
+        }
+
+        m_grabReference = m_cameraEntity->GetTransform()->GetWorldTM();
+        m_grabReference.SetTranslation(m_cameraEntity->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+
+        m_grabbedObject = GetEntityPtr(m_grabEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
+
+        if (m_throwKey)
+        {
+            ThrowObject(m_grabEntityIds.at(0), deltaTime);
+            isThrowing = true;
+        }
+
+        else if (!m_throwKey && !isThrowing)
+        {
+            HoldObject(m_grabEntityIds.at(0), deltaTime);
+        }              
     }
 
     void Grab::HoldObject(AZ::EntityId objectId, const float& deltaTime)

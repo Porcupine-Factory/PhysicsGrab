@@ -74,10 +74,12 @@ namespace TestGem
 		float m_grabDistanceKey = 0.f;
 		float m_grabDistance = 0.f;
 
-		const float m_mingrabDistance = 1.5f;
-		const float m_maxgrabDistance = 3.f;
+		bool isThrowing = false;
+
+		const float m_minGrabDistance = 1.5f;
+		const float m_maxGrabDistance = 3.f;
 		const float m_grabInitialDistance = 1.75f;
-		const float m_grabStrength = 600.f;
+		const float m_grabStrength = 700.f;
 		const float m_throwStrength = 60000.f;
 		const float m_sphereCastRadius = 0.3f;
 		const float m_sphereCastDistance = 3.f;
