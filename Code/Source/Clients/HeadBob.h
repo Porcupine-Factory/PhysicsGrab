@@ -38,7 +38,6 @@ namespace TestGem
 
 		AZ::Vector3 m_originalCameraTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_offset = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_upLocalVector = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_rightLocalVector = AZ::Vector3::CreateZero();
 
 		float m_walkingTime = 0.f;

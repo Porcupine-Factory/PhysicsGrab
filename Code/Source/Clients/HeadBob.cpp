@@ -62,13 +62,11 @@ namespace TestGem
 
 	void HeadBob::OnTick(float deltaTime, AZ::ScriptTimePoint)
 	{
-
         CalculateHeadbobOffset();
 
         AZ::Vector3 targetCameraPosition = AZ::Vector3::CreateZero();
 
         m_rightLocalVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
-        m_upLocalVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
 
         // Set walking time and target camera position to zero if player character is not moving.
         if (!m_isWalking)
@@ -121,8 +119,9 @@ namespace TestGem
             horizontalOffset = cos(m_walkingTime * m_bobFreqency) * m_bobHorzAmplitude;
             verticalOffset = sin(m_walkingTime * m_bobFreqency * 2) * m_bobVertAmplitude;
 
-            // Combine offsets with the camera's local up and right vectors and calculate the camera's target position
-            m_offset = m_rightLocalVector * horizontalOffset + m_upLocalVector * verticalOffset;
+            // Combine offsets with the camera's local up and right vectors and calculate the camera's target position.
+            // May need to test vertical offset factor with different gravity directions(e.g.walking on a ceiling) to confirm normal vector direction with respect to the ground.
+            m_offset = m_rightLocalVector * horizontalOffset + AZ::Vector3::CreateAxisZ(verticalOffset);
         }
     }
 }

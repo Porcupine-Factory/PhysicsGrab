@@ -30,17 +30,21 @@ namespace TestGem
 
 		void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 
+		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
+
 	private:
 		AZ::Entity* m_activeCameraEntity = nullptr;
+		AZ::Entity* m_cameraOriginalEntity = nullptr;
 		AZ::Entity* GetActiveCamera() const;
 
 		StartingPointInput::InputEventNotificationId m_shakeEventId;
 		AZStd::string m_strShake = "Camera Shake";
 
+		void OnCameraAdded(const AZ::EntityId& cameraId);
 		void Shake(const float& deltaTime);
 		float GenFastNoise(int genSeed);
 
-		AZ::Transform m_activeCameraTransform = AZ::Transform::CreateIdentity();
+		AZ::Transform m_originalCameraTransform = AZ::Transform::CreateIdentity();
 
 		bool m_initiateShake = false;
 

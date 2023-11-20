@@ -222,6 +222,10 @@ namespace TestGem
 
     void Grab::CheckForObjects(const float& deltaTime)
     {
+        AZ_Printf("", "X Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetX());
+        AZ_Printf("", "Y Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetY());
+        AZ_Printf("", "Z Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetZ());
+
         // Do not perform spherecast query if grab key is not pressed
         if (!m_grabKey)
         {

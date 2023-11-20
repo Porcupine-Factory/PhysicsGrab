@@ -105,6 +105,18 @@ namespace TestGem
         InputEventNotificationBus::MultiHandler::BusDisconnect();
 	}
 
+    void CameraShake::OnCameraAdded(const AZ::EntityId& cameraId)
+    {
+        m_cameraOriginalEntity = GetEntityPtr(cameraId);
+        m_originalCameraTransform = m_cameraOriginalEntity->GetTransform()->GetLocalTM();
+    }
+
+    AZ::Entity* CameraShake::GetEntityPtr(AZ::EntityId pointer) const
+    {
+        auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
+        return ca->FindEntity(pointer);
+    }
+
     // Recieve the input event in OnPressed method
     void CameraShake::OnPressed(float value)
     {
@@ -166,27 +178,27 @@ namespace TestGem
         m_currentCameraTranslation = GetActiveCamera()->GetTransform()->GetLocalTM().GetTranslation();
 
         // Grabbing the Z local translation of the camera to add to the camera shake
-        AZ::Vector3 zCameraTranslation = AZ::Vector3(0.f, 0.f, m_currentCameraTranslation.GetZ());
+        AZ::Vector3 zCameraTranslation = AZ::Vector3::CreateAxisZ(m_currentCameraTranslation.GetZ());
 
         // Subtracting the translation caused by shake to get a "clean" version of our current local camera translation
         AZ::Vector3 adjustedCameraTranslation = m_currentCameraTranslation - m_shakeTranslation;
 
         // Grabbing only the Z local translation of adjustedCameraTranslation to be used when setting our new translation with shake. 
         // This allows you to control the zheight of the camera while simultaniously allowing camera shake
-        AZ::Vector3 zadjustedCameraTranslation = AZ::Vector3(0.f, 0.f, adjustedCameraTranslation.GetZ());
-        
+        AZ::Vector3 zadjustedCameraTranslation = AZ::Vector3::CreateAxisZ(adjustedCameraTranslation.GetZ());
+
         // Getting our Camera's current rotation using Euler Radians to make the math a bit easier
         m_currentCameraRotation = GetActiveCamera()->GetTransform()->GetLocalTM().GetRotation().GetEulerRadians();
 
         // Grabbing the x local rotation of the camera to use when setting our camera position back after stopping shake
-        AZ::Vector3 xCameraRotation = AZ::Vector3(m_currentCameraRotation.GetX(), 0.f, 0.f);
+        AZ::Vector3 xCameraRotation = AZ::Vector3::CreateAxisX(m_currentCameraRotation.GetX());
         
         // Subtracting the rotation caused by shake to get a "clean" version of our current local camera rotation
         AZ::Vector3 adjustedCameraRotation = m_currentCameraRotation - m_shakeRotation;
         
         // Grabbing only the X local rotation of adjustedCameraRotation to be used when setting our new rotation with shake. 
         // This allows you to control the pitch of the camera while simultaniously allowing camera shake
-        AZ::Vector3 xadjustedCameraRotation = AZ::Vector3(adjustedCameraRotation.GetX(), 0.f, 0.f);
+        AZ::Vector3 xadjustedCameraRotation = AZ::Vector3::CreateAxisX(adjustedCameraRotation.GetX());
 
         if(m_trauma > 0)
         { 
@@ -206,7 +218,7 @@ namespace TestGem
             // Set our active camera's translation to the current camera translation plus the shake values
             GetActiveCamera()->GetTransform()->SetLocalTranslation(zadjustedCameraTranslation + m_shakeTranslation);
 
-            // Set our active camera's rotation to the current camera rotation pSlus the shake values
+            // Set our active camera's rotation to the current camera rotation plus the shake values
             GetActiveCamera()->GetTransform()->SetLocalRotation(xadjustedCameraRotation + m_shakeRotation);
 
             // Reducing the trauma amount over time. GetMax() ensures trauma is never less than 0
@@ -228,11 +240,14 @@ namespace TestGem
             // NOTE: Camera does not reset back to original position. It still retains ztranslation, and xRotation values from shake. Need a better way 
             // of storing the original positions. 
             
-            // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
+            // Smoothly reset back to our camera's original translation with linear interpolation. Currently set to immediate reset.
             GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(zCameraTranslation, 1.f));
+            //GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(m_originalCameraTransform.GetTranslation(), 0.5f));
 
             // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
+            //GetActiveCamera()->GetTransform()->SetLocalRotation(m_currentCameraRotation.Lerp(xCameraRotation, 1.f));
             GetActiveCamera()->GetTransform()->SetLocalRotation(m_currentCameraRotation.Lerp(xCameraRotation, 1.f));
+
         } 
     }
 
