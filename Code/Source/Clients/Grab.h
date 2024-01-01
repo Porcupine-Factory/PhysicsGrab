@@ -45,7 +45,13 @@ namespace TestGem
 		AZStd::string m_strThrow = "Throw Key";
 
 		StartingPointInput::InputEventNotificationId m_rotateEventId;
-		AZStd::string m_strRotate = "Rotate Key";
+		AZStd::string m_strRotate = "Rotate Enable Key";
+
+		StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
+		AZStd::string m_strRotatePitch = "Rotate Pitch Key";
+
+		StartingPointInput::InputEventNotificationId m_rotateYawEventId;
+		AZStd::string m_strRotateYaw = "Rotate Yaw Key";
 
 		StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
 		AZStd::string m_strGrabDistance = "Grab Distance Key";
@@ -61,8 +67,12 @@ namespace TestGem
 
 		AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_grabbedObject = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
 
 		AZStd::vector<AZ::EntityId> m_grabEntityIds;
+
+		AZ::EntityId m_lastGrabbedObject;
 
 		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
 		AzPhysics::CollisionGroup m_grabCollisionGroup = AzPhysics::CollisionGroup::All;
@@ -73,8 +83,12 @@ namespace TestGem
 		float m_rotateScale = 1.f;
 		float m_grabDistanceKey = 0.f;
 		float m_grabDistance = 0.f;
+		float m_pitch = 0.f;
+		float m_yaw = 0.f;
 
 		bool isThrowing = false;
+		bool m_objectReset = false;
+		bool isObjectKinematic = false;
 
 		const float m_minGrabDistance = 1.5f;
 		const float m_maxGrabDistance = 3.f;

@@ -107,8 +107,8 @@ namespace TestGem
 
     void CameraShake::OnCameraAdded(const AZ::EntityId& cameraId)
     {
-        m_cameraOriginalEntity = GetEntityPtr(cameraId);
-        m_originalCameraTransform = m_cameraOriginalEntity->GetTransform()->GetLocalTM();
+        m_cameraEntity = GetEntityPtr(cameraId);
+        m_originalCameraTranslation = m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation();
     }
 
     AZ::Entity* CameraShake::GetEntityPtr(AZ::EntityId pointer) const
@@ -149,6 +149,10 @@ namespace TestGem
 
     void CameraShake::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
+        //AZ_Printf("", "X Local Camera Translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTranslation().GetX());
+        //AZ_Printf("", "Y Local Camera Translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTranslation().GetY());
+        //AZ_Printf("", "Z Local Camera Translation = %.10f", GetActiveCamera()->GetTransform()->GetLocalTranslation().GetZ());
+        //AZ_Printf("", "Z m_originalCameraTranslation = %.10f", m_originalCameraTranslation.GetZ());
         Shake(deltaTime);
     }
 
@@ -220,7 +224,7 @@ namespace TestGem
 
             // Set our active camera's rotation to the current camera rotation plus the shake values
             GetActiveCamera()->GetTransform()->SetLocalRotation(xadjustedCameraRotation + m_shakeRotation);
-
+            
             // Reducing the trauma amount over time. GetMax() ensures trauma is never less than 0
             m_trauma = AZ::GetMax(m_trauma - m_traumaDecay * deltaTime, 0.f);
 
@@ -242,7 +246,7 @@ namespace TestGem
             
             // Smoothly reset back to our camera's original translation with linear interpolation. Currently set to immediate reset.
             GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(zCameraTranslation, 1.f));
-            //GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(m_originalCameraTransform.GetTranslation(), 0.5f));
+            //GetActiveCamera()->GetTransform()->SetLocalTranslation(m_currentCameraTranslation.Lerp(m_originalCameraTranslation, 1.f));
 
             // Smoothly reset back to our camera's original rotation with linear interpolation. Currently set to immediate reset.
             //GetActiveCamera()->GetTransform()->SetLocalRotation(m_currentCameraRotation.Lerp(xCameraRotation, 1.f));

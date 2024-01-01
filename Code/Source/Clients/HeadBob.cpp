@@ -62,6 +62,10 @@ namespace TestGem
 
 	void HeadBob::OnTick(float deltaTime, AZ::ScriptTimePoint)
 	{
+        AZ_Printf("", "X Local Camera Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTranslation().GetX());
+        AZ_Printf("", "Y Local Camera Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTranslation().GetY());
+        AZ_Printf("", "Z Local Camera Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTranslation().GetZ());
+
         CalculateHeadbobOffset();
 
         AZ::Vector3 targetCameraPosition = AZ::Vector3::CreateZero();

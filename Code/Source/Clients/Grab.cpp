@@ -22,7 +22,9 @@ namespace TestGem
                 ->Field("Grab Input Key", &Grab::m_strGrab)
                 ->Field("Grab Distance Input Key", &Grab::m_strGrabDistance)
                 ->Field("Throw Input Key", &Grab::m_strThrow)
-                ->Field("Rotate Input Key", &Grab::m_strRotate)
+                ->Field("Rotate Enable Input Key", &Grab::m_strRotate)
+                ->Field("Rotate Pitch Key", &Grab::m_strRotatePitch)
+                ->Field("Rotate Yaw Key", &Grab::m_strRotateYaw)
 
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
@@ -49,16 +51,22 @@ namespace TestGem
                     // Input Binding Keys
                     ->DataElement(nullptr,
                         &Grab::m_strGrab,
-                        "Grab Input Key", "Grab interaction input binding")
+                        "Grab Key", "Grab interaction input binding")
                     ->DataElement(nullptr,
                         &Grab::m_strGrabDistance,
-                        "Grab Distance Input Key", "Grab distance input binding")
+                        "Grab Distance Key", "Grab distance input binding")
                     ->DataElement(nullptr,
                         &Grab::m_strThrow,
                         "Throw Input Key", "Throw object input binding")
                     ->DataElement(nullptr,
                         &Grab::m_strRotate,
-                        "Rotate Input Key", "Rotate object input binding")
+                        "Rotate Enable Key", "Enable rotate object input binding")
+                    ->DataElement(nullptr,
+                        &Grab::m_strRotatePitch,
+                        "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(nullptr,
+                        &Grab::m_strRotateYaw,
+                        "Rotate Yaw Key", "Rotate object about Z axis input binding")
 
                     ->DataElement(nullptr,
                         &Grab::m_throwStrength,
@@ -110,6 +118,12 @@ namespace TestGem
         m_rotateEventId = StartingPointInput::InputEventNotificationId(m_strRotate.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_rotateEventId);
 
+        m_rotatePitchEventId = StartingPointInput::InputEventNotificationId(m_strRotatePitch.c_str());
+        InputEventNotificationBus::MultiHandler::BusConnect(m_rotatePitchEventId);
+
+        m_rotateYawEventId = StartingPointInput::InputEventNotificationId(m_strRotateYaw.c_str());
+        InputEventNotificationBus::MultiHandler::BusConnect(m_rotateYawEventId);
+
         Camera::CameraNotificationBus::Handler::BusConnect();
         AZ::TickBus::Handler::BusConnect();
 
@@ -149,19 +163,31 @@ namespace TestGem
         if (*inputId == m_grabDistanceEventId)
         {
             m_grabDistanceKey = value;
-            //AZ_Printf("Player", "Grab Distance value %f", value);
+            //AZ_Printf("Object", "Grab Distance value %f", value);
         }
 
         if (*inputId == m_throwEventId)
         {
             m_throwKey = value;
-            //AZ_Printf("Player", "Throw value value %f", value);
+            //AZ_Printf("Player", "Throw value %f", value);
         }
 
         if (*inputId == m_rotateEventId)
         {
             m_rotateKey = value;
-            //AZ_Printf("Player", "Throw value value %f", value);
+            //AZ_Printf("Player", "rotate value %f", value);
+        }
+
+        if (*inputId == m_rotatePitchEventId)
+        {
+            m_pitch = value;
+            //AZ_Printf("Object", "Grab Object pitch value %f", value);
+        }
+
+        if (*inputId == m_rotateYawEventId)
+        {
+            m_yaw = value;
+            //AZ_Printf("Object", "Grab Object yaw value %f", value);
         }
     }
 
@@ -193,6 +219,18 @@ namespace TestGem
             m_rotateKey = value;
             //AZ_Printf("Player", "Throw released value %f", value);
         }
+
+        if (*inputId == m_rotatePitchEventId)
+        {
+            m_pitch = value;
+            //AZ_Printf("Object", "Grab Object pitch released value %f", value);
+        }
+
+        if (*inputId == m_rotateYawEventId)
+        {
+            m_yaw = value;
+            //AZ_Printf("Object", "Grab Object yaw released value %f", value);
+        }
     }
     void Grab::OnHeld(float value)
     {
@@ -202,10 +240,22 @@ namespace TestGem
         {
             return;
         }
-
-        if (*inputId == RotateYawEventId)
+        if (*inputId == m_throwEventId)
         {
-            m_grabKey = value;
+            m_throwKey = value;
+            //AZ_Printf("Player", "Throw held value %f", value);
+        }
+
+        if (*inputId == m_rotatePitchEventId)
+        {
+            m_pitch = value;
+            //AZ_Printf("Object", "Grab Object pitch held value %f", value);
+        }
+
+        else if (*inputId == m_rotateYawEventId)
+        {
+            m_yaw = value;
+            //AZ_Printf("Object", "Grab Object yaw held value %f", value);
         }
     }
 
@@ -222,16 +272,26 @@ namespace TestGem
 
     void Grab::CheckForObjects(const float& deltaTime)
     {
-        AZ_Printf("", "X Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetX());
-        AZ_Printf("", "Y Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetY());
-        AZ_Printf("", "Z Translation = %.10f", m_cameraEntity->GetTransform()->GetLocalTM().GetTranslation().GetZ());
-
         // Do not perform spherecast query if grab key is not pressed
         if (!m_grabKey)
         {
             // Reset current grabbed distance to m_grabInitialDistance if grab key is not pressed
             m_grabDistance = m_grabInitialDistance;
             isThrowing = false;
+
+            // Might need a way to check if m_lastGrabbedObject has a valid ID as to not get null reference crash
+            Physics::RigidBodyRequestBus::EventResult(isObjectKinematic, m_lastGrabbedObject,
+                &Physics::RigidBodyRequestBus::Events::IsKinematic);
+
+            if (!isObjectKinematic)
+            {
+                return;
+            }
+
+            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObject,
+                &Physics::RigidBodyRequests::SetKinematic,
+                false);
+            
             return;
         }
 
@@ -258,19 +318,39 @@ namespace TestGem
         m_grabEntityIds.clear();
 
         if (!hits)
-        {
+        {  
+            Physics::RigidBodyRequestBus::EventResult(isObjectKinematic, m_lastGrabbedObject,
+                &Physics::RigidBodyRequestBus::Events::IsKinematic);
+
+            if (!isObjectKinematic)
+            {
+                return;
+            }
+
+            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObject,
+                &Physics::RigidBodyRequests::SetKinematic,
+                false);
+
             return;
         }
 
         // Takes the first object hit in m_hits vector and assigns it to m_grabEntityIds vector
         m_grabEntityIds.push_back(hits.m_hits.at(0).m_entityId);
 
-        if (!m_rotateKey)
+        m_lastGrabbedObject = m_grabEntityIds.at(0);
+
+        if (!m_rotateKey || isThrowing)
         {
+            m_objectReset = false;
+
+            Physics::RigidBodyRequestBus::Event(m_grabEntityIds.at(0),
+                &Physics::RigidBodyRequests::SetKinematic,
+                false);
+
             m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_minGrabDistance, m_maxGrabDistance);
         }
 
-        else 
+        else //if (m_rotateKey && !isThrowing)
         {
             RotateObject(m_grabEntityIds.at(0));
         }
@@ -310,9 +390,30 @@ namespace TestGem
     
     void Grab::RotateObject(AZ::EntityId objectId)
     {
-        // Rotate grabbed object about X axis using Angular Velocity
-        Physics::RigidBodyRequestBus::Event(objectId,
-            &Physics::RigidBodyRequests::SetAngularVelocity,
-            AZ::Vector3::CreateAxisX(m_grabDistanceKey) * m_rotateScale);
+        // It is recommended to stop player character camera rotation while rotating an object
+        if (!m_objectReset)
+        {
+            m_objectReset = true;
+
+            Physics::RigidBodyRequestBus::Event(objectId,
+                &Physics::RigidBodyRequests::SetKinematic,
+                true);
+        }
+
+        else
+        {
+            AZ::Vector3 current_Rotation = GetEntityPtr(objectId)->GetTransform()->GetLocalRotation();
+
+            m_delta_yaw = AZ::Vector3(0.f, 0.f, m_yaw);
+            m_delta_pitch = AZ::Vector3(m_pitch, 0.f, 0.f);
+
+            m_delta_yaw *= m_rotateScale;
+            m_delta_pitch *= m_rotateScale;
+
+            AZ::Vector3 new_Rotation = AZ::Vector3::CreateZero();
+            new_Rotation = (current_Rotation + m_delta_yaw + m_delta_pitch);
+
+            GetEntityPtr(objectId)->GetTransform()->SetLocalRotation(new_Rotation);
+        }
     }
 }

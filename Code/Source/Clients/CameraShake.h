@@ -33,8 +33,8 @@ namespace TestGem
 		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
 
 	private:
+		AZ::Entity* m_cameraEntity = nullptr;
 		AZ::Entity* m_activeCameraEntity = nullptr;
-		AZ::Entity* m_cameraOriginalEntity = nullptr;
 		AZ::Entity* GetActiveCamera() const;
 
 		StartingPointInput::InputEventNotificationId m_shakeEventId;
@@ -44,10 +44,9 @@ namespace TestGem
 		void Shake(const float& deltaTime);
 		float GenFastNoise(int genSeed);
 
-		AZ::Transform m_originalCameraTransform = AZ::Transform::CreateIdentity();
-
 		bool m_initiateShake = false;
 
+		AZ::Vector3 m_originalCameraTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_currentCameraTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_currentCameraRotation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_shakeTranslation = AZ::Vector3::CreateZero();
