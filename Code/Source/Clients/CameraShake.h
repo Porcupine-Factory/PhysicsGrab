@@ -54,16 +54,16 @@ namespace TestGem
 
 		int m_Random = 0;
 
-		float m_traumaInitial = 1.25f;
+		float m_traumaInitial = 1.3f;
 		float m_trauma = 0.f;
 		float m_traumaDecay = 2.f;
-		float m_freq = 20.f;
-		float m_xTranslationAmplitude = 0.0f;
+		float m_freq = 19.f;
+		float m_xTranslationAmplitude = 0.02f;
 		float m_yTranslationAmplitude = 0.f;
-		float m_zTranslationAmplitude = 0.0f;
+		float m_zTranslationAmplitude = 0.02f;
 		float m_xRotationAmplitude = 0.04f;
 		float m_yRotationAmplitude = 0.01f;
-		float m_zRotationAmplitude = 0.04f;
+		float m_zRotationAmplitude = 0.05f;
 		float m_perlinFastNoise;
 		float m_currentTime = 0.f;
 		float m_perlinNoise = 0.f;
