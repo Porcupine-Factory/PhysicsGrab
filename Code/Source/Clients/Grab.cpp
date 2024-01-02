@@ -350,7 +350,7 @@ namespace TestGem
             m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_minGrabDistance, m_maxGrabDistance);
         }
 
-        else //if (m_rotateKey && !isThrowing)
+        else
         {
             RotateObject(m_grabEntityIds.at(0));
         }
@@ -362,6 +362,7 @@ namespace TestGem
 
         if (m_throwKey)
         {
+            // May see PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic to throw
             ThrowObject(m_grabEntityIds.at(0), deltaTime);
             isThrowing = true;
         }

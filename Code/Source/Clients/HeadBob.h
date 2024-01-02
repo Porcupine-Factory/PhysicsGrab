@@ -41,8 +41,8 @@ namespace TestGem
 		AZ::Vector3 m_rightLocalVector = AZ::Vector3::CreateZero();
 
 		float m_walkingTime = 0.f;
-		float m_bobFreqency = 7.f;
-		float m_bobHorzAmplitude = 0.025f;
+		float m_bobFreqency = 6.5f;
+		float m_bobHorzAmplitude = 0.03f;
 		float m_bobVertAmplitude = 0.06f;
 		float m_headBobSmoothing = 0.2f;
 
