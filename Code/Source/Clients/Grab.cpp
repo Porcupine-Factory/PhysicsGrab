@@ -31,6 +31,7 @@ namespace TestGem
                 ->Field("Default Grab Distance", &Grab::m_grabInitialDistance)
                 ->Field("Min Grab Distance", &Grab::m_minGrabDistance)
                 ->Field("Max Grab Distance", &Grab::m_maxGrabDistance)
+                ->Field("Grab Distance Speed", &Grab::m_grabDistanceSpeed)
                 ->Field("Throw Strength", &Grab::m_throwStrength)
                 ->Field("Grab Strength", &Grab::m_grabStrength)
                 ->Field("Rotate Scale", &Grab::m_rotateScale)
@@ -100,7 +101,10 @@ namespace TestGem
                         "Min Grab Distance", "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
                     ->DataElement(nullptr,
                         &Grab::m_maxGrabDistance,
-                        "Max Grab Distance", "Maximum allowable grab distance. Grabbed object cannot get further than this distance.");
+                        "Max Grab Distance", "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
+                    ->DataElement(nullptr,
+                        &Grab::m_grabDistanceSpeed,
+                        "Grab Distance Speed", "The speed at which you move the grabbed object closer or away.");
             }
         }
     }
@@ -347,12 +351,12 @@ namespace TestGem
                 &Physics::RigidBodyRequests::SetKinematic,
                 false);
 
-            m_grabDistance = AZ::GetClamp(m_grabDistance + m_grabDistanceKey * 0.002f, m_minGrabDistance, m_maxGrabDistance);
+            m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKey * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
         }
 
         else
         {
-            RotateObject(m_grabEntityIds.at(0));
+            RotateObject(m_grabEntityIds.at(0), deltaTime);
         }
 
         m_grabReference = m_cameraEntity->GetTransform()->GetWorldTM();
@@ -389,7 +393,7 @@ namespace TestGem
             m_forwardVector * m_throwStrength * deltaTime);
     }
     
-    void Grab::RotateObject(AZ::EntityId objectId)
+    void Grab::RotateObject(AZ::EntityId objectId, const float& deltaTime)
     {
         // It is recommended to stop player character camera rotation while rotating an object
         if (!m_objectReset)
@@ -412,7 +416,7 @@ namespace TestGem
             m_delta_pitch *= m_rotateScale;
 
             AZ::Vector3 new_Rotation = AZ::Vector3::CreateZero();
-            new_Rotation = (current_Rotation + m_delta_yaw + m_delta_pitch);
+            new_Rotation = current_Rotation + ((m_delta_yaw + m_delta_pitch) * deltaTime);
 
             GetEntityPtr(objectId)->GetTransform()->SetLocalRotation(new_Rotation);
         }

@@ -60,7 +60,7 @@ namespace TestGem
 		void CheckForObjects(const float& deltaTime);
 		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
-		void RotateObject(AZ::EntityId objectId);
+		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
 
 		AZ::Transform m_cameraTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -80,7 +80,6 @@ namespace TestGem
 		float m_grabKey = 0.f;
 		float m_throwKey = 0.f;
 		float m_rotateKey = 0.f;
-		float m_rotateScale = 1.f;
 		float m_grabDistanceKey = 0.f;
 		float m_grabDistance = 0.f;
 		float m_pitch = 0.f;
@@ -89,10 +88,12 @@ namespace TestGem
 		bool isThrowing = false;
 		bool m_objectReset = false;
 		bool isObjectKinematic = false;
-
+		
+		const float m_rotateScale = 0.5f;
 		const float m_minGrabDistance = 1.5f;
 		const float m_maxGrabDistance = 3.f;
 		const float m_grabInitialDistance = 1.75f;
+		const float m_grabDistanceSpeed = 0.2f;
 		const float m_grabStrength = 700.f;
 		const float m_throwStrength = 60000.f;
 		const float m_sphereCastRadius = 0.3f;
