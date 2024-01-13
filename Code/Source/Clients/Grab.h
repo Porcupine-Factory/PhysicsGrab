@@ -1,4 +1,6 @@
 #pragma once
+
+#include <TestGem/TestGemComponentBus.h>
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
@@ -14,6 +16,7 @@ namespace TestGem
 		: public AZ::Component
 		, public AZ::TickBus::Handler
 		, public StartingPointInput::InputEventNotificationBus::MultiHandler
+		, public TestGemComponentRequestBus::Handler
 		, Camera::CameraNotificationBus::Handler
 	{
 	public:
@@ -34,6 +37,10 @@ namespace TestGem
 		void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 
 		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
+
+		// TestGemRequestBus
+		bool GetisObjectKinematic() const override;
+		float GetGrabObjectDistance() const override;
 
 	private:
 		AZ::Entity* m_cameraEntity = nullptr;
@@ -61,6 +68,15 @@ namespace TestGem
 		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
 		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
+
+		// GrabNotificationBus
+		// void OnObjectCollision();
+		// void OnGrabObject();
+		// void OnThrowObject();
+		// void OnRotateObject();
+		// void OnKinematicObject();
+		// void OnDynamicObject();
+		// void OnGrabDistanceChanged();
 
 		AZ::Transform m_cameraTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();

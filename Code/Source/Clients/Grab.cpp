@@ -107,6 +107,21 @@ namespace TestGem
                         "Grab Distance Speed", "The speed at which you move the grabbed object closer or away.");
             }
         }
+
+        if (auto bc = azrtti_cast<AZ::BehaviorContext*>(rc))
+        {
+            //bc->EBus<GrabNotificationBus>("GrabNotificationBus")
+            //    ->Handler<GrabNotificationHandler>();
+
+            bc->EBus<TestGemComponentRequestBus>("TestGemComponentRequestBus")
+                ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
+                ->Attribute(AZ::Script::Attributes::Module, "interaction")
+                ->Attribute(AZ::Script::Attributes::Category, "Grab")
+                ->Event("Get isObjectKinematic", &TestGemComponentRequests::GetisObjectKinematic)
+                ->Event("Get Grab Object Distance", &TestGemComponentRequests::GetGrabObjectDistance);
+
+            bc->Class<Grab>()->RequestBus("TestGemComponentRequestBus");
+        }
     }
     void Grab::Activate()
     {
@@ -352,6 +367,7 @@ namespace TestGem
                 false);
 
             m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKey * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
+            AZ_Printf("", "m_grabDistance = %.10f", m_grabDistance);
         }
 
         else
@@ -420,5 +436,14 @@ namespace TestGem
 
             GetEntityPtr(objectId)->GetTransform()->SetLocalRotation(new_Rotation);
         }
+    }
+    bool Grab::GetisObjectKinematic() const
+    {
+        return isObjectKinematic;
+    }
+
+    float Grab::GetGrabObjectDistance() const
+    {
+        return m_grabDistance;
     }
 }
