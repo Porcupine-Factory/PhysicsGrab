@@ -39,7 +39,7 @@ namespace TestGem
 		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
 
 		// TestGemRequestBus
-		bool GetisObjectKinematic() const override;
+		bool GetisThrowing() const override;
 		float GetGrabObjectDistance() const override;
 
 	private:
@@ -68,15 +68,6 @@ namespace TestGem
 		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
 		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
-
-		// GrabNotificationBus
-		// void OnObjectCollision();
-		// void OnGrabObject();
-		// void OnThrowObject();
-		// void OnRotateObject();
-		// void OnKinematicObject();
-		// void OnDynamicObject();
-		// void OnGrabDistanceChanged();
 
 		AZ::Transform m_cameraTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();

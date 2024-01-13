@@ -11,7 +11,7 @@ namespace TestGem
         ~TestGemComponentRequests() override = default;
 
         virtual float GetGrabObjectDistance() const = 0;
-        virtual bool GetisObjectKinematic() const = 0;
+        virtual bool GetisThrowing() const = 0;
     };
 
     using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;

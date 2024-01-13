@@ -117,7 +117,7 @@ namespace TestGem
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
                 ->Attribute(AZ::Script::Attributes::Category, "Grab")
-                ->Event("Get isObjectKinematic", &TestGemComponentRequests::GetisObjectKinematic)
+                ->Event("Get isThrowing", &TestGemComponentRequests::GetisThrowing)
                 ->Event("Get Grab Object Distance", &TestGemComponentRequests::GetGrabObjectDistance);
 
             bc->Class<Grab>()->RequestBus("TestGemComponentRequestBus");
@@ -148,6 +148,9 @@ namespace TestGem
 
         Physics::CollisionRequestBus::BroadcastResult(
             m_grabCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_grabCollisionGroupId);
+
+        // Connect the handler to the request bus
+        TestGemComponentRequestBus::Handler::BusConnect(GetEntityId());
     }
 
     void Grab::Deactivate()
@@ -155,7 +158,11 @@ namespace TestGem
         AZ::TickBus::Handler::BusDisconnect();
         InputEventNotificationBus::MultiHandler::BusDisconnect();
 
+        // Disconnect the handler from the request bus
+        TestGemComponentRequestBus::Handler::BusDisconnect();
+
         Camera::CameraNotificationBus::Handler::BusDisconnect();
+
     }
 
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
@@ -280,6 +287,7 @@ namespace TestGem
 
     void Grab::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
+        // AZ_Printf("", "isThrowing = %s", isThrowing ? "true" : "false");
         CheckForObjects(deltaTime);
     }
 
@@ -338,6 +346,8 @@ namespace TestGem
 
         if (!hits)
         {  
+            isThrowing = false;
+
             Physics::RigidBodyRequestBus::EventResult(isObjectKinematic, m_lastGrabbedObject,
                 &Physics::RigidBodyRequestBus::Events::IsKinematic);
 
@@ -367,7 +377,6 @@ namespace TestGem
                 false);
 
             m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKey * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
-            AZ_Printf("", "m_grabDistance = %.10f", m_grabDistance);
         }
 
         else
@@ -437,9 +446,9 @@ namespace TestGem
             GetEntityPtr(objectId)->GetTransform()->SetLocalRotation(new_Rotation);
         }
     }
-    bool Grab::GetisObjectKinematic() const
+    bool Grab::GetisThrowing() const
     {
-        return isObjectKinematic;
+        return isThrowing;
     }
 
     float Grab::GetGrabObjectDistance() const
