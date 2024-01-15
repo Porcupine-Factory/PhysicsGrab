@@ -133,11 +133,6 @@ namespace TestGem
     }
     void Grab::Activate()
     {
-        if (!m_useCameraAsGrabbingEntity)
-        {
-            m_grabbingEntityPtr = GetEntityPtr(m_grabbingEntityId);
-        }
-
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
 
@@ -164,6 +159,18 @@ namespace TestGem
 
         // Connect the handler to the request bus
         TestGemComponentRequestBus::Handler::BusConnect(GetEntityId());
+
+        AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
+    }
+
+    void Grab::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
+    {
+        AZ::EntityBus::Handler::BusDisconnect();
+
+        if (!m_useCameraAsGrabbingEntity)
+        {
+            m_grabbingEntityPtr = GetEntityPtr(m_grabbingEntityId);
+        }
     }
 
     void Grab::Deactivate()

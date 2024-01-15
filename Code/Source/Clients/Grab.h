@@ -2,6 +2,7 @@
 
 #include <TestGem/TestGemComponentBus.h>
 #include <AzCore/Component/Component.h>
+#include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzCore/Math/Quaternion.h>
@@ -14,6 +15,7 @@ namespace TestGem
 
 	class Grab
 		: public AZ::Component
+		, public AZ::EntityBus::Handler
 		, public AZ::TickBus::Handler
 		, public StartingPointInput::InputEventNotificationBus::MultiHandler
 		, public TestGemComponentRequestBus::Handler
@@ -28,6 +30,9 @@ namespace TestGem
 		// AZ::Component overrides
 		void Activate() override;
 		void Deactivate() override;
+
+		// AZ::EntityBus overrides ...
+		void OnEntityActivated(const AZ::EntityId& entityId) override;
 
 		// AZ::InputEventNotificationBus interface. Overrides OnPressed and OnReleased virtual methods. 
 		void OnPressed(float value) override;
