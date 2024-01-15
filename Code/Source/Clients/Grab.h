@@ -43,7 +43,7 @@ namespace TestGem
 		float GetGrabObjectDistance() const override;
 
 	private:
-		AZ::Entity* m_cameraEntity = nullptr;
+		AZ::Entity* m_grabbingEntityPtr = nullptr;
 
 		StartingPointInput::InputEventNotificationId m_grabEventId;
 		AZStd::string m_strGrab = "Grab Key";
@@ -63,7 +63,7 @@ namespace TestGem
 		StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
 		AZStd::string m_strGrabDistance = "Grab Distance Key";
 
-		//void OnCameraAdded(const AZ::EntityId& cameraId);
+		void OnCameraAdded(const AZ::EntityId& cameraId);
 		void CheckForObjects(const float& deltaTime);
 		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
@@ -93,6 +93,7 @@ namespace TestGem
 		float m_pitch = 0.f;
 		float m_yaw = 0.f;
 
+		bool m_useCameraAsGrabbingEntity = true;
 		bool isThrowing = false;
 		bool m_objectReset = false;
 		bool isObjectKinematic = false;

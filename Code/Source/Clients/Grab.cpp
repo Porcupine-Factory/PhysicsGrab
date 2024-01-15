@@ -26,6 +26,7 @@ namespace TestGem
                 ->Field("Rotate Pitch Key", &Grab::m_strRotatePitch)
                 ->Field("Rotate Yaw Key", &Grab::m_strRotateYaw)
 
+                ->Field("Use Camera As Grabbing Entity", &Grab::m_useCameraAsGrabbingEntity)
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
@@ -70,8 +71,12 @@ namespace TestGem
                         &Grab::m_strRotateYaw,
                         "Rotate Yaw Key", "Rotate object about Z axis input binding")
 
+
+                    ->DataElement(nullptr,
+                        &Grab::m_useCameraAsGrabbingEntity,
+                        "Use Camera As Grabbing Entity", "Sets Active Camera as the default Grabbing Entity.")
                     ->DataElement(0,
-                        &Grab::m_grabbingEntityId , "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
+                        &Grab::m_grabbingEntityId, "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
                     ->DataElement(nullptr,
                         &Grab::m_throwStrength,
                         "Throw Strength", "Linear Impulse scale applied when throwing grabbed object")
@@ -128,7 +133,10 @@ namespace TestGem
     }
     void Grab::Activate()
     {
-        m_cameraEntity = GetEntityPtr(m_grabbingEntityId );
+        if (!m_useCameraAsGrabbingEntity)
+        {
+            m_grabbingEntityPtr = GetEntityPtr(m_grabbingEntityId);
+        }
 
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
@@ -169,12 +177,12 @@ namespace TestGem
         Camera::CameraNotificationBus::Handler::BusDisconnect();
 
     }
-    /*
+    
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
     {
-        m_cameraEntity = GetEntityPtr(cameraId);
+        if (m_useCameraAsGrabbingEntity)
+            m_grabbingEntityPtr = GetEntityPtr(cameraId);
     }
-    */
 
     // Recieve the input event in OnPressed method
     void Grab::OnPressed(float value)
@@ -328,10 +336,10 @@ namespace TestGem
         }
 
         // Get our local forward vector relative to the camera transform
-        m_forwardVector = AZ::Quaternion(m_cameraEntity->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
+        m_forwardVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
         
         // Get our Camera's world transform
-        m_cameraTransform = m_cameraEntity->GetTransform()->GetWorldTM();
+        m_cameraTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
 
         // Perform a spherecast query to check if colliding with object
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
@@ -368,7 +376,7 @@ namespace TestGem
             return;
         }
 
-        // Takes the first object hit in m_hits vector and assigns it to m_grabbedObjectEntityIds vector
+        // Takes the first object hit in m_hits vector and assigns it to m_grabbedObjectEntityIds vector.
         m_grabbedObjectEntityIds.push_back(hits.m_hits.at(0).m_entityId);
 
         m_lastGrabbedObject = m_grabbedObjectEntityIds.at(0);
@@ -389,14 +397,14 @@ namespace TestGem
             RotateObject(m_grabbedObjectEntityIds.at(0), deltaTime);
         }
 
-        m_grabReference = m_cameraEntity->GetTransform()->GetWorldTM();
-        m_grabReference.SetTranslation(m_cameraEntity->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+        m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+        m_grabReference.SetTranslation(m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
         m_grabbedObjectTranslation = GetEntityPtr(m_grabbedObjectEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
 
         if (m_throwKey)
         {
-            // May see PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic to throw
+            // May see PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
             ThrowObject(m_grabbedObjectEntityIds.at(0), deltaTime);
             isThrowing = true;
         }
@@ -417,7 +425,7 @@ namespace TestGem
 
     void Grab::ThrowObject(AZ::EntityId objectId, const float& deltaTime)
     {
-        // Apply a Linear Impulse to our held object
+        // Apply a Linear Impulse to our held object.
         Physics::RigidBodyRequestBus::Event(objectId,
             &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
             m_forwardVector * m_throwStrength * deltaTime);
@@ -425,7 +433,7 @@ namespace TestGem
     
     void Grab::RotateObject(AZ::EntityId objectId, const float& deltaTime)
     {
-        // It is recommended to stop player character camera rotation while rotating an object
+        // It is recommended to stop player character camera rotation while rotating an object.
         if (!m_objectReset)
         {
             m_objectReset = true;
