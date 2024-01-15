@@ -26,6 +26,7 @@ namespace TestGem
                 ->Field("Rotate Pitch Key", &Grab::m_strRotatePitch)
                 ->Field("Rotate Yaw Key", &Grab::m_strRotateYaw)
 
+                ->Field("GrabEntityId", &Grab::m_grabEntityId)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
                 ->Field("Default Grab Distance", &Grab::m_grabInitialDistance)
@@ -69,6 +70,8 @@ namespace TestGem
                         &Grab::m_strRotateYaw,
                         "Rotate Yaw Key", "Rotate object about Z axis input binding")
 
+                    ->DataElement(0,
+                        &Grab::m_grabEntityId, "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
                     ->DataElement(nullptr,
                         &Grab::m_throwStrength,
                         "Throw Strength", "Linear Impulse scale applied when throwing grabbed object")
@@ -125,6 +128,8 @@ namespace TestGem
     }
     void Grab::Activate()
     {
+        m_cameraEntity = GetEntityPtr(m_grabEntityId);
+
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
 
@@ -164,12 +169,12 @@ namespace TestGem
         Camera::CameraNotificationBus::Handler::BusDisconnect();
 
     }
-
+    /*
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
     {
         m_cameraEntity = GetEntityPtr(cameraId);
     }
-
+    */
 
     // Recieve the input event in OnPressed method
     void Grab::OnPressed(float value)

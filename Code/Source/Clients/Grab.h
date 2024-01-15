@@ -63,7 +63,7 @@ namespace TestGem
 		StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
 		AZStd::string m_strGrabDistance = "Grab Distance Key";
 
-		void OnCameraAdded(const AZ::EntityId& cameraId);
+		//void OnCameraAdded(const AZ::EntityId& cameraId);
 		void CheckForObjects(const float& deltaTime);
 		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
@@ -79,6 +79,7 @@ namespace TestGem
 
 		AZStd::vector<AZ::EntityId> m_grabEntityIds;
 
+		AZ::EntityId m_grabEntityId;
 		AZ::EntityId m_lastGrabbedObject;
 
 		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
