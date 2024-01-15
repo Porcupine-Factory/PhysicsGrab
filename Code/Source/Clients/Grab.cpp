@@ -26,7 +26,7 @@ namespace TestGem
                 ->Field("Rotate Pitch Key", &Grab::m_strRotatePitch)
                 ->Field("Rotate Yaw Key", &Grab::m_strRotateYaw)
 
-                ->Field("GrabEntityId", &Grab::m_grabEntityId)
+                ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
                 ->Field("Default Grab Distance", &Grab::m_grabInitialDistance)
@@ -71,7 +71,7 @@ namespace TestGem
                         "Rotate Yaw Key", "Rotate object about Z axis input binding")
 
                     ->DataElement(0,
-                        &Grab::m_grabEntityId, "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
+                        &Grab::m_grabbingEntityId , "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
                     ->DataElement(nullptr,
                         &Grab::m_throwStrength,
                         "Throw Strength", "Linear Impulse scale applied when throwing grabbed object")
@@ -128,7 +128,7 @@ namespace TestGem
     }
     void Grab::Activate()
     {
-        m_cameraEntity = GetEntityPtr(m_grabEntityId);
+        m_cameraEntity = GetEntityPtr(m_grabbingEntityId );
 
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
@@ -347,7 +347,7 @@ namespace TestGem
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        m_grabEntityIds.clear();
+        m_grabbedObjectEntityIds.clear();
 
         if (!hits)
         {  
@@ -368,16 +368,16 @@ namespace TestGem
             return;
         }
 
-        // Takes the first object hit in m_hits vector and assigns it to m_grabEntityIds vector
-        m_grabEntityIds.push_back(hits.m_hits.at(0).m_entityId);
+        // Takes the first object hit in m_hits vector and assigns it to m_grabbedObjectEntityIds vector
+        m_grabbedObjectEntityIds.push_back(hits.m_hits.at(0).m_entityId);
 
-        m_lastGrabbedObject = m_grabEntityIds.at(0);
+        m_lastGrabbedObject = m_grabbedObjectEntityIds.at(0);
 
         if (!m_rotateKey || isThrowing)
         {
             m_objectReset = false;
 
-            Physics::RigidBodyRequestBus::Event(m_grabEntityIds.at(0),
+            Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityIds.at(0),
                 &Physics::RigidBodyRequests::SetKinematic,
                 false);
 
@@ -386,24 +386,24 @@ namespace TestGem
 
         else
         {
-            RotateObject(m_grabEntityIds.at(0), deltaTime);
+            RotateObject(m_grabbedObjectEntityIds.at(0), deltaTime);
         }
 
         m_grabReference = m_cameraEntity->GetTransform()->GetWorldTM();
         m_grabReference.SetTranslation(m_cameraEntity->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
-        m_grabbedObject = GetEntityPtr(m_grabEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
+        m_grabbedObjectTranslation = GetEntityPtr(m_grabbedObjectEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
 
         if (m_throwKey)
         {
             // May see PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic to throw
-            ThrowObject(m_grabEntityIds.at(0), deltaTime);
+            ThrowObject(m_grabbedObjectEntityIds.at(0), deltaTime);
             isThrowing = true;
         }
 
         else if (!m_throwKey && !isThrowing)
         {
-            HoldObject(m_grabEntityIds.at(0), deltaTime);
+            HoldObject(m_grabbedObjectEntityIds.at(0), deltaTime);
         }              
     }
 
@@ -412,7 +412,7 @@ namespace TestGem
         // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
         Physics::RigidBodyRequestBus::Event(objectId, 
             &Physics::RigidBodyRequests::SetLinearVelocity, 
-            (m_grabReference.GetTranslation() - m_grabbedObject) * m_grabStrength * deltaTime);
+            (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabStrength * deltaTime);
     }
 
     void Grab::ThrowObject(AZ::EntityId objectId, const float& deltaTime)

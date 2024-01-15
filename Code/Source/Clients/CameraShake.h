@@ -2,7 +2,6 @@
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Vector3.h>
-#include <AzCore/Component/ComponentApplicationBus.h>
 #include <AzCore/Math/Random.h>
 #include <External/FastNoise/FastNoise.h>
 #include <StartingPointInput/InputEventNotificationBus.h>

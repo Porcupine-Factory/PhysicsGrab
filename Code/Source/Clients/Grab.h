@@ -73,13 +73,13 @@ namespace TestGem
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
 
 		AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_grabbedObject = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
 
-		AZStd::vector<AZ::EntityId> m_grabEntityIds;
+		AZStd::vector<AZ::EntityId> m_grabbedObjectEntityIds;
 
-		AZ::EntityId m_grabEntityId;
+		AZ::EntityId m_grabbingEntityId;
 		AZ::EntityId m_lastGrabbedObject;
 
 		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
