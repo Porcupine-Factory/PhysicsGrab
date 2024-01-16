@@ -31,6 +31,9 @@ namespace TestGem
 		void Activate() override;
 		void Deactivate() override;
 
+		static void GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required);
+		static void GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided);
+
 		// AZ::EntityBus overrides ...
 		void OnEntityActivated(const AZ::EntityId& entityId) override;
 
@@ -45,6 +48,7 @@ namespace TestGem
 
 		// TestGemRequestBus
 		bool GetisThrowing() const override;
+		bool GetisRotating() const override;
 		float GetGrabObjectDistance() const override;
 
 	private:
@@ -90,19 +94,22 @@ namespace TestGem
 		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
 		AzPhysics::CollisionGroup m_grabCollisionGroup = AzPhysics::CollisionGroup::All;
 
-		float m_grabKey = 0.f;
-		float m_throwKey = 0.f;
-		float m_rotateKey = 0.f;
-		float m_grabDistanceKey = 0.f;
+		float m_grabKeyValue = 0.f;
+		float m_throwKeyValue = 0.f;
+		float m_rotateKeyValue = 0.f;
+		float m_rotatePrevValue = 0.f;
+		float m_grabDistanceKeyValue = 0.f;
 		float m_grabDistance = 0.f;
-		float m_pitch = 0.f;
-		float m_yaw = 0.f;
+		float m_pitchKeyValue = 0.f;
+		float m_yawKeyValue = 0.f;
 
 		bool m_useCameraAsGrabbingEntity = true;
-		bool isThrowing = false;
+		bool m_rotateEnableToggle = true;
+		bool m_isRotating = false;
+		bool m_isThrowing = false;
 		bool m_objectReset = false;
-		bool isObjectKinematic = false;
-		
+		bool m_isObjectKinematic = false;
+
 		const float m_rotateScale = 0.5f;
 		const float m_minGrabDistance = 1.5f;
 		const float m_maxGrabDistance = 3.f;

@@ -12,6 +12,7 @@ namespace TestGem
 
         virtual float GetGrabObjectDistance() const = 0;
         virtual bool GetisThrowing() const = 0;
+        virtual bool GetisRotating() const = 0;
     };
 
     using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;
