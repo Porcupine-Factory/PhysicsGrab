@@ -47,6 +47,7 @@ namespace TestGem
 		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
 
 		// TestGemRequestBus
+		bool GetisGrabbing() const override;
 		bool GetisThrowing() const override;
 		bool GetisRotating() const override;
 		float GetGrabObjectDistance() const override;
@@ -74,11 +75,11 @@ namespace TestGem
 
 		void OnCameraAdded(const AZ::EntityId& cameraId);
 		void CheckForObjects(const float& deltaTime);
-		void HoldObject(AZ::EntityId objectId, const float& deltaTime);
+		void GrabObject(AZ::EntityId objectId, const float& deltaTime);
 		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
 		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
 
-		AZ::Transform m_cameraTransform = AZ::Transform::CreateIdentity();
+		AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
 
 		AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
@@ -104,10 +105,12 @@ namespace TestGem
 		float m_yawKeyValue = 0.f;
 
 		bool m_useCameraAsGrabbingEntity = true;
+		bool m_kinematicDefaultEnable = false;
 		bool m_rotateEnableToggle = true;
+		bool m_isGrabbing = false;
 		bool m_isRotating = false;
 		bool m_isThrowing = false;
-		bool m_objectReset = false;
+		bool m_hasRotated = false;
 		bool m_isObjectKinematic = false;
 
 		const float m_rotateScale = 0.5f;

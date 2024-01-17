@@ -11,6 +11,7 @@ namespace TestGem
         ~TestGemComponentRequests() override = default;
 
         virtual float GetGrabObjectDistance() const = 0;
+        virtual bool GetisGrabbing() const = 0;
         virtual bool GetisThrowing() const = 0;
         virtual bool GetisRotating() const = 0;
     };
