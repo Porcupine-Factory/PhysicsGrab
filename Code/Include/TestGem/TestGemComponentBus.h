@@ -10,6 +10,10 @@ namespace TestGem
     public:
         ~TestGemComponentRequests() override = default;
 
+        virtual AZ::EntityId GetGrabbingEntityId() const = 0;
+        virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
+        virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
+        virtual void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) = 0;
         virtual float GetGrabObjectDistance() const = 0;
         virtual bool GetisGrabbing() const = 0;
         virtual bool GetisThrowing() const = 0;

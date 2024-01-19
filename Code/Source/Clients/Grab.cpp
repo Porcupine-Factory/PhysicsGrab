@@ -27,7 +27,7 @@ namespace TestGem
                 ->Field("Rotate Yaw Key", &Grab::m_strRotateYaw)
 
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
-                ->Field("Use Camera As Grabbing Entity", &Grab::m_useCameraAsGrabbingEntity)
+                ->Field("Grab Enable Toggle", &Grab::m_grabEnableToggle)
                 ->Field("Kinematic Grabbed Object", &Grab::m_kinematicDefaultEnable)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
@@ -77,8 +77,8 @@ namespace TestGem
                     ->DataElement(0,
                         &Grab::m_grabbingEntityId, "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
                     ->DataElement(nullptr,
-                        &Grab::m_useCameraAsGrabbingEntity,
-                        "Use Camera As Grabbing Entity", "Sets Active Camera as the default Grabbing Entity.")
+                        &Grab::m_grabEnableToggle,
+                        "Grab Enable Toggle", "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to maintain Grab mode.")
                     ->DataElement(nullptr,
                         &Grab::m_kinematicDefaultEnable,
                         "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
@@ -133,6 +133,10 @@ namespace TestGem
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
                 ->Attribute(AZ::Script::Attributes::Category, "Grab")
+                ->Event("Get Grabbing EntityId", &TestGemComponentRequests::GetGrabbingEntityId)
+                ->Event("Get Active Camera EntityId", &TestGemComponentRequests::GetActiveCameraEntityId)
+                ->Event("Get Grabbed Object EntityId", &TestGemComponentRequests::GetGrabbedObjectEntityId)
+                ->Event("Set Grabbing Entity", &TestGemComponentRequests::SetGrabbingEntity)
                 ->Event("Get isGrabbing", &TestGemComponentRequests::GetisGrabbing)
                 ->Event("Get isThrowing", &TestGemComponentRequests::GetisThrowing)
                 ->Event("Get isRotating", &TestGemComponentRequests::GetisRotating)
@@ -170,6 +174,7 @@ namespace TestGem
         // Connect the handler to the request bus
         TestGemComponentRequestBus::Handler::BusConnect(GetEntityId());
 
+        // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready.
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
     }
 
@@ -177,9 +182,9 @@ namespace TestGem
     {
         AZ::EntityBus::Handler::BusDisconnect();
 
-        if (!m_useCameraAsGrabbingEntity)
+        if (m_grabbingEntityId.IsValid())
         {
-            m_grabbingEntityPtr = GetEntityPtr(m_grabbingEntityId);
+            m_grabbingEntityPtr = GetEntityPtr(entityId);
         }
     }
 
@@ -197,6 +202,8 @@ namespace TestGem
 
     void Grab::GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required)
     {
+        required.push_back(AZ_CRC_CE("InputConfigurationService"));
+        required.push_back(AZ_CRC_CE("TransformService"));
     }
 
     void Grab::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
@@ -204,11 +211,34 @@ namespace TestGem
         provided.push_back(AZ_CRC_CE("GrabService"));
     }
 
+    void Grab::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
+    {
+        incompatible.push_back(AZ_CRC_CE("GrabService"));
+        incompatible.push_back(AZ_CRC_CE("InputService"));
+    }
+
+    void Grab::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
+    {
+        dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
+    }
+    
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
     {
-        if (m_useCameraAsGrabbingEntity)
+        if (!m_grabbingEntityId.IsValid())
+            m_grabbingEntityId = cameraId;
             m_grabbingEntityPtr = GetEntityPtr(cameraId);
     }
+    
+    AZ::Entity* Grab::GetActiveCameraEntityPtr() const
+    {
+        AZ::EntityId activeCameraId;
+        Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId,
+            &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
+
+        auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
+        return ca->FindEntity(activeCameraId);
+    }
+ 
 
     // Recieve the input event in OnPressed method
     void Grab::OnPressed(float value)
@@ -327,6 +357,8 @@ namespace TestGem
     void Grab::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         CheckForObjects(deltaTime);
+        m_grabPrevValue = m_grabKeyValue;
+        //AZ_Printf("", "m_grabPrevValue = %.10f", m_grabPrevValue);
     }
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
@@ -338,12 +370,11 @@ namespace TestGem
     void Grab::CheckForObjects(const float& deltaTime)
     {
         // Do not perform spherecast query if grab key is not pressed
-        if (!m_grabKeyValue)
+        if (!m_grabKeyValue && !m_isGrabbing)
         {
             // Reset current grabbed distance to m_grabInitialDistance if grab key is not pressed
             m_grabDistance = m_grabInitialDistance;
 
-            m_isGrabbing = false;
             m_isThrowing = false;
             m_isRotating = false;
             m_hasRotated = false;
@@ -423,15 +454,16 @@ namespace TestGem
 
         m_rotatePrevValue = m_rotateKeyValue;
 
+        // Call grab function only if object is not being thrown
         if (!m_throwKeyValue && !m_isThrowing)
         {
-            m_isGrabbing = true;
             GrabObject(m_grabbedObjectEntityIds.at(0), deltaTime);
         }
 
+        // Call throw function if throw key is pressed
         else if (m_throwKeyValue)
         {
-            m_isGrabbing = false;
+            //m_isGrabbing = false;
             ThrowObject(m_grabbedObjectEntityIds.at(0), deltaTime);
         }
     }
@@ -446,6 +478,25 @@ namespace TestGem
         m_grabReference.SetTranslation(m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
         m_grabbedObjectTranslation = GetEntityPtr(m_grabbedObjectEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
+
+
+        if (m_grabEnableToggle && m_grabPrevValue == 0.f && m_grabKeyValue != 0.f)
+        {
+            m_isGrabbing = !m_isGrabbing;
+        }
+
+        else if (!m_grabEnableToggle)
+        {
+            if (m_grabKeyValue != 0.f)
+            {
+                m_isGrabbing = true;
+            }
+
+            else
+            {
+                m_isGrabbing = false;
+            }
+        }
 
         if (m_kinematicDefaultEnable)
         {
@@ -479,7 +530,7 @@ namespace TestGem
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
             Physics::RigidBodyRequestBus::Event(objectId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabStrength * deltaTime);
+                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabStrength);
 
             if (m_isRotating)
             {
@@ -558,6 +609,27 @@ namespace TestGem
             m_hasRotated = true;
         }
     }
+
+    AZ::EntityId Grab::GetGrabbingEntityId() const
+    {
+        return m_grabbingEntityPtr->GetId();
+    }
+
+    AZ::EntityId Grab::GetActiveCameraEntityId() const
+    {
+        return GetActiveCameraEntityPtr()->GetId();
+    }
+
+    AZ::EntityId Grab::GetGrabbedObjectEntityId() const
+    {
+        return m_lastGrabbedObject;
+    }
+
+    void Grab::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
+    {
+       m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
+    }
+
     bool Grab::GetisGrabbing() const
     {
         return m_isGrabbing;

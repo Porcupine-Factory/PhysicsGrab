@@ -33,6 +33,8 @@ namespace TestGem
 
 		static void GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required);
 		static void GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided);
+		static void GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible);
+		static void GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent);
 
 		// AZ::EntityBus overrides ...
 		void OnEntityActivated(const AZ::EntityId& entityId) override;
@@ -45,8 +47,13 @@ namespace TestGem
 		void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 
 		AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
+		AZ::Entity* GetActiveCameraEntityPtr() const;
 
 		// TestGemRequestBus
+		AZ::EntityId GetGrabbingEntityId() const override;
+		AZ::EntityId GetActiveCameraEntityId() const override;
+		AZ::EntityId GetGrabbedObjectEntityId() const override;
+		void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
 		bool GetisGrabbing() const override;
 		bool GetisThrowing() const override;
 		bool GetisRotating() const override;
@@ -96,6 +103,7 @@ namespace TestGem
 		AzPhysics::CollisionGroup m_grabCollisionGroup = AzPhysics::CollisionGroup::All;
 
 		float m_grabKeyValue = 0.f;
+		float m_grabPrevValue = 0.f;
 		float m_throwKeyValue = 0.f;
 		float m_rotateKeyValue = 0.f;
 		float m_rotatePrevValue = 0.f;
@@ -104,7 +112,7 @@ namespace TestGem
 		float m_pitchKeyValue = 0.f;
 		float m_yawKeyValue = 0.f;
 
-		bool m_useCameraAsGrabbingEntity = true;
+		bool m_grabEnableToggle = false;
 		bool m_kinematicDefaultEnable = false;
 		bool m_rotateEnableToggle = true;
 		bool m_isGrabbing = false;
@@ -118,7 +126,7 @@ namespace TestGem
 		const float m_maxGrabDistance = 3.f;
 		const float m_grabInitialDistance = 1.75f;
 		const float m_grabDistanceSpeed = 0.2f;
-		const float m_grabStrength = 700.f;
+		const float m_grabStrength = 7.f;
 		const float m_throwStrength = 60000.f;
 		const float m_sphereCastRadius = 0.3f;
 		const float m_sphereCastDistance = 3.f;
