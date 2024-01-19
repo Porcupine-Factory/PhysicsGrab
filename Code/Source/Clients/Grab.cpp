@@ -32,7 +32,7 @@ namespace TestGem
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
-                ->Field("Default Grab Distance", &Grab::m_grabInitialDistance)
+                ->Field("Default Grab Distance", &Grab::m_initialGrabDistance)
                 ->Field("Min Grab Distance", &Grab::m_minGrabDistance)
                 ->Field("Max Grab Distance", &Grab::m_maxGrabDistance)
                 ->Field("Grab Distance Speed", &Grab::m_grabDistanceSpeed)
@@ -53,7 +53,13 @@ namespace TestGem
                         Attributes::AppearsInAddComponentMenu,
                         AZ_CRC_CE("Game"))
 
+
+                    ->DataElement(0,
+                        &Grab::m_grabbingEntityId, "Grab Entity", "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
+
                     // Input Binding Keys
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
                         &Grab::m_strGrab,
                         "Grab Key", "Grab interaction input binding")
@@ -74,8 +80,8 @@ namespace TestGem
                         "Rotate Yaw Key", "Rotate object about Z axis input binding")
 
 
-                    ->DataElement(0,
-                        &Grab::m_grabbingEntityId, "Grab Entity", "Reference entity for initiating Grab spherecast. This would be the Camera Entity for a typical first-person game.")
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
                         &Grab::m_grabEnableToggle,
                         "Grab Enable Toggle", "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to maintain Grab mode.")
@@ -85,6 +91,10 @@ namespace TestGem
                     ->DataElement(nullptr,
                         &Grab::m_rotateEnableToggle,
                         "Rotate Enable Toggle", "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to maintain Rotate mode.")
+                    
+                    
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
                         &Grab::m_throwStrength,
                         "Throw Strength", "Linear Impulse scale applied when throwing grabbed object")
@@ -94,6 +104,7 @@ namespace TestGem
                     ->DataElement(nullptr,
                         &Grab::m_rotateScale,
                         "Rotate Scale", "Rotation speed scale applied when rotating object")
+
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -107,10 +118,11 @@ namespace TestGem
                         &Grab::m_sphereCastDistance,
                         "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distances")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
-                        &Grab::m_grabInitialDistance,
+                        &Grab::m_initialGrabDistance,
                         "Default Grab Distance", "Distance the grabbed object will default to when letting go of the object")
                     ->DataElement(nullptr,
                         &Grab::m_minGrabDistance,
@@ -137,10 +149,31 @@ namespace TestGem
                 ->Event("Get Active Camera EntityId", &TestGemComponentRequests::GetActiveCameraEntityId)
                 ->Event("Get Grabbed Object EntityId", &TestGemComponentRequests::GetGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &TestGemComponentRequests::SetGrabbingEntity)
+                ->Event("Get Grab Collision Group", &TestGemComponentRequests::GetGrabCollisionGroup)
+                ->Event("Set Grab Collision Group", &TestGemComponentRequests::SetGrabCollisionGroup)
                 ->Event("Get isGrabbing", &TestGemComponentRequests::GetisGrabbing)
                 ->Event("Get isThrowing", &TestGemComponentRequests::GetisThrowing)
                 ->Event("Get isRotating", &TestGemComponentRequests::GetisRotating)
-                ->Event("Get Grab Object Distance", &TestGemComponentRequests::GetGrabObjectDistance);
+                ->Event("Get Grab Object Distance", &TestGemComponentRequests::GetGrabObjectDistance)
+                ->Event("Set Grab Object Distance", &TestGemComponentRequests::SetGrabObjectDistance)
+                ->Event("Get Minimum Grab Object Distance", &TestGemComponentRequests::GetMinGrabObjectDistance)
+                ->Event("Set Minimum Grab Object Distance", &TestGemComponentRequests::SetMinGrabObjectDistance)
+                ->Event("Get Maximum Grab Object Distance", &TestGemComponentRequests::GetMaxGrabObjectDistance)
+                ->Event("Set Maximum Grab Object Distance", &TestGemComponentRequests::SetMaxGrabObjectDistance)
+                ->Event("Get Initial Grab Object Distance", &TestGemComponentRequests::GetInitialGrabObjectDistance)
+                ->Event("Set Initial Grab Object Distance", &TestGemComponentRequests::SetInitialGrabObjectDistance)
+                ->Event("Get Grabbed Object Distance Speed", &TestGemComponentRequests::GetGrabObjectDistanceSpeed)
+                ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabObjectDistanceSpeed)
+                ->Event("Get Grab Strength", &TestGemComponentRequests::GetGrabStrength)
+                ->Event("Set Grab Strength", &TestGemComponentRequests::SetGrabStrength)
+                ->Event("Get Grabbed Object Rotation Scale", &TestGemComponentRequests::GetRotateScale)
+                ->Event("Set Grabbed Object Rotation Scale", &TestGemComponentRequests::SetRotateScale)
+                ->Event("Get Grab Throw Strength", &TestGemComponentRequests::GetThrowStrength)
+                ->Event("Set Grab Throw Strength", &TestGemComponentRequests::SetThrowStrength)
+                ->Event("Get Grab Sphere Cast Radius", &TestGemComponentRequests::GetSphereCastRadius)
+                ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
+                ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
+                ->Event("Set Grab Sphere Cast Distance", &TestGemComponentRequests::SetSphereCastDistance);
 
             bc->Class<Grab>()->RequestBus("TestGemComponentRequestBus");
         }
@@ -372,8 +405,8 @@ namespace TestGem
         // Do not perform spherecast query if grab key is not pressed
         if (!m_grabKeyValue && !m_isGrabbing)
         {
-            // Reset current grabbed distance to m_grabInitialDistance if grab key is not pressed
-            m_grabDistance = m_grabInitialDistance;
+            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
+            m_grabDistance = m_initialGrabDistance;
 
             m_isThrowing = false;
             m_isRotating = false;
@@ -648,5 +681,121 @@ namespace TestGem
     float Grab::GetGrabObjectDistance() const
     {
         return m_grabDistance;
+    }
+
+    void Grab::SetGrabObjectDistance(const float& new_grabDistance)
+    {
+        m_grabDistance = AZ::GetClamp(new_grabDistance, m_minGrabDistance, m_maxGrabDistance);
+    }
+
+    float Grab::GetMinGrabObjectDistance() const
+    {
+        return m_minGrabDistance;
+    }
+
+    void Grab::SetMinGrabObjectDistance(const float& new_minGrabDistance)
+    {
+        m_minGrabDistance = new_minGrabDistance;
+    }
+
+    float Grab::GetMaxGrabObjectDistance() const
+    {
+        return m_maxGrabDistance;
+    }
+
+    void Grab::SetMaxGrabObjectDistance(const float& new_maxGrabDistance)
+    {
+        m_maxGrabDistance = new_maxGrabDistance;
+    }
+
+    float Grab::GetInitialGrabObjectDistance() const
+    {
+        return m_initialGrabDistance;
+    }
+
+    void Grab::SetInitialGrabObjectDistance(const float& new_initialGrabDistance)
+    {
+        m_initialGrabDistance = new_initialGrabDistance;
+    }
+
+    float Grab::GetGrabObjectDistanceSpeed() const
+    {
+        return m_grabDistanceSpeed;
+    }
+
+    void Grab::SetGrabObjectDistanceSpeed(const float& new_grabDistanceSpeed)
+    {
+        m_grabDistanceSpeed = new_grabDistanceSpeed;
+    }
+
+    float Grab::GetGrabStrength() const
+    {
+        return m_grabStrength;
+    }
+
+    void Grab::SetGrabStrength(const float& new_grabStrength)
+    {
+        m_grabStrength = new_grabStrength;
+    }
+
+    float Grab::GetRotateScale() const
+    {
+        return m_rotateScale;
+    }
+
+    void Grab::SetRotateScale(const float& new_rotateScale)
+    {
+        m_rotateScale = new_rotateScale;
+    }
+
+    float Grab::GetThrowStrength() const
+    {
+        return m_throwStrength;
+    }
+
+    void Grab::SetThrowStrength(const float& new_throwStrength)
+    {
+        m_throwStrength = new_throwStrength;
+    }
+
+    float Grab::GetSphereCastRadius() const
+    {
+        return m_sphereCastRadius;
+    }
+
+    void Grab::SetSphereCastRadius(const float& new_sphereCastRadius)
+    {
+        m_sphereCastRadius = new_sphereCastRadius;
+    }
+
+    float Grab::GetSphereCastDistance() const
+    {
+        return m_sphereCastDistance;
+    }
+
+    void Grab::SetSphereCastDistance(const float& new_sphereCastDistance)
+    {
+        m_sphereCastDistance = new_sphereCastDistance;
+    }
+
+    AZStd::string Grab::GetGrabCollisionGroup() const
+    {
+        AZStd::string groupName;
+        Physics::CollisionRequestBus::BroadcastResult(
+            groupName, &Physics::CollisionRequests::GetCollisionGroupName, m_grabCollisionGroup);
+        return groupName;
+    }
+
+    void Grab::SetGrabCollisionGroup(const AZStd::string& new_grabCollisionGroupName)
+    {
+        bool success = false;
+        AzPhysics::CollisionGroup collisionGroup;
+        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionGroupByName, new_grabCollisionGroupName, collisionGroup);
+        if (success)
+        {
+            m_grabCollisionGroup = collisionGroup;
+            const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+            m_grabCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabCollisionGroupName);
+        }
     }
 }

@@ -53,11 +53,32 @@ namespace TestGem
 		AZ::EntityId GetGrabbingEntityId() const override;
 		AZ::EntityId GetActiveCameraEntityId() const override;
 		AZ::EntityId GetGrabbedObjectEntityId() const override;
+		AZStd::string GetGrabCollisionGroup() const override;
+		void SetGrabCollisionGroup(const AZStd::string& new_grabCollisionGroupId) override;
 		void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
 		bool GetisGrabbing() const override;
 		bool GetisThrowing() const override;
 		bool GetisRotating() const override;
 		float GetGrabObjectDistance() const override;
+		void SetGrabObjectDistance(const float& new_grabDistance) override;
+		float GetMinGrabObjectDistance() const override;
+		void SetMinGrabObjectDistance(const float& new_minGrabDistance) override;
+		float GetMaxGrabObjectDistance() const override;
+		void SetMaxGrabObjectDistance(const float& new_maxGrabDistance) override;
+		float GetInitialGrabObjectDistance() const override;
+		void SetInitialGrabObjectDistance(const float& new_initialGrabDistance) override;
+		float GetGrabObjectDistanceSpeed() const override;
+		void SetGrabObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
+		float GetGrabStrength() const override;
+		void SetGrabStrength(const float& new_grabStrength) override;
+		float GetRotateScale() const override;
+		void SetRotateScale(const float& new_rotateScale) override;
+		float GetThrowStrength() const override;
+		void SetThrowStrength(const float& new_throwStrength) override;
+		float GetSphereCastRadius() const override;
+		void SetSphereCastRadius(const float& new_sphereCastRadius) override;
+		float GetSphereCastDistance() const override;
+		void SetSphereCastDistance(const float& new_sphereCastDistance) override;
 
 	private:
 		AZ::Entity* m_grabbingEntityPtr = nullptr;
@@ -102,8 +123,8 @@ namespace TestGem
 		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
 		AzPhysics::CollisionGroup m_grabCollisionGroup = AzPhysics::CollisionGroup::All;
 
+		// Event value multipliers
 		float m_grabKeyValue = 0.f;
-		float m_grabPrevValue = 0.f;
 		float m_throwKeyValue = 0.f;
 		float m_rotateKeyValue = 0.f;
 		float m_rotatePrevValue = 0.f;
@@ -111,6 +132,17 @@ namespace TestGem
 		float m_grabDistance = 0.f;
 		float m_pitchKeyValue = 0.f;
 		float m_yawKeyValue = 0.f;
+
+		float m_grabPrevValue = 0.f;
+		float m_minGrabDistance = 1.5f;
+		float m_maxGrabDistance = 3.f;
+		float m_initialGrabDistance = 1.75f;
+		float m_rotateScale = 0.5f;
+		float m_grabDistanceSpeed = 0.2f;
+		float m_grabStrength = 10.f;
+		float m_throwStrength = 60000.f;
+		float m_sphereCastRadius = 0.3f;
+		float m_sphereCastDistance = 3.f;
 
 		bool m_grabEnableToggle = false;
 		bool m_kinematicDefaultEnable = false;
@@ -120,15 +152,5 @@ namespace TestGem
 		bool m_isThrowing = false;
 		bool m_hasRotated = false;
 		bool m_isObjectKinematic = false;
-
-		const float m_rotateScale = 0.5f;
-		const float m_minGrabDistance = 1.5f;
-		const float m_maxGrabDistance = 3.f;
-		const float m_grabInitialDistance = 1.75f;
-		const float m_grabDistanceSpeed = 0.2f;
-		const float m_grabStrength = 7.f;
-		const float m_throwStrength = 60000.f;
-		const float m_sphereCastRadius = 0.3f;
-		const float m_sphereCastDistance = 3.f;
 	};
 }
