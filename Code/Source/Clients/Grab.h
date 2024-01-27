@@ -24,7 +24,7 @@ namespace TestGem
 	public:
 		AZ_COMPONENT(Grab, "{D5628156-EF36-41E9-9C15-4BD66B7B834E}");
 
-		// Provide runtime reflection, if any
+		// Provide runtime reflection
 		static void Reflect(AZ::ReflectContext* rc);
 
 		// AZ::Component overrides
@@ -36,7 +36,7 @@ namespace TestGem
 		static void GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible);
 		static void GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent);
 
-		// AZ::EntityBus overrides ...
+		// AZ::EntityBus overrides
 		void OnEntityActivated(const AZ::EntityId& entityId) override;
 
 		// AZ::InputEventNotificationBus interface. Overrides OnPressed and OnReleased virtual methods. 
@@ -53,8 +53,25 @@ namespace TestGem
 		AZ::EntityId GetGrabbingEntityId() const override;
 		AZ::EntityId GetActiveCameraEntityId() const override;
 		AZ::EntityId GetGrabbedObjectEntityId() const override;
-		AZStd::string GetGrabCollisionGroup() const override;
-		void SetGrabCollisionGroup(const AZStd::string& new_grabCollisionGroupId) override;
+		AZ::EntityId GetLastGrabbedObjectEntityId() const override;
+
+
+		AZStd::string GetGrabbedCollisionGroup() const override;
+		void SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupId) override;
+
+		AZStd::string GetCurrentGrabbedCollisionLayerName() const override;
+		void SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName) override;
+		AzPhysics::CollisionLayer GetCurrentGrabbedCollisionLayer() const override;
+		void SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer) override;
+		AZStd::string GetPrevGrabbedCollisionLayerName() const override;
+		void SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName) override;
+		AzPhysics::CollisionLayer GetPrevGrabbedCollisionLayer() const override;
+		void SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer) override;
+		AZStd::string GetTempGrabbedCollisionLayerName() const override;
+		void SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName) override;
+		AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
+		void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
+
 		void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
 		bool GetisGrabbing() const override;
 		bool GetisThrowing() const override;
@@ -104,7 +121,7 @@ namespace TestGem
 		void OnCameraAdded(const AZ::EntityId& cameraId);
 		void CheckForObjects(const float& deltaTime);
 		void GrabObject(AZ::EntityId objectId, const float& deltaTime);
-		void ThrowObject(AZ::EntityId objectId, const float& deltaTime);
+		void ThrowObject(AZ::EntityId objectId);
 		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
 
 		AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
@@ -115,13 +132,19 @@ namespace TestGem
 		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
 
-		AZStd::vector<AZ::EntityId> m_grabbedObjectEntityIds;
+		AZ::EntityId m_grabbedObjectEntityId;
 
 		AZ::EntityId m_grabbingEntityId;
-		AZ::EntityId m_lastGrabbedObject;
+		AZ::EntityId m_lastGrabbedObjectEntityId;
 
-		AzPhysics::CollisionGroups::Id m_grabCollisionGroupId = AzPhysics::CollisionGroups::Id();
-		AzPhysics::CollisionGroup m_grabCollisionGroup = AzPhysics::CollisionGroup::All;
+		AzPhysics::CollisionGroups::Id m_grabbedCollisionGroupId = AzPhysics::CollisionGroups::Id();
+		AzPhysics::CollisionGroup m_grabbedCollisionGroup = AzPhysics::CollisionGroup::All;
+
+		AzPhysics::CollisionLayer m_prevGrabbedCollisionLayer;
+		AzPhysics::CollisionLayer m_currentGrabbedCollisionLayer;
+		AZStd::string m_currentGrabbedCollisionLayerName;
+		AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
+		AZStd::string m_tempGrabbedCollisionLayerName;
 
 		// Event value multipliers
 		float m_grabKeyValue = 0.f;
@@ -140,7 +163,7 @@ namespace TestGem
 		float m_rotateScale = 0.5f;
 		float m_grabDistanceSpeed = 0.2f;
 		float m_grabStrength = 10.f;
-		float m_throwStrength = 60000.f;
+		float m_throwStrength = 5000.f;
 		float m_sphereCastRadius = 0.3f;
 		float m_sphereCastDistance = 3.f;
 
@@ -148,6 +171,7 @@ namespace TestGem
 		bool m_kinematicDefaultEnable = false;
 		bool m_rotateEnableToggle = true;
 		bool m_isGrabbing = false;
+		bool m_grabMaintained = false;
 		bool m_isRotating = false;
 		bool m_isThrowing = false;
 		bool m_hasRotated = false;

@@ -28,6 +28,7 @@ namespace TestGem
 
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
                 ->Field("Grab Enable Toggle", &Grab::m_grabEnableToggle)
+                //->Field("Maintain Grab", &Grab::m_grabMaintained)
                 ->Field("Kinematic Grabbed Object", &Grab::m_kinematicDefaultEnable)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
@@ -39,7 +40,8 @@ namespace TestGem
                 ->Field("Throw Strength", &Grab::m_throwStrength)
                 ->Field("Grab Strength", &Grab::m_grabStrength)
                 ->Field("Rotate Scale", &Grab::m_rotateScale)
-                ->Field("Grab Object Collision Group", &Grab::m_grabCollisionGroupId)
+                ->Field("Grabbed Object Collision Group", &Grab::m_grabbedCollisionGroupId)
+                ->Field("Grabbed Object Temporary Collision Layer", &Grab::m_tempGrabbedCollisionLayer)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -85,6 +87,9 @@ namespace TestGem
                     ->DataElement(nullptr,
                         &Grab::m_grabEnableToggle,
                         "Grab Enable Toggle", "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to maintain Grab mode.")
+                    //->DataElement(nullptr,
+                    //    &Grab::m_grabMaintained,
+                    //    "Maintain Grab", "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from flying off when quickly changing directions.")
                     ->DataElement(nullptr,
                         &Grab::m_kinematicDefaultEnable,
                         "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
@@ -109,8 +114,11 @@ namespace TestGem
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
-                        &Grab::m_grabCollisionGroupId,
-                        "Sphere Cast Collision Group", "The collision group which will be used for the grabbing objects.")
+                        &Grab::m_grabbedCollisionGroupId,
+                        "Sphere Cast Collision Group", "The collision group which will be used for detecting grabbable objects.")
+                    ->DataElement(nullptr,
+                        &Grab::m_tempGrabbedCollisionLayer,
+                        "Grabbed Object Temporary Collision Layer", "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
                     ->DataElement(nullptr,
                         &Grab::m_sphereCastRadius,
                         "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
@@ -148,9 +156,22 @@ namespace TestGem
                 ->Event("Get Grabbing EntityId", &TestGemComponentRequests::GetGrabbingEntityId)
                 ->Event("Get Active Camera EntityId", &TestGemComponentRequests::GetActiveCameraEntityId)
                 ->Event("Get Grabbed Object EntityId", &TestGemComponentRequests::GetGrabbedObjectEntityId)
+                ->Event("Get Last Grabbed Object EntityId", &TestGemComponentRequests::GetLastGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &TestGemComponentRequests::SetGrabbingEntity)
-                ->Event("Get Grab Collision Group", &TestGemComponentRequests::GetGrabCollisionGroup)
-                ->Event("Set Grab Collision Group", &TestGemComponentRequests::SetGrabCollisionGroup)
+                ->Event("Get Grabbed Collision Group", &TestGemComponentRequests::GetGrabbedCollisionGroup)
+                ->Event("Set Grabbed Collision Group", &TestGemComponentRequests::SetGrabbedCollisionGroup)
+		        ->Event("Get Current Grabbed Layer Name", &TestGemComponentRequests::GetCurrentGrabbedCollisionLayerName)
+		        ->Event("Set Current Grabbed Layer By Name", &TestGemComponentRequests::SetCurrentGrabbedCollisionLayerByName)
+                ->Event("Get Current Grabbed Layer", &TestGemComponentRequests::GetCurrentGrabbedCollisionLayer)
+                ->Event("Set Current Grabbed Layer", &TestGemComponentRequests::SetCurrentGrabbedCollisionLayer)
+                ->Event("Get Previous Grabbed Layer Name", &TestGemComponentRequests::GetPrevGrabbedCollisionLayerName)
+                ->Event("Set Previous Grabbed Layer Name By Name", &TestGemComponentRequests::SetPrevGrabbedCollisionLayerByName)
+                ->Event("Get Previous Grabbed Layer", &TestGemComponentRequests::GetPrevGrabbedCollisionLayer)
+                ->Event("Set Previous Grabbed Layer", &TestGemComponentRequests::SetPrevGrabbedCollisionLayer)
+		        ->Event("Get Temporary Grabbed Layer Name", &TestGemComponentRequests::GetTempGrabbedCollisionLayerName)
+		        ->Event("Set Temporary Grabbed Layer By Name", &TestGemComponentRequests::SetTempGrabbedCollisionLayerByName)
+                ->Event("Get Temporary Grabbed Layer", &TestGemComponentRequests::GetTempGrabbedCollisionLayer)
+                ->Event("Set Temporary Grabbed Layer", &TestGemComponentRequests::SetTempGrabbedCollisionLayer)
                 ->Event("Get isGrabbing", &TestGemComponentRequests::GetisGrabbing)
                 ->Event("Get isThrowing", &TestGemComponentRequests::GetisThrowing)
                 ->Event("Get isRotating", &TestGemComponentRequests::GetisRotating)
@@ -202,7 +223,7 @@ namespace TestGem
         AZ::TickBus::Handler::BusConnect();
 
         Physics::CollisionRequestBus::BroadcastResult(
-            m_grabCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_grabCollisionGroupId);
+            m_grabbedCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_grabbedCollisionGroupId);
 
         // Connect the handler to the request bus
         TestGemComponentRequestBus::Handler::BusConnect(GetEntityId());
@@ -230,7 +251,6 @@ namespace TestGem
         TestGemComponentRequestBus::Handler::BusDisconnect();
 
         Camera::CameraNotificationBus::Handler::BusDisconnect();
-
     }
 
     void Grab::GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required)
@@ -258,8 +278,10 @@ namespace TestGem
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
     {
         if (!m_grabbingEntityId.IsValid())
+        {
             m_grabbingEntityId = cameraId;
             m_grabbingEntityPtr = GetEntityPtr(cameraId);
+        }
     }
     
     AZ::Entity* Grab::GetActiveCameraEntityPtr() const
@@ -391,7 +413,6 @@ namespace TestGem
     {
         CheckForObjects(deltaTime);
         m_grabPrevValue = m_grabKeyValue;
-        //AZ_Printf("", "m_grabPrevValue = %.10f", m_grabPrevValue);
     }
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
@@ -408,6 +429,7 @@ namespace TestGem
             // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
 
+            m_isGrabbing = false;
             m_isThrowing = false;
             m_isRotating = false;
             m_hasRotated = false;
@@ -415,7 +437,7 @@ namespace TestGem
             // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
             if (m_isObjectKinematic)
             {
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObject,
+                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
                     &Physics::RigidBodyRequests::SetKinematic,
                     false);
 
@@ -438,15 +460,13 @@ namespace TestGem
             m_forwardVector,
             m_sphereCastDistance,
             AzPhysics::SceneQuery::QueryType::Dynamic,
-            m_grabCollisionGroup,
+            m_grabbedCollisionGroup,
             nullptr);
 
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        m_grabbedObjectEntityIds.clear();
-
-        if (!hits)
+        if (!hits/* && !m_grabMaintained*/)
         {
             m_isGrabbing = false;
             m_isThrowing = false;
@@ -456,29 +476,34 @@ namespace TestGem
             // Set Object to Dynamic Rigid Body if it was previously Kinematic
             if (m_isObjectKinematic)
             {
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObject,
+                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
                     &Physics::RigidBodyRequests::SetKinematic,
                     false);
 
                 m_isObjectKinematic = false;
             }
+            // Set Object Current Layer variable back to Prev Layer if sphere cast does not detect a hit
+            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
             return;
         }
 
-        // Takes the first object hit in m_hits vector and assigns it to m_grabbedObjectEntityIds vector.
-        m_grabbedObjectEntityIds.push_back(hits.m_hits.at(0).m_entityId);
-
-        m_lastGrabbedObject = m_grabbedObjectEntityIds.at(0);
+        // Prevents Grabbing new object if currently grabbing.
+        if (!m_isGrabbing)
+        {
+            // Takes the first object hit in m_hits vector and assigns it to m_grabbedObjectEntityId
+            m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
+            m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
+        }
 
         if ((m_rotateKeyValue != 0 || m_isRotating) && !m_isThrowing)
         {
-            RotateObject(m_grabbedObjectEntityIds.at(0), deltaTime);
+            RotateObject(m_lastGrabbedObjectEntityId, deltaTime);
         }
 
         // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
         else if (m_isObjectKinematic)
         {
-            Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityIds.at(0),
+            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetKinematic,
                 false);
 
@@ -490,14 +515,14 @@ namespace TestGem
         // Call grab function only if object is not being thrown
         if (!m_throwKeyValue && !m_isThrowing)
         {
-            GrabObject(m_grabbedObjectEntityIds.at(0), deltaTime);
+            GrabObject(m_lastGrabbedObjectEntityId, deltaTime);
         }
 
         // Call throw function if throw key is pressed
         else if (m_throwKeyValue)
         {
-            //m_isGrabbing = false;
-            ThrowObject(m_grabbedObjectEntityIds.at(0), deltaTime);
+            m_isGrabbing = false;
+            ThrowObject(m_lastGrabbedObjectEntityId);
         }
     }
 
@@ -510,27 +535,39 @@ namespace TestGem
         m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
         m_grabReference.SetTranslation(m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
-        m_grabbedObjectTranslation = GetEntityPtr(m_grabbedObjectEntityIds.at(0))->GetTransform()->GetWorldTM().GetTranslation();
-
+        m_grabbedObjectTranslation = GetEntityPtr(m_grabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
         if (m_grabEnableToggle && m_grabPrevValue == 0.f && m_grabKeyValue != 0.f)
         {
+            if (!m_isGrabbing)
+            {
+                // Set Object Current Layer variable to Temp Layer if Grabbing
+                m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
+                SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
+            }
+            else
+            {
+                // Set Object Current Layer variable back to Prev Layer if Grab Key is not pressed
+                SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+            }
             m_isGrabbing = !m_isGrabbing;
         }
-
-        else if (!m_grabEnableToggle)
+        else if (m_grabPrevValue != m_grabKeyValue && !m_grabEnableToggle)
         {
             if (m_grabKeyValue != 0.f)
             {
+                // Set Object Current Layer variable to Temp Layer if Grabbing
+                m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
+                SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
                 m_isGrabbing = true;
             }
-
             else
             {
+                // Set Object Current Layer variable back to Prev Layer if Grab Key is not pressed
+                SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
                 m_isGrabbing = false;
             }
         }
-
         if (m_kinematicDefaultEnable)
         {
             // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic 
@@ -555,7 +592,6 @@ namespace TestGem
             {
                 GetEntityPtr(objectId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
             }
-
         }
 
         else
@@ -572,12 +608,12 @@ namespace TestGem
         }
     }
 
-    void Grab::ThrowObject(AZ::EntityId objectId, const float& deltaTime)
+    void Grab::ThrowObject(AZ::EntityId objectId)
     {
         // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
         if (m_isObjectKinematic)
         {
-            Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityIds.at(0),
+            Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetKinematic,
                 false);
 
@@ -589,7 +625,7 @@ namespace TestGem
         // Apply a Linear Impulse to our held object.
         Physics::RigidBodyRequestBus::Event(objectId,
             &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
-            m_forwardVector * m_throwStrength * deltaTime);
+            m_forwardVector * m_throwStrength);
     }
 
     void Grab::RotateObject(AZ::EntityId objectId, const float& deltaTime)
@@ -655,7 +691,12 @@ namespace TestGem
 
     AZ::EntityId Grab::GetGrabbedObjectEntityId() const
     {
-        return m_lastGrabbedObject;
+        return m_grabbedObjectEntityId;
+    }
+
+    AZ::EntityId Grab::GetLastGrabbedObjectEntityId() const
+    {
+        return m_lastGrabbedObjectEntityId;
     }
 
     void Grab::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
@@ -778,24 +819,115 @@ namespace TestGem
         m_sphereCastDistance = new_sphereCastDistance;
     }
 
-    AZStd::string Grab::GetGrabCollisionGroup() const
+    AZStd::string Grab::GetGrabbedCollisionGroup() const
     {
         AZStd::string groupName;
         Physics::CollisionRequestBus::BroadcastResult(
-            groupName, &Physics::CollisionRequests::GetCollisionGroupName, m_grabCollisionGroup);
+            groupName, &Physics::CollisionRequests::GetCollisionGroupName, m_grabbedCollisionGroup);
         return groupName;
     }
 
-    void Grab::SetGrabCollisionGroup(const AZStd::string& new_grabCollisionGroupName)
+    void Grab::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
     {
         bool success = false;
         AzPhysics::CollisionGroup collisionGroup;
-        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionGroupByName, new_grabCollisionGroupName, collisionGroup);
+        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionGroupByName, new_grabbedCollisionGroupName, collisionGroup);
         if (success)
         {
-            m_grabCollisionGroup = collisionGroup;
+            m_grabbedCollisionGroup = collisionGroup;
             const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
-            m_grabCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabCollisionGroupName);
+            m_grabbedCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabbedCollisionGroupName);
         }
+    }
+
+    AZStd::string Grab::GetCurrentGrabbedCollisionLayerName() const
+    {
+        AZStd::string currentGrabbedCollisionLayerName;
+        Physics::CollisionFilteringRequestBus::EventResult(currentGrabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        return currentGrabbedCollisionLayerName;
+    }
+
+    void Grab::SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName)
+    {
+        bool success = false;
+        AzPhysics::CollisionLayer grabbedCollisionLayer;
+        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_currentGrabbedCollisionLayerName, grabbedCollisionLayer);
+        if (success)
+        {
+            m_currentGrabbedCollisionLayerName = new_currentGrabbedCollisionLayerName;
+            m_currentGrabbedCollisionLayer = grabbedCollisionLayer;
+            Physics::CollisionFilteringRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer, m_currentGrabbedCollisionLayerName, AZ::Crc32());
+        }
+    }
+
+    AzPhysics::CollisionLayer Grab::GetCurrentGrabbedCollisionLayer() const
+    {
+        AZStd::string grabbedCollisionLayerName;
+        Physics::CollisionFilteringRequestBus::EventResult(grabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        AzPhysics::CollisionLayer grabbedCollisionLayer;
+        Physics::CollisionRequestBus::BroadcastResult(grabbedCollisionLayer, &Physics::CollisionRequests::GetCollisionLayerByName, grabbedCollisionLayerName);
+        return grabbedCollisionLayer;
+    }
+
+    void Grab::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
+    {
+        m_currentGrabbedCollisionLayer = new_currentGrabbedCollisionLayer;
+        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        m_currentGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_currentGrabbedCollisionLayer);
+        Physics::CollisionFilteringRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer, m_currentGrabbedCollisionLayerName, AZ::Crc32());
+    }
+
+    AZStd::string Grab::GetPrevGrabbedCollisionLayerName() const
+    {
+        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        return configuration.m_collisionLayers.GetName(m_prevGrabbedCollisionLayer);
+    }
+
+    void Grab::SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName)
+    {
+        bool success = false;
+        AzPhysics::CollisionLayer prevGrabbedCollisionLayer;
+        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_prevGrabbedCollisionLayerName, prevGrabbedCollisionLayer);
+        if (success)
+            m_prevGrabbedCollisionLayer = prevGrabbedCollisionLayer;
+    }
+
+    AzPhysics::CollisionLayer Grab::GetPrevGrabbedCollisionLayer() const
+    {
+        return m_prevGrabbedCollisionLayer;
+    }
+
+    void Grab::SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer)
+    {
+        m_prevGrabbedCollisionLayer = new_prevGrabbedCollisionLayer;
+    }
+
+    AZStd::string Grab::GetTempGrabbedCollisionLayerName() const
+    {
+        return m_tempGrabbedCollisionLayerName;
+    }
+
+    void Grab::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
+    {
+        bool success = false;
+        AzPhysics::CollisionLayer tempGrabbedCollisionLayer;
+        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_tempGrabbedCollisionLayerName, tempGrabbedCollisionLayer);
+        if (success)
+        {
+            m_tempGrabbedCollisionLayerName = new_tempGrabbedCollisionLayerName;
+            m_tempGrabbedCollisionLayer = tempGrabbedCollisionLayer;
+        }
+    }
+
+    AzPhysics::CollisionLayer Grab::GetTempGrabbedCollisionLayer() const
+    {
+        return m_tempGrabbedCollisionLayer;
+    }
+
+    void Grab::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
+    {
+        m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
+        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
     }
 }

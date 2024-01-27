@@ -2,6 +2,7 @@
 
 #include <AzCore/Component/ComponentBus.h>
 #include <AzCore/RTTI/BehaviorContext.h>
+#include <AzFramework/Physics/Collision/CollisionLayers.h>
 
 namespace TestGem
 {
@@ -13,8 +14,21 @@ namespace TestGem
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
         virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
-        virtual AZStd::string GetGrabCollisionGroup() const = 0;
-        virtual void SetGrabCollisionGroup(const AZStd::string&) = 0;
+        virtual AZ::EntityId GetLastGrabbedObjectEntityId() const = 0;
+        virtual AZStd::string GetGrabbedCollisionGroup() const = 0;
+        virtual void SetGrabbedCollisionGroup(const AZStd::string&) = 0;
+        virtual AZStd::string GetCurrentGrabbedCollisionLayerName() const = 0;
+        virtual void SetCurrentGrabbedCollisionLayerByName(const AZStd::string&) = 0;
+        virtual AzPhysics::CollisionLayer GetCurrentGrabbedCollisionLayer() const = 0;
+        virtual void SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
+        virtual AZStd::string GetPrevGrabbedCollisionLayerName() const = 0;
+        virtual void SetPrevGrabbedCollisionLayerByName(const AZStd::string&) = 0;
+        virtual AzPhysics::CollisionLayer GetPrevGrabbedCollisionLayer() const = 0;
+        virtual void SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
+		    virtual AZStd::string GetTempGrabbedCollisionLayerName() const = 0;
+		    virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
+        virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
+        virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
         virtual float GetGrabObjectDistance() const = 0;
         virtual void SetGrabObjectDistance(const float&) = 0;
