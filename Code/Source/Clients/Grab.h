@@ -12,7 +12,6 @@
 
 namespace TestGem
 {
-
 	class Grab
 		: public AZ::Component
 		, public AZ::EntityBus::Handler
@@ -96,6 +95,8 @@ namespace TestGem
 		void SetSphereCastRadius(const float& new_sphereCastRadius) override;
 		float GetSphereCastDistance() const override;
 		void SetSphereCastDistance(const float& new_sphereCastDistance) override;
+		bool GetGrabbedObjectIsKinematic() const override;
+		void SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic) override;
 
 	private:
 		AZ::Entity* m_grabbingEntityPtr = nullptr;

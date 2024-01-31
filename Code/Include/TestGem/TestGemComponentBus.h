@@ -25,8 +25,8 @@ namespace TestGem
         virtual void SetPrevGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetPrevGrabbedCollisionLayer() const = 0;
         virtual void SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
-		    virtual AZStd::string GetTempGrabbedCollisionLayerName() const = 0;
-		    virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
+		virtual AZStd::string GetTempGrabbedCollisionLayerName() const = 0;
+		virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
@@ -50,6 +50,8 @@ namespace TestGem
         virtual void SetSphereCastRadius(const float&) = 0;
         virtual float GetSphereCastDistance() const = 0;
         virtual void SetSphereCastDistance(const float&) = 0;
+        virtual bool GetGrabbedObjectIsKinematic() const = 0;
+        virtual void SetGrabbedObjectIsKinematic(const AZ::EntityId, const bool&) = 0;
         virtual bool GetisGrabbing() const = 0;
         virtual bool GetisThrowing() const = 0;
         virtual bool GetisRotating() const = 0;

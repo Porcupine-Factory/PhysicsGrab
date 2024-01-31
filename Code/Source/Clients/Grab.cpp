@@ -28,7 +28,7 @@ namespace TestGem
 
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
                 ->Field("Grab Enable Toggle", &Grab::m_grabEnableToggle)
-                //->Field("Maintain Grab", &Grab::m_grabMaintained)
+                ->Field("Maintain Grab", &Grab::m_grabMaintained)
                 ->Field("Kinematic Grabbed Object", &Grab::m_kinematicDefaultEnable)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
@@ -87,9 +87,9 @@ namespace TestGem
                     ->DataElement(nullptr,
                         &Grab::m_grabEnableToggle,
                         "Grab Enable Toggle", "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to maintain Grab mode.")
-                    //->DataElement(nullptr,
-                    //    &Grab::m_grabMaintained,
-                    //    "Maintain Grab", "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from flying off when quickly changing directions.")
+                    ->DataElement(nullptr,
+                        &Grab::m_grabMaintained,
+                        "Maintain Grab", "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from flying off when quickly changing directions.")
                     ->DataElement(nullptr,
                         &Grab::m_kinematicDefaultEnable,
                         "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
@@ -194,7 +194,9 @@ namespace TestGem
                 ->Event("Get Grab Sphere Cast Radius", &TestGemComponentRequests::GetSphereCastRadius)
                 ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
                 ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
-                ->Event("Set Grab Sphere Cast Distance", &TestGemComponentRequests::SetSphereCastDistance);
+                ->Event("Set Grab Sphere Cast Distance", &TestGemComponentRequests::SetSphereCastDistance)
+                ->Event("Get Grabbed Object Is Kinematic", &TestGemComponentRequests::GetGrabbedObjectIsKinematic)
+                ->Event("Set Grabbed Object Is Kinematic", &TestGemComponentRequests::SetGrabbedObjectIsKinematic);
 
             bc->Class<Grab>()->RequestBus("TestGemComponentRequestBus");
         }
@@ -437,11 +439,7 @@ namespace TestGem
             // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
             if (m_isObjectKinematic)
             {
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-                    &Physics::RigidBodyRequests::SetKinematic,
-                    false);
-
-                m_isObjectKinematic = false;
+                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
             }
             return;
         }
@@ -466,7 +464,7 @@ namespace TestGem
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        if (!hits/* && !m_grabMaintained*/)
+        if (!hits && (!m_grabMaintained || (m_grabMaintained && !m_isGrabbing)))
         {
             m_isGrabbing = false;
             m_isThrowing = false;
@@ -476,11 +474,7 @@ namespace TestGem
             // Set Object to Dynamic Rigid Body if it was previously Kinematic
             if (m_isObjectKinematic)
             {
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-                    &Physics::RigidBodyRequests::SetKinematic,
-                    false);
-
-                m_isObjectKinematic = false;
+                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
             }
             // Set Object Current Layer variable back to Prev Layer if sphere cast does not detect a hit
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
@@ -503,11 +497,7 @@ namespace TestGem
         // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
         else if (m_isObjectKinematic)
         {
-            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-                &Physics::RigidBodyRequests::SetKinematic,
-                false);
-
-            m_isObjectKinematic = false;
+            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
         }
 
         m_rotatePrevValue = m_rotateKeyValue;
@@ -573,11 +563,7 @@ namespace TestGem
             // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic 
             if (!m_isObjectKinematic)
             {
-                Physics::RigidBodyRequestBus::Event(objectId,
-                    &Physics::RigidBodyRequests::SetKinematic,
-                    true);
-
-                m_isObjectKinematic = true;
+                SetGrabbedObjectIsKinematic(objectId, true);
             }
 
             if (!m_isRotating)
@@ -597,6 +583,7 @@ namespace TestGem
         else
         {
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
+            
             Physics::RigidBodyRequestBus::Event(objectId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabStrength);
@@ -613,11 +600,7 @@ namespace TestGem
         // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
         if (m_isObjectKinematic)
         {
-            Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId,
-                &Physics::RigidBodyRequests::SetKinematic,
-                false);
-
-            m_isObjectKinematic = false;
+            SetGrabbedObjectIsKinematic(objectId, false);
         }
 
         m_isThrowing = true;
@@ -653,11 +636,7 @@ namespace TestGem
         // Set Grabbed Object to Kinematic Rigid Body while rotating object
         if (!m_isObjectKinematic)
         {
-            Physics::RigidBodyRequestBus::Event(objectId,
-                &Physics::RigidBodyRequests::SetKinematic,
-                true);
-
-            m_isObjectKinematic = true;
+            SetGrabbedObjectIsKinematic(objectId, true);
         }
 
         else
@@ -929,5 +908,19 @@ namespace TestGem
         m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
+    }
+
+    bool Grab::GetGrabbedObjectIsKinematic() const
+    {
+        return m_isObjectKinematic;
+    }
+
+    void Grab::SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic)
+    {
+        Physics::RigidBodyRequestBus::Event(objectId,
+            &Physics::RigidBodyRequests::SetKinematic,
+            isKinematic);
+
+        m_isObjectKinematic = isKinematic;
     }
 }
