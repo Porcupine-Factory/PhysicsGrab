@@ -2,6 +2,7 @@
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
+#include <AzFramework/Physics/NameConstants.h>
 #include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Physics/CollisionBus.h>
@@ -32,14 +33,24 @@ namespace TestGem
                 ->Field("Kinematic Grabbed Object", &Grab::m_kinematicDefaultEnable)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Default Grab Distance", &Grab::m_initialGrabDistance)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Min Grab Distance", &Grab::m_minGrabDistance)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Max Grab Distance", &Grab::m_maxGrabDistance)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &Grab::m_grabDistanceSpeed)
-                ->Field("Throw Strength", &Grab::m_throwStrength)
-                ->Field("Grab Strength", &Grab::m_grabStrength)
-                ->Field("Rotate Scale", &Grab::m_rotateScale)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+                ->Field("Throw Impulse", &Grab::m_throwImpulse)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Grab Response", &Grab::m_grabResponse)
+                    ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" s%s%s", Physics::NameConstants::GetSuperscriptMinus().c_str(), Physics::NameConstants::GetSuperscriptOne().c_str()))
+                ->Field("Kinematic Rotate Scale", &Grab::m_kinematicRotateScale)
+                ->Field("Dynamic Rotate Scale", &Grab::m_dynamicRotateScale)
+                ->Field("Angular Damping", &Grab::m_tempObjectAngularDamping)
                 ->Field("Grabbed Object Collision Group", &Grab::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &Grab::m_tempGrabbedCollisionLayer)
                 ->Version(1);
@@ -101,14 +112,20 @@ namespace TestGem
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(nullptr,
-                        &Grab::m_throwStrength,
-                        "Throw Strength", "Linear Impulse scale applied when throwing grabbed object")
+                        &Grab::m_throwImpulse,
+                        "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
                     ->DataElement(nullptr,
-                        &Grab::m_grabStrength,
-                        "Grab Strength", "Linear velocity scale applied when holding grabbed object")
+                        &Grab::m_grabResponse,
+                        "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(nullptr,
-                        &Grab::m_rotateScale,
-                        "Rotate Scale", "Rotation speed scale applied when rotating object")
+                        &Grab::m_kinematicRotateScale,
+                        "Kinematic Rotate Scale", "Rotation speed scale applied when rotating kinematic object")
+                    ->DataElement(nullptr,
+                        &Grab::m_dynamicRotateScale,
+                        "Dynamic Rotate Scale", "Angular Velocity scale applied when rotating dynamic object")
+                    ->DataElement(nullptr,
+                        &Grab::m_tempObjectAngularDamping,
+                        "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
 
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
@@ -185,12 +202,14 @@ namespace TestGem
                 ->Event("Set Initial Grab Object Distance", &TestGemComponentRequests::SetInitialGrabObjectDistance)
                 ->Event("Get Grabbed Object Distance Speed", &TestGemComponentRequests::GetGrabObjectDistanceSpeed)
                 ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabObjectDistanceSpeed)
-                ->Event("Get Grab Strength", &TestGemComponentRequests::GetGrabStrength)
-                ->Event("Set Grab Strength", &TestGemComponentRequests::SetGrabStrength)
-                ->Event("Get Grabbed Object Rotation Scale", &TestGemComponentRequests::GetRotateScale)
-                ->Event("Set Grabbed Object Rotation Scale", &TestGemComponentRequests::SetRotateScale)
-                ->Event("Get Grab Throw Strength", &TestGemComponentRequests::GetThrowStrength)
-                ->Event("Set Grab Throw Strength", &TestGemComponentRequests::SetThrowStrength)
+                ->Event("Get Grab Response", &TestGemComponentRequests::GetGrabResponse)
+                ->Event("Set Grab Response", &TestGemComponentRequests::SetGrabResponse)
+                ->Event("Get Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::GetDynamicRotateScale)
+                ->Event("Set Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::SetDynamicRotateScale)
+                ->Event("Get Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::GetKinematicRotateScale)
+                ->Event("Set Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::SetKinematicRotateScale)
+                ->Event("Get Grab Throw Impulse", &TestGemComponentRequests::GetThrowImpulse)
+                ->Event("Set Grab Throw Impulse", &TestGemComponentRequests::SetThrowImpulse)
                 ->Event("Get Grab Sphere Cast Radius", &TestGemComponentRequests::GetSphereCastRadius)
                 ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
                 ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
@@ -509,7 +528,7 @@ namespace TestGem
         }
 
         // Call throw function if throw key is pressed
-        else if (m_throwKeyValue)
+        else if (m_throwKeyValue && !m_isThrowing)
         {
             m_isGrabbing = false;
             ThrowObject(m_lastGrabbedObjectEntityId);
@@ -579,14 +598,13 @@ namespace TestGem
                 GetEntityPtr(objectId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
             }
         }
-
         else
         {
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
             
             Physics::RigidBodyRequestBus::Event(objectId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabStrength);
+                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
 
             if (m_isRotating)
             {
@@ -608,46 +626,81 @@ namespace TestGem
         // Apply a Linear Impulse to our held object.
         Physics::RigidBodyRequestBus::Event(objectId,
             &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
-            m_forwardVector * m_throwStrength);
+            m_forwardVector * m_throwImpulse);
     }
 
     void Grab::RotateObject(AZ::EntityId objectId, const float& deltaTime)
     {
         // It is recommended to stop player character camera rotation while rotating an object.
 
+        m_rightWorldVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+        //m_rightLocalVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+        //m_upLocalVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetLocalRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
+
         if (m_rotateEnableToggle && m_rotatePrevValue == 0.f && m_rotateKeyValue != 0.f)
         {
+            if (!m_isRotating)
+            {
+                m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
+                // Set new Angular Damping before rotating object
+                SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
+            }
+            else if (m_isRotating)
+            {
+                // Set Angular Damping back to original value
+                SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            }
             m_isRotating = !m_isRotating;
         }
-
-        else if (!m_rotateEnableToggle)
+        else if (m_rotatePrevValue != m_rotateKeyValue && !m_rotateEnableToggle)
         {
             if (m_rotateKeyValue != 0.f)
             {
+                m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
+                // Set new Angular Damping before rotating object
+                SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
                 m_isRotating = true;
             }
-
             else
             {
+                // Set Angular Damping back to original value
+                SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
                 m_isRotating = false;
             }
         }
-
-        // Set Grabbed Object to Kinematic Rigid Body while rotating object
+        // Rotate Dynamic object using Angular Velocity
         if (!m_isObjectKinematic)
         {
-            SetGrabbedObjectIsKinematic(objectId, true);
-        }
+            AZ::Vector3 currentAngularVelocity = AZ::Vector3::CreateZero();
 
+            Physics::RigidBodyRequestBus::EventResult(currentAngularVelocity, objectId,
+                &Physics::RigidBodyRequests::GetAngularVelocity);
+            
+            m_delta_yaw = AZ::Vector3::CreateAxisZ(m_yawKeyValue);
+            m_delta_pitch = m_rightWorldVector * m_pitchKeyValue;
+
+            m_delta_yaw *= m_dynamicRotateScale;
+            m_delta_pitch *= m_dynamicRotateScale;
+
+            AZ::Vector3 newAngularVelocity = AZ::Vector3::CreateZero();
+
+            newAngularVelocity = currentAngularVelocity + (m_delta_yaw + m_delta_pitch);
+
+            Physics::RigidBodyRequestBus::Event(objectId,
+                &Physics::RigidBodyRequests::SetAngularVelocity, newAngularVelocity);
+
+            m_hasRotated = true;
+        }
+        // Rotate Kinematic object using rotation transform
         else
         {
             AZ::Vector3 current_Rotation = GetEntityPtr(objectId)->GetTransform()->GetLocalRotation();
-
-            m_delta_yaw = AZ::Vector3(0.f, 0.f, m_yawKeyValue);
-            m_delta_pitch = AZ::Vector3(m_pitchKeyValue, 0.f, 0.f);
-
-            m_delta_yaw *= m_rotateScale;
-            m_delta_pitch *= m_rotateScale;
+            
+            m_delta_yaw = AZ::Vector3::CreateAxisZ(m_yawKeyValue);
+            m_delta_pitch = AZ::Vector3::CreateAxisX(m_pitchKeyValue);
+            
+            m_delta_yaw *= m_kinematicRotateScale;
+            m_delta_pitch *= m_kinematicRotateScale;
 
             AZ::Vector3 newRotation = AZ::Vector3::CreateZero();
             newRotation = current_Rotation + ((m_delta_yaw + m_delta_pitch) * deltaTime);
@@ -748,34 +801,44 @@ namespace TestGem
         m_grabDistanceSpeed = new_grabDistanceSpeed;
     }
 
-    float Grab::GetGrabStrength() const
+    float Grab::GetGrabResponse() const
     {
-        return m_grabStrength;
+        return m_grabResponse;
     }
 
-    void Grab::SetGrabStrength(const float& new_grabStrength)
+    void Grab::SetGrabResponse(const float& new_grabResponse)
     {
-        m_grabStrength = new_grabStrength;
+        m_grabResponse = new_grabResponse;
     }
 
-    float Grab::GetRotateScale() const
+    float Grab::GetDynamicRotateScale() const
     {
-        return m_rotateScale;
+        return m_dynamicRotateScale;
     }
 
-    void Grab::SetRotateScale(const float& new_rotateScale)
+    void Grab::SetDynamicRotateScale(const float& new_dynamicRotateScale)
     {
-        m_rotateScale = new_rotateScale;
+        m_dynamicRotateScale = new_dynamicRotateScale;
     }
 
-    float Grab::GetThrowStrength() const
+    float Grab::GetKinematicRotateScale() const
     {
-        return m_throwStrength;
+        return m_kinematicRotateScale;
     }
 
-    void Grab::SetThrowStrength(const float& new_throwStrength)
+    void Grab::SetKinematicRotateScale(const float& new_kinematicRotateScale)
     {
-        m_throwStrength = new_throwStrength;
+        m_kinematicRotateScale = new_kinematicRotateScale;
+    }
+
+    float Grab::GetThrowImpulse() const
+    {
+        return m_throwImpulse;
+    }
+
+    void Grab::SetThrowImpulse(const float& new_throwImpulse)
+    {
+        m_throwImpulse = new_throwImpulse;
     }
 
     float Grab::GetSphereCastRadius() const
@@ -922,5 +985,45 @@ namespace TestGem
             isKinematic);
 
         m_isObjectKinematic = isKinematic;
+    }
+
+    float Grab::GetCurrentGrabbedObjectAngularDamping() const
+    {
+        float currentObjectAngularDamping = 0.f;
+
+        Physics::RigidBodyRequestBus::EventResult(currentObjectAngularDamping, m_lastGrabbedObjectEntityId,
+            &Physics::RigidBodyRequests::GetAngularDamping);
+
+        return currentObjectAngularDamping;
+    }
+
+    void Grab::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
+    {
+        m_currentObjectAngularDamping = new_currentObjectAngularDamping;
+
+        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
+            &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
+    }
+
+    float Grab::GetPrevGrabbedObjectAngularDamping() const
+    {
+        return m_prevObjectAngularDamping;
+    }
+
+    void Grab::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
+    {
+        m_prevObjectAngularDamping = new_prevObjectAngularDamping;
+    }
+
+    float Grab::GetTempGrabbedObjectAngularDamping() const
+    {
+        return m_tempObjectAngularDamping;
+    }
+
+    void Grab::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
+    {
+        m_tempObjectAngularDamping = new_tempObjectAngularDamping;
+        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
+            &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
     }
 }

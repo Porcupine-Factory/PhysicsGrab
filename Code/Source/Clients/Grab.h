@@ -85,18 +85,26 @@ namespace TestGem
 		void SetInitialGrabObjectDistance(const float& new_initialGrabDistance) override;
 		float GetGrabObjectDistanceSpeed() const override;
 		void SetGrabObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
-		float GetGrabStrength() const override;
-		void SetGrabStrength(const float& new_grabStrength) override;
-		float GetRotateScale() const override;
-		void SetRotateScale(const float& new_rotateScale) override;
-		float GetThrowStrength() const override;
-		void SetThrowStrength(const float& new_throwStrength) override;
+		float GetGrabResponse() const override;
+		void SetGrabResponse(const float& new_grabStrength) override;
+		float GetDynamicRotateScale() const override;
+		void SetDynamicRotateScale(const float& new_dynamicRotateScale) override;
+		float GetKinematicRotateScale() const override;
+		void SetKinematicRotateScale(const float& new_kinematicRotateScale) override;
+		float GetThrowImpulse() const override;
+		void SetThrowImpulse(const float& new_throwImpulse) override;
 		float GetSphereCastRadius() const override;
 		void SetSphereCastRadius(const float& new_sphereCastRadius) override;
 		float GetSphereCastDistance() const override;
 		void SetSphereCastDistance(const float& new_sphereCastDistance) override;
 		bool GetGrabbedObjectIsKinematic() const override;
 		void SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic) override;
+		float GetCurrentGrabbedObjectAngularDamping() const override;
+		void SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping) override;
+		float GetPrevGrabbedObjectAngularDamping() const override;
+		void SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping) override;
+		float GetTempGrabbedObjectAngularDamping() const override;
+		void SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping) override;
 
 	private:
 		AZ::Entity* m_grabbingEntityPtr = nullptr;
@@ -129,6 +137,9 @@ namespace TestGem
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
 
 		AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_rightWorldVector = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_rightLocalVector = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_upLocalVector = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
@@ -161,10 +172,14 @@ namespace TestGem
 		float m_minGrabDistance = 1.5f;
 		float m_maxGrabDistance = 3.f;
 		float m_initialGrabDistance = 1.75f;
-		float m_rotateScale = 0.5f;
+		float m_kinematicRotateScale = 0.5f;
+		float m_dynamicRotateScale = 0.3f;
+		float m_prevObjectAngularDamping = 0.f;
+		float m_currentObjectAngularDamping = 0.f;
+		float m_tempObjectAngularDamping = 20.f;
 		float m_grabDistanceSpeed = 0.2f;
-		float m_grabStrength = 10.f;
-		float m_throwStrength = 5000.f;
+		float m_grabResponse = 10.f;
+		float m_throwImpulse = 7000.f;
 		float m_sphereCastRadius = 0.3f;
 		float m_sphereCastDistance = 3.f;
 
