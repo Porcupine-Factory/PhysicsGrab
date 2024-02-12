@@ -15,6 +15,7 @@ namespace TestGem
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
         virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
         virtual AZ::EntityId GetLastGrabbedObjectEntityId() const = 0;
+        virtual AZ::EntityId GetThrownGrabbedObjectEntityId() const = 0;
         virtual AZStd::string GetGrabbedCollisionGroup() const = 0;
         virtual void SetGrabbedCollisionGroup(const AZStd::string&) = 0;
         virtual AZStd::string GetCurrentGrabbedCollisionLayerName() const = 0;
@@ -54,15 +55,18 @@ namespace TestGem
         virtual void SetSphereCastDistance(const float&) = 0;
         virtual bool GetGrabbedObjectIsKinematic() const = 0;
         virtual void SetGrabbedObjectIsKinematic(const AZ::EntityId, const bool&) = 0;
+        virtual bool GetInitialGrabbedObjectIsKinematic() const = 0;
         virtual float GetCurrentGrabbedObjectAngularDamping() const = 0;
         virtual void SetCurrentGrabbedObjectAngularDamping(const float&) = 0;
         virtual float GetPrevGrabbedObjectAngularDamping() const = 0;
         virtual void SetPrevGrabbedObjectAngularDamping(const float&) = 0;
         virtual float GetTempGrabbedObjectAngularDamping() const = 0;
         virtual void SetTempGrabbedObjectAngularDamping(const float&) = 0;
-        virtual bool GetisGrabbing() const = 0;
-        virtual bool GetisThrowing() const = 0;
-        virtual bool GetisRotating() const = 0;
+        virtual AZ::Vector3 GetGrabbedObjectAngularVelocity() const = 0;
+        virtual void SetGrabbedObjectAngularVelocity(const AZ::Vector3&) = 0;
+        virtual bool GetIsInGrabState() const = 0;
+        virtual bool GetIsInThrowState() const = 0;
+        virtual bool GetIsInRotateState() const = 0;
     };
 
     using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;

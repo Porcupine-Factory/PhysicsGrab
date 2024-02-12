@@ -53,6 +53,7 @@ namespace TestGem
 		AZ::EntityId GetActiveCameraEntityId() const override;
 		AZ::EntityId GetGrabbedObjectEntityId() const override;
 		AZ::EntityId GetLastGrabbedObjectEntityId() const override;
+		AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
 
 
 		AZStd::string GetGrabbedCollisionGroup() const override;
@@ -72,9 +73,9 @@ namespace TestGem
 		void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
 
 		void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
-		bool GetisGrabbing() const override;
-		bool GetisThrowing() const override;
-		bool GetisRotating() const override;
+		bool GetIsInGrabState() const override;
+		bool GetIsInThrowState() const override;
+		bool GetIsInRotateState() const override;
 		float GetGrabObjectDistance() const override;
 		void SetGrabObjectDistance(const float& new_grabDistance) override;
 		float GetMinGrabObjectDistance() const override;
@@ -99,12 +100,15 @@ namespace TestGem
 		void SetSphereCastDistance(const float& new_sphereCastDistance) override;
 		bool GetGrabbedObjectIsKinematic() const override;
 		void SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic) override;
+		bool GetInitialGrabbedObjectIsKinematic() const override;
 		float GetCurrentGrabbedObjectAngularDamping() const override;
 		void SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping) override;
 		float GetPrevGrabbedObjectAngularDamping() const override;
 		void SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping) override;
 		float GetTempGrabbedObjectAngularDamping() const override;
 		void SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping) override;
+		AZ::Vector3 GetGrabbedObjectAngularVelocity() const override;
+		void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
 
 	private:
 		AZ::Entity* m_grabbingEntityPtr = nullptr;
@@ -124,6 +128,9 @@ namespace TestGem
 		StartingPointInput::InputEventNotificationId m_rotateYawEventId;
 		AZStd::string m_strRotateYaw = "Rotate Yaw Key";
 
+		StartingPointInput::InputEventNotificationId m_rotateRollEventId;
+		AZStd::string m_strRotateRoll = "Rotate Roll Key";
+
 		StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
 		AZStd::string m_strGrabDistance = "Grab Distance Key";
 
@@ -137,17 +144,19 @@ namespace TestGem
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
 
 		AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_rightWorldVector = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_rightLocalVector = AZ::Vector3::CreateZero();
-		AZ::Vector3 m_upLocalVector = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_rightVector = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_upVector = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_pitch = AZ::Vector3::CreateZero();
 		AZ::Vector3 m_delta_yaw = AZ::Vector3::CreateZero();
+		AZ::Vector3 m_delta_roll = AZ::Vector3::CreateZero();
 
 		AZ::EntityId m_grabbedObjectEntityId;
 
 		AZ::EntityId m_grabbingEntityId;
 		AZ::EntityId m_lastGrabbedObjectEntityId;
+		AZ::EntityId m_thrownGrabbedObjectEntityId;
 
 		AzPhysics::CollisionGroups::Id m_grabbedCollisionGroupId = AzPhysics::CollisionGroups::Id();
 		AzPhysics::CollisionGroup m_grabbedCollisionGroup = AzPhysics::CollisionGroup::All;
@@ -162,13 +171,14 @@ namespace TestGem
 		float m_grabKeyValue = 0.f;
 		float m_throwKeyValue = 0.f;
 		float m_rotateKeyValue = 0.f;
-		float m_rotatePrevValue = 0.f;
+		float m_prevRotateKeyValue = 0.f;
 		float m_grabDistanceKeyValue = 0.f;
 		float m_grabDistance = 0.f;
 		float m_pitchKeyValue = 0.f;
 		float m_yawKeyValue = 0.f;
+		float m_rollKeyValue = 0.f;
 
-		float m_grabPrevValue = 0.f;
+		float m_prevGrabKeyValue = 0.f;
 		float m_minGrabDistance = 1.5f;
 		float m_maxGrabDistance = 3.f;
 		float m_initialGrabDistance = 1.75f;
@@ -182,14 +192,17 @@ namespace TestGem
 		float m_throwImpulse = 7000.f;
 		float m_sphereCastRadius = 0.3f;
 		float m_sphereCastDistance = 3.f;
+		float m_throwStateTime = 2.f;
+		float m_throwCounter = 0.f;
 
 		bool m_grabEnableToggle = false;
-		bool m_kinematicDefaultEnable = false;
+		bool m_kinematicWhileGrabbing = false;
 		bool m_rotateEnableToggle = true;
-		bool m_isGrabbing = false;
+		bool m_isInitialObjectKinematic = false;
+		bool m_isInGrabState = false;
 		bool m_grabMaintained = false;
-		bool m_isRotating = false;
-		bool m_isThrowing = false;
+		bool m_isInRotateState = false;
+		bool m_isInThrowState = false;
 		bool m_hasRotated = false;
 		bool m_isObjectKinematic = false;
 	};
