@@ -31,16 +31,16 @@ namespace TestGem
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
-        virtual float GetGrabObjectDistance() const = 0;
-        virtual void SetGrabObjectDistance(const float&) = 0;
-        virtual float GetMinGrabObjectDistance() const = 0;
-        virtual void SetMinGrabObjectDistance(const float&) = 0;
-        virtual float GetMaxGrabObjectDistance() const = 0;
-        virtual void SetMaxGrabObjectDistance(const float&) = 0;
-        virtual float GetInitialGrabObjectDistance() const = 0;
-        virtual void SetInitialGrabObjectDistance(const float&) = 0;
-        virtual float GetGrabObjectDistanceSpeed() const = 0;
-        virtual void SetGrabObjectDistanceSpeed(const float&) = 0;
+        virtual float GetGrabbedObjectDistance() const = 0;
+        virtual void SetGrabbedObjectDistance(const float&) = 0;
+        virtual float GetMinGrabbedObjectDistance() const = 0;
+        virtual void SetMinGrabbedObjectDistance(const float&) = 0;
+        virtual float GetMaxGrabbedObjectDistance() const = 0;
+        virtual void SetMaxGrabbedObjectDistance(const float&) = 0;
+        virtual float GetInitialGrabbedObjectDistance() const = 0;
+        virtual void SetInitialGrabbedObjectDistance(const float&) = 0;
+        virtual float GetGrabbedObjectDistanceSpeed() const = 0;
+        virtual void SetGrabbedObjectDistanceSpeed(const float&) = 0;
         virtual float GetGrabResponse() const = 0;
         virtual void SetGrabResponse(const float&) = 0;
         virtual float GetDynamicRotateScale() const = 0;
@@ -49,6 +49,9 @@ namespace TestGem
         virtual void SetKinematicRotateScale(const float&) = 0;
         virtual float GetThrowImpulse() const = 0;
         virtual void SetThrowImpulse(const float&) = 0;
+        virtual float GetGrabbedObjectThrowStateCounter() const = 0;
+        virtual float GetGrabbedObjectThrowStateTime() const = 0;
+        virtual void SetGrabbedObjectThrowStateTime(const float&) = 0;
         virtual float GetSphereCastRadius() const = 0;
         virtual void SetSphereCastRadius(const float&) = 0;
         virtual float GetSphereCastDistance() const = 0;
@@ -67,6 +70,7 @@ namespace TestGem
         virtual bool GetIsInGrabState() const = 0;
         virtual bool GetIsInThrowState() const = 0;
         virtual bool GetIsInRotateState() const = 0;
+        virtual bool GetObjectSphereCastHit() const = 0;
     };
 
     using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;

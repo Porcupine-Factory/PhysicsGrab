@@ -76,16 +76,17 @@ namespace TestGem
 		bool GetIsInGrabState() const override;
 		bool GetIsInThrowState() const override;
 		bool GetIsInRotateState() const override;
-		float GetGrabObjectDistance() const override;
-		void SetGrabObjectDistance(const float& new_grabDistance) override;
-		float GetMinGrabObjectDistance() const override;
-		void SetMinGrabObjectDistance(const float& new_minGrabDistance) override;
-		float GetMaxGrabObjectDistance() const override;
-		void SetMaxGrabObjectDistance(const float& new_maxGrabDistance) override;
-		float GetInitialGrabObjectDistance() const override;
-		void SetInitialGrabObjectDistance(const float& new_initialGrabDistance) override;
-		float GetGrabObjectDistanceSpeed() const override;
-		void SetGrabObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
+		bool GetObjectSphereCastHit() const override;
+		float GetGrabbedObjectDistance() const override;
+		void SetGrabbedObjectDistance(const float& new_grabDistance) override;
+		float GetMinGrabbedObjectDistance() const override;
+		void SetMinGrabbedObjectDistance(const float& new_minGrabDistance) override;
+		float GetMaxGrabbedObjectDistance() const override;
+		void SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance) override;
+		float GetInitialGrabbedObjectDistance() const override;
+		void SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance) override;
+		float GetGrabbedObjectDistanceSpeed() const override;
+		void SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
 		float GetGrabResponse() const override;
 		void SetGrabResponse(const float& new_grabStrength) override;
 		float GetDynamicRotateScale() const override;
@@ -94,6 +95,9 @@ namespace TestGem
 		void SetKinematicRotateScale(const float& new_kinematicRotateScale) override;
 		float GetThrowImpulse() const override;
 		void SetThrowImpulse(const float& new_throwImpulse) override;
+		float GetGrabbedObjectThrowStateCounter() const override;
+		float GetGrabbedObjectThrowStateTime() const override;
+		void SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime) override;
 		float GetSphereCastRadius() const override;
 		void SetSphereCastRadius(const float& new_sphereCastRadius) override;
 		float GetSphereCastDistance() const override;
@@ -135,10 +139,10 @@ namespace TestGem
 		AZStd::string m_strGrabDistance = "Grab Distance Key";
 
 		void OnCameraAdded(const AZ::EntityId& cameraId);
-		void CheckForObjects(const float& deltaTime);
-		void GrabObject(AZ::EntityId objectId, const float& deltaTime);
-		void ThrowObject(AZ::EntityId objectId);
-		void RotateObject(AZ::EntityId objectId, const float& deltaTime);
+		void CheckForObjects();
+		void GrabObject(const float& deltaTime);
+		void RotateObject(const float& deltaTime);
+		void ThrowObject(const float& deltaTime);
 
 		AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -192,8 +196,8 @@ namespace TestGem
 		float m_throwImpulse = 7000.f;
 		float m_sphereCastRadius = 0.3f;
 		float m_sphereCastDistance = 3.f;
-		float m_throwStateTime = 2.f;
-		float m_throwCounter = 0.f;
+		float m_throwStateMaxTime = 0.5f;
+		float m_throwStateCounter = 0.f;
 
 		bool m_grabEnableToggle = false;
 		bool m_kinematicWhileGrabbing = false;
@@ -205,5 +209,6 @@ namespace TestGem
 		bool m_isInThrowState = false;
 		bool m_hasRotated = false;
 		bool m_isObjectKinematic = false;
+		bool m_objectSphereCastHit = false;
 	};
 }

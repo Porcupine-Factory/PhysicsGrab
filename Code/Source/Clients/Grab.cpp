@@ -196,16 +196,17 @@ namespace TestGem
                 ->Event("Get Is In Grab State", &TestGemComponentRequests::GetIsInGrabState)
                 ->Event("Get Is In Throw State", &TestGemComponentRequests::GetIsInThrowState)
                 ->Event("Get Is In Rotate State", &TestGemComponentRequests::GetIsInRotateState)
-                ->Event("Get Grab Object Distance", &TestGemComponentRequests::GetGrabObjectDistance)
-                ->Event("Set Grab Object Distance", &TestGemComponentRequests::SetGrabObjectDistance)
-                ->Event("Get Minimum Grab Object Distance", &TestGemComponentRequests::GetMinGrabObjectDistance)
-                ->Event("Set Minimum Grab Object Distance", &TestGemComponentRequests::SetMinGrabObjectDistance)
-                ->Event("Get Maximum Grab Object Distance", &TestGemComponentRequests::GetMaxGrabObjectDistance)
-                ->Event("Set Maximum Grab Object Distance", &TestGemComponentRequests::SetMaxGrabObjectDistance)
-                ->Event("Get Initial Grab Object Distance", &TestGemComponentRequests::GetInitialGrabObjectDistance)
-                ->Event("Set Initial Grab Object Distance", &TestGemComponentRequests::SetInitialGrabObjectDistance)
-                ->Event("Get Grabbed Object Distance Speed", &TestGemComponentRequests::GetGrabObjectDistanceSpeed)
-                ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabObjectDistanceSpeed)
+                ->Event("Get Object Sphere Cast Hit", &TestGemComponentRequests::GetObjectSphereCastHit)
+                ->Event("Get Grabbed Object Distance", &TestGemComponentRequests::GetGrabbedObjectDistance)
+                ->Event("Set Grabbed Object Distance", &TestGemComponentRequests::SetGrabbedObjectDistance)
+                ->Event("Get Minimum Grabbed Object Distance", &TestGemComponentRequests::GetMinGrabbedObjectDistance)
+                ->Event("Set Minimum Grabbed Object Distance", &TestGemComponentRequests::SetMinGrabbedObjectDistance)
+                ->Event("Get Maximum Grabbed Objectt Distance", &TestGemComponentRequests::GetMaxGrabbedObjectDistance)
+                ->Event("Set Maximum Grabbed Object Distance", &TestGemComponentRequests::SetMaxGrabbedObjectDistance)
+                ->Event("Get Initial Grabbed Object Distance", &TestGemComponentRequests::GetInitialGrabbedObjectDistance)
+                ->Event("Set Initial Grabbed Objectt Distance", &TestGemComponentRequests::SetInitialGrabbedObjectDistance)
+                ->Event("Get Grabbed Object Distance Speed", &TestGemComponentRequests::GetGrabbedObjectDistanceSpeed)
+                ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabbedObjectDistanceSpeed)
                 ->Event("Get Grab Response", &TestGemComponentRequests::GetGrabResponse)
                 ->Event("Set Grab Response", &TestGemComponentRequests::SetGrabResponse)
                 ->Event("Get Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::GetDynamicRotateScale)
@@ -214,6 +215,9 @@ namespace TestGem
                 ->Event("Set Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::SetKinematicRotateScale)
                 ->Event("Get Grab Throw Impulse", &TestGemComponentRequests::GetThrowImpulse)
                 ->Event("Set Grab Throw Impulse", &TestGemComponentRequests::SetThrowImpulse)
+                ->Event("Get Grabbed Object Throw State Counter", &TestGemComponentRequests::GetGrabbedObjectThrowStateCounter)
+                ->Event("Get Grabbed Object Throw State Max Time", &TestGemComponentRequests::GetGrabbedObjectThrowStateTime)
+                ->Event("Set Grabbed Object Throw State Max Time", &TestGemComponentRequests::SetGrabbedObjectThrowStateTime)
                 ->Event("Get Grab Sphere Cast Radius", &TestGemComponentRequests::GetSphereCastRadius)
                 ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
                 ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
@@ -249,6 +253,9 @@ namespace TestGem
 
         m_rotateYawEventId = StartingPointInput::InputEventNotificationId(m_strRotateYaw.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_rotateYawEventId);
+
+        m_rotateRollEventId = StartingPointInput::InputEventNotificationId(m_strRotateRoll.c_str());
+        InputEventNotificationBus::MultiHandler::BusConnect(m_rotateRollEventId);
 
         Camera::CameraNotificationBus::Handler::BusConnect();
         AZ::TickBus::Handler::BusConnect();
@@ -325,7 +332,6 @@ namespace TestGem
         return ca->FindEntity(activeCameraId);
     }
  
-
     // Recieve the input event in OnPressed method
     void Grab::OnPressed(float value)
     {
@@ -425,6 +431,7 @@ namespace TestGem
             //AZ_Printf("Object", "Grab Object roll released value %f", value);
         }
     }
+
     void Grab::OnHeld(float value)
     {
         const InputEventNotificationId* inputId =
@@ -460,8 +467,13 @@ namespace TestGem
 
     void Grab::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
-        CheckForObjects(deltaTime);
+        CheckForObjects();
+        GrabObject(deltaTime);
+        RotateObject(deltaTime);
+        ThrowObject(deltaTime);
+
         m_prevGrabKeyValue = m_grabKeyValue;
+        m_prevRotateKeyValue = m_rotateKeyValue;
     }
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
@@ -470,26 +482,16 @@ namespace TestGem
         return ca->FindEntity(pointer);
     }
 
-    void Grab::CheckForObjects(const float& deltaTime)
-    {
-        // Do not perform spherecast query if grab key is not pressed
-        if (!m_grabKeyValue && !m_isInGrabState && !m_isInThrowState)
+    // Perform a spherecast query to check if colliding with a grabbable object, then assign the first returned hit to m_grabbedObjectEntityId
+    void Grab::CheckForObjects()
+    {   
+        // Do not execute the function if Grab Key is not pressed and not currently in Grab State
+        if (!m_grabKeyValue && !m_isInGrabState)
         {
-            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
-            m_grabDistance = m_initialGrabDistance;
-
-            m_isInRotateState = false;
-            m_hasRotated = false;
-
-            // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
-            if (m_isObjectKinematic && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
-            }
             return;
         }
-
-        // Get our local forward vector relative to the grabbing entity's transform
+        
+        // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
 
         // Get our grabbing entity's world transform
@@ -509,83 +511,27 @@ namespace TestGem
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        if (!hits && (!m_grabMaintained || (m_grabMaintained && !m_isInGrabState)))
-        {
-            m_isInGrabState = false;
-            m_isInThrowState = false;
-            m_isInRotateState = false;
-            m_hasRotated = false;
-
-            // Set Object to Dynamic Rigid Body if it was previously Kinematic
-            if (m_isObjectKinematic && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
-            }
-            // Set Object Current Layer variable back to Prev Layer if sphere cast does not detect a hit
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-            // Set Angular Damping back to original value if sphere cast does not detect a hit
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-            return;
-        }
+        m_objectSphereCastHit = hits ? true : false;
 
         // Prevents Grabbing new object if currently grabbing.
-        if (!m_isInGrabState)
+        if (!m_isInGrabState && m_objectSphereCastHit)
         {
+            // Takes first hit from spherecast query vector, and assigns this EntityID to m_grabbedObjectEntityId
             m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
             m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
         }
-
-        if ((m_rotateKeyValue != 0 || m_isInRotateState) && !m_isInThrowState)
-        {
-            RotateObject(m_lastGrabbedObjectEntityId, deltaTime);
-        }
-        // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
-        else if (m_isObjectKinematic && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic)
-        {
-            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
-        }
-
-        m_prevRotateKeyValue = m_rotateKeyValue;
-
-        // Call grab function only if object is not being thrown (or if it is initially Kinematic, since Kinematic objects cannot be thrown anyways)
-        if ((!m_throwKeyValue && !m_isInThrowState) || m_isInitialObjectKinematic)
-        {
-            m_throwCounter = 0.f;
-            GrabObject(m_lastGrabbedObjectEntityId, deltaTime);
-        }
-        // Call throw function if throw key is pressed
-        else if (m_throwKeyValue && !m_isInThrowState && !m_isInitialObjectKinematic)
-        {
-            m_throwCounter = 0.f;
-            m_isInGrabState = false;
-            // Set Object Current Layer variable back to Prev Layer if in throw state
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-            // Set Angular Damping back to original value
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-            ThrowObject(m_lastGrabbedObjectEntityId);
-        }
-        // Conditional to set Throw State back to false when object is sufficiently far away (95% of m_sphereCastDistance) or enough time has passed (m_throwTime).
-        else if (m_isInThrowState)
-        {
-            m_throwCounter += deltaTime;
-            
-            // Set throw state to false if the thrown grabbed object is more than 95% the distance of m_sphereCastDistance away. 95% is used so that this statement can fire before the the distance limit of the spherecast
-            if (m_grabReference.GetTranslation().GetDistance(GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > (m_sphereCastDistance * 0.95f))
-            {
-                m_isInThrowState = false;
-            }
-            // Set throw state to false if grabbed object is in throw state longer than m_throwStateTime
-            else if (m_throwCounter >= m_throwStateTime)
-            {
-                m_isInThrowState = false;
-            }
-        }
     }
 
-    void Grab::GrabObject(AZ::EntityId objectId, const float& deltaTime)
-    {
+    // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is enabled. 
+    void Grab::GrabObject(const float& deltaTime)
+    { 
+        // Do not execute the function if there is no SphereCast hit and not in Grab State, or if the object is being thrown
+        if ((!m_objectSphereCastHit && (!m_grabMaintained || (m_grabMaintained && !m_isInGrabState))) || m_isInThrowState)
+        {
+            m_grabDistance = m_initialGrabDistance;
+            m_isInGrabState = false;
+            return;
+        }
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively.
         m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
@@ -595,13 +541,18 @@ namespace TestGem
 
         m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
+        // Set object's Grab state if m_grabEnableToggle is true
         if (m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)
         {
             if (!m_isInGrabState)
             {
+                // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
                 m_isInitialObjectKinematic = GetGrabbedObjectIsKinematic();
-                // Set Object Current Layer variable to Temp Layer if Grabbing
+
+                // Store initial collision layer
                 m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
+
+                // Set Object Current Layer variable to Temp Layer
                 SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
 
                 // Store object's original Angular Damping value
@@ -609,21 +560,35 @@ namespace TestGem
             }
             else
             {
-                // Set Object Current Layer variable back to Prev Layer if Grab Key is not pressed
+                // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
+                m_grabDistance = m_initialGrabDistance;
+
+                // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
                 SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
                 // Set Angular Damping back to original value if Grab Key is not pressed
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+                m_isInRotateState = false;
+                m_hasRotated = false;
             }
+
             m_isInGrabState = !m_isInGrabState;
         }
+        // Set object's Grab state if m_grabEnableToggle is false
         else if (m_prevGrabKeyValue != m_grabKeyValue && !m_grabEnableToggle)
         {
             if (m_grabKeyValue != 0.f)
             {
+                // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
                 m_isInitialObjectKinematic = GetGrabbedObjectIsKinematic();
-                // Set Object Current Layer variable to Temp Layer if Grabbing
+
+                // Store initial collision layer
                 m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
+
+                // Set Object Current Layer variable to Temp Layer
                 SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
+
                 m_isInGrabState = true;
 
                 // Store object's original Angular Damping value
@@ -631,74 +596,79 @@ namespace TestGem
             }
             else
             {
+                // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
+                m_grabDistance = m_initialGrabDistance;
+
                 // Set Object Current Layer variable back to Prev Layer if Grab Key is not pressed
                 SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
                 // Set Angular Damping back to original value if Grab Key is not pressed
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
                 m_isInGrabState = false;
+                m_isInRotateState = false;
+                m_hasRotated = false;
             }
         }
 
-        if (m_kinematicWhileGrabbing || m_isInitialObjectKinematic)
+        // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
+        if (!m_isInGrabState && (GetGrabbedObjectIsKinematic() && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic))
+        {
+            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
+        }
+
+        // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
+        if (m_isInGrabState && (m_kinematicWhileGrabbing || m_isInitialObjectKinematic))
         {
             // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic 
-            if (!m_isObjectKinematic)
+            if (!GetGrabbedObjectIsKinematic())
             {
-                SetGrabbedObjectIsKinematic(objectId, true);
+                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, true);
             }
 
+            // If object is NOT in rotate state, move object by setting its Translation directly. Only rotate object if it has been in rotate state
             if (!m_isInRotateState)
             {
-                GetEntityPtr(objectId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
+                GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
+                // Keep Object rotation facing the grabbing entity if it has not be rotated. If it has been rotated, object will keep that rotation while translating
                 if (!m_hasRotated)
                 {
-                    GetEntityPtr(objectId)->GetTransform()->SetWorldRotation(m_grabReference.GetRotation().GetEulerRadians());
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldRotation(m_grabReference.GetRotation().GetEulerRadians());
                 }
             }
+            // If object is in rotate state, move object by setting its Translation, but do not rotate it 
             else
             {
-                GetEntityPtr(objectId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
+                GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
             }
         }
-        else
+        // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
+        else if (m_isInGrabState && !GetGrabbedObjectIsKinematic() && (!m_kinematicWhileGrabbing || !m_isInitialObjectKinematic))
         {
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
-            
-            Physics::RigidBodyRequestBus::Event(objectId,
+            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
-
-            if (m_isInRotateState)
-            {
-                GetEntityPtr(objectId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
-            }
+                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);   
         }
     }
 
-    void Grab::ThrowObject(AZ::EntityId objectId)
+    // Rotate object using physics or transforms, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is enabled.
+    // It is recommended to stop player character camera rotation while rotating an object.
+    void Grab::RotateObject(const float& deltaTime)
     {
-        // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
-        if (m_isObjectKinematic)
+        // Do not execute the function if Rotate Key is not pressed, the object is not in Grab State, or if the object is being thrown
+        if ((!m_rotateKeyValue && !m_isInRotateState) || !m_isInGrabState || m_isInThrowState)
         {
-            SetGrabbedObjectIsKinematic(objectId, false);
+            return;
         }
 
-        m_isInThrowState = true;
-        m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
-
-        // Apply a Linear Impulse to our held object.
-        Physics::RigidBodyRequestBus::Event(objectId,
-            &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
-            m_forwardVector * m_throwImpulse);
-    }
-
-    void Grab::RotateObject(AZ::EntityId objectId, const float& deltaTime)
-    {
-        // It is recommended to stop player character camera rotation while rotating an object.
-
+        // Get right vector relative to the grabbing entity's transform
         m_rightVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+
+        // Get up vector relative to the grabbing entity's transform
         m_upVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
-        
+
+        // Set object's Rotate state if m_rotateEnableToggle is true
         if (m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f)
         {
             if (!m_isInRotateState)
@@ -712,37 +682,38 @@ namespace TestGem
             {
                 // Set Angular Damping back to original value
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-                // Set Angular Velocity to zero when no longer rotating to prevent momentum
-                SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             }
             m_isInRotateState = !m_isInRotateState;
         }
+        // Set object's Rotate state if m_rotateEnableToggle is false
         else if (m_prevRotateKeyValue != m_rotateKeyValue && !m_rotateEnableToggle)
         {
             if (m_rotateKeyValue != 0.f)
             {
+                // Store initial Angular Damping value
                 m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
+
                 // Set new Angular Damping before rotating object
                 SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
+
                 m_isInRotateState = true;
             }
             else
             {
                 // Set Angular Damping back to original value
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-                m_isInRotateState = false;
-                // Set Angular Velocity to zero when no longer rotating to prevent momentum
-                SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+
+                m_isInRotateState = false;    
             }
         }
 
-        // Rotate Dynamic object using Angular Velocity
+        // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         if (!m_kinematicWhileGrabbing && !m_isInitialObjectKinematic)
         {
             AZ::Vector3 currentAngularVelocity = AZ::Vector3::CreateZero();
 
             currentAngularVelocity = GetGrabbedObjectAngularVelocity();
-            
+
             m_delta_yaw = m_upVector * m_yawKeyValue;
             m_delta_pitch = m_rightVector * m_pitchKeyValue;
             m_delta_roll = m_forwardVector * m_rollKeyValue;
@@ -756,18 +727,18 @@ namespace TestGem
             newAngularVelocity = currentAngularVelocity + (m_delta_yaw + m_delta_pitch + m_delta_roll);
 
             SetGrabbedObjectAngularVelocity(newAngularVelocity);
-
-            m_hasRotated = true;
+            
+            m_hasRotated = true;      
         }
-        // Rotate Kinematic object using rotation transform
+        // Rotate the object using Rotation (Transform) if it is a Kinematic Rigid Body
         else
         {
-            AZ::Vector3 current_Rotation = GetEntityPtr(objectId)->GetTransform()->GetLocalRotation();
-            
+            AZ::Vector3 current_Rotation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetLocalRotation();
+
             m_delta_yaw = AZ::Vector3::CreateAxisZ(m_yawKeyValue);
             m_delta_pitch = AZ::Vector3::CreateAxisX(m_pitchKeyValue);
             m_delta_roll = AZ::Vector3::CreateAxisY(m_rollKeyValue);
-            
+
             m_delta_yaw *= m_kinematicRotateScale;
             m_delta_pitch *= m_kinematicRotateScale;
             m_delta_pitch *= m_kinematicRotateScale;
@@ -775,9 +746,69 @@ namespace TestGem
             AZ::Vector3 newRotation = AZ::Vector3::CreateZero();
             newRotation = current_Rotation + ((m_delta_yaw + m_delta_pitch + m_delta_roll) * deltaTime);
 
-            GetEntityPtr(objectId)->GetTransform()->SetLocalRotation(newRotation);
+            GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetLocalRotation(newRotation);
+            
+            m_hasRotated = true;        
+        }
 
-            m_hasRotated = true;
+        // Set Angular Velocity to zero when no longer rotating  
+        if (!m_isInRotateState)
+        {
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+        }
+    }
+    // Apply linear impulse to object if it is a Dynamic Rigid Body
+    void Grab::ThrowObject(const float& deltaTime)
+    {
+        // Do not execute the function if the object is not in Grab State, or if the object is initially a Kinematic Rigid Body
+        if ((!m_isInGrabState && !m_isInThrowState) || m_isInitialObjectKinematic)
+        {
+            return;
+        }
+
+        // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
+        if (m_throwKeyValue && GetGrabbedObjectIsKinematic())
+        {
+            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
+        }
+
+        if (m_throwKeyValue && !m_isInThrowState)
+        {
+            m_throwStateCounter = 0.f;
+
+            // Apply a Linear Impulse to the grabbed object.
+            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
+                &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
+                m_forwardVector * m_throwImpulse);
+
+            m_isInThrowState = true;
+            m_isInGrabState = false;
+            m_isInRotateState = false;
+            m_hasRotated = false;
+
+            m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
+
+            // Set Object Current Layer variable back to Prev Layer if in throw state
+            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
+            // Set Angular Damping back to original value
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+        }
+
+        if (m_isInThrowState)
+        {
+            m_throwStateCounter += deltaTime;
+
+            // Set throw state to false if the thrown grabbed object is more than the distance of m_sphereCastDistance away.
+            if (m_grabReference.GetTranslation().GetDistance(GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
+            {
+                m_isInThrowState = false;
+            }
+            // Set throw state to false if grabbed object is in throw state longer than m_throwStateTime
+            else if (m_throwStateCounter >= m_throwStateMaxTime)
+            {
+                m_isInThrowState = false;
+            }
         }
     }
 
@@ -826,52 +857,57 @@ namespace TestGem
         return m_isInRotateState;
     }
 
-    float Grab::GetGrabObjectDistance() const
+    bool Grab::GetObjectSphereCastHit() const
+    {
+        return m_objectSphereCastHit;
+    }
+
+    float Grab::GetGrabbedObjectDistance() const
     {
         return m_grabDistance;
     }
 
-    void Grab::SetGrabObjectDistance(const float& new_grabDistance)
+    void Grab::SetGrabbedObjectDistance(const float& new_grabDistance)
     {
         m_grabDistance = AZ::GetClamp(new_grabDistance, m_minGrabDistance, m_maxGrabDistance);
     }
 
-    float Grab::GetMinGrabObjectDistance() const
+    float Grab::GetMinGrabbedObjectDistance() const
     {
         return m_minGrabDistance;
     }
 
-    void Grab::SetMinGrabObjectDistance(const float& new_minGrabDistance)
+    void Grab::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
     {
         m_minGrabDistance = new_minGrabDistance;
     }
 
-    float Grab::GetMaxGrabObjectDistance() const
+    float Grab::GetMaxGrabbedObjectDistance() const
     {
         return m_maxGrabDistance;
     }
 
-    void Grab::SetMaxGrabObjectDistance(const float& new_maxGrabDistance)
+    void Grab::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
     {
         m_maxGrabDistance = new_maxGrabDistance;
     }
 
-    float Grab::GetInitialGrabObjectDistance() const
+    float Grab::GetInitialGrabbedObjectDistance() const
     {
         return m_initialGrabDistance;
     }
 
-    void Grab::SetInitialGrabObjectDistance(const float& new_initialGrabDistance)
+    void Grab::SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance)
     {
         m_initialGrabDistance = new_initialGrabDistance;
     }
 
-    float Grab::GetGrabObjectDistanceSpeed() const
+    float Grab::GetGrabbedObjectDistanceSpeed() const
     {
         return m_grabDistanceSpeed;
     }
 
-    void Grab::SetGrabObjectDistanceSpeed(const float& new_grabDistanceSpeed)
+    void Grab::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
     {
         m_grabDistanceSpeed = new_grabDistanceSpeed;
     }
@@ -914,6 +950,21 @@ namespace TestGem
     void Grab::SetThrowImpulse(const float& new_throwImpulse)
     {
         m_throwImpulse = new_throwImpulse;
+    }
+
+    float Grab::GetGrabbedObjectThrowStateCounter() const
+    {
+        return m_throwStateCounter;
+    }
+
+    float Grab::GetGrabbedObjectThrowStateTime() const
+    {
+        return m_throwStateMaxTime;
+    }
+
+    void Grab::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
+    {
+        m_throwStateMaxTime = new_throwStateMaxTime;
     }
 
     float Grab::GetSphereCastRadius() const
