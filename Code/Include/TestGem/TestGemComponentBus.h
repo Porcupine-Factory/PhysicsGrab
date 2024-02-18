@@ -74,28 +74,62 @@ namespace TestGem
     };
 
     using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;
-    /*
-    class GrabNotifications
-        : public AZ::ComponentBus
+
+    class TestGemNotifications : public AZ::ComponentBus
     {
     public:
-        virtual void OnGrabChanged() = 0;
+        virtual void OnObjectSphereCastHit() = 0;
+        virtual void OnGrabObject() = 0;
+        virtual void OnEndGrabObject() = 0;
+        virtual void OnRotateObject() = 0;
+        virtual void OnEndRotateObject() = 0;
+        virtual void OnThrowObject() = 0;
+        virtual void OnThrowStateCounterZero() = 0;
+        virtual void OnMaxThrowDistance() = 0;
     };
 
-    using GrabNotificationBus = AZ::EBus<GrabNotifications>;
+    using TestGemNotificationBus = AZ::EBus<TestGemNotifications>;
 
-    class GrabNotificationHandler
-        : public GrabNotificationBus::Handler
+    class TestGemNotificationHandler
+        : public TestGemNotificationBus::Handler
         , public AZ::BehaviorEBusHandler
     {
     public:
-        AZ_EBUS_BEHAVIOR_BINDER(GrabNotificationHandler,
-            "{814559c9-032e-44ff-85fa-fc1a8ef95068}",
-            AZ::SystemAllocator, OnGrabChanged);
+        AZ_EBUS_BEHAVIOR_BINDER(TestGemNotificationHandler,
+            "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
+            AZ::SystemAllocator, OnObjectSphereCastHit, OnGrabObject, OnEndGrabObject, OnRotateObject, OnEndRotateObject, OnThrowObject, OnThrowStateCounterZero, OnMaxThrowDistance);
 
-        void OnGrabChanged() override
+        void OnObjectSphereCastHit() override
         {
-            Call(FN_OnGrabChanged);
+            Call(FN_OnObjectSphereCastHit);
         }
-    };*/
+        void OnGrabObject() override
+        {
+            Call(FN_OnGrabObject);
+        }
+        void OnEndGrabObject() override
+        {
+            Call(FN_OnEndGrabObject);
+        }
+        void OnRotateObject() override
+        {
+            Call(FN_OnRotateObject);
+        }
+        void OnEndRotateObject() override
+        {
+            Call(FN_OnEndRotateObject);
+        }
+        void OnThrowObject() override
+        {
+            Call(FN_OnThrowObject);
+        }
+        void OnThrowStateCounterZero() override
+        {
+            Call(FN_OnThrowStateCounterZero);
+        }
+        void OnMaxThrowDistance() override
+        {
+            Call(FN_OnMaxThrowDistance);
+        }
+    };
 } // namespace TestGem

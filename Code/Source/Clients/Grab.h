@@ -54,11 +54,8 @@ namespace TestGem
 		AZ::EntityId GetGrabbedObjectEntityId() const override;
 		AZ::EntityId GetLastGrabbedObjectEntityId() const override;
 		AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
-
-
 		AZStd::string GetGrabbedCollisionGroup() const override;
 		void SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupId) override;
-
 		AZStd::string GetCurrentGrabbedCollisionLayerName() const override;
 		void SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName) override;
 		AzPhysics::CollisionLayer GetCurrentGrabbedCollisionLayer() const override;
@@ -71,7 +68,6 @@ namespace TestGem
 		void SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName) override;
 		AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
 		void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
-
 		void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
 		bool GetIsInGrabState() const override;
 		bool GetIsInThrowState() const override;
@@ -143,6 +139,16 @@ namespace TestGem
 		void GrabObject(const float& deltaTime);
 		void RotateObject(const float& deltaTime);
 		void ThrowObject(const float& deltaTime);
+
+		// TestGemNotificationBus
+		void OnObjectSphereCastHit();
+		void OnGrabObject();
+		void OnEndGrabObject();
+		void OnRotateObject();
+		void OnEndRotateObject();
+		void OnThrowObject();
+		void OnMaxThrowDistance();
+		void OnThrowStateCounterZero();
 
 		AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
 		AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();

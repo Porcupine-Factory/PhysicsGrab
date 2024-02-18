@@ -167,8 +167,8 @@ namespace TestGem
 
         if (auto bc = azrtti_cast<AZ::BehaviorContext*>(rc))
         {
-            //bc->EBus<GrabNotificationBus>("GrabNotificationBus")
-            //    ->Handler<GrabNotificationHandler>();
+            bc->EBus<TestGemNotificationBus>("GrabNotificationBus", "GrabComponentNotificationBus", "Notifications for Grab Component")
+                ->Handler<TestGemNotificationHandler>();
 
             bc->EBus<TestGemComponentRequestBus>("TestGemComponentRequestBus")
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
@@ -491,6 +491,8 @@ namespace TestGem
             return;
         }
         
+        const bool prevObjectSphereCastHit = m_objectSphereCastHit;
+
         // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
 
@@ -520,6 +522,12 @@ namespace TestGem
             m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
             m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
         }
+
+        // Trigger an event notification if SphereCast query succesfully hits an object
+        if (!prevObjectSphereCastHit && m_objectSphereCastHit)
+        {
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnObjectSphereCastHit);
+        }
     }
 
     // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is enabled. 
@@ -532,6 +540,9 @@ namespace TestGem
             m_isInGrabState = false;
             return;
         }
+
+        const bool prevGrabState = m_isInGrabState;
+
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively.
         m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
@@ -650,6 +661,16 @@ namespace TestGem
                 &Physics::RigidBodyRequests::SetLinearVelocity,
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);   
         }
+
+        // Trigger an event notification when object enters Grab state or exits Grab state
+        if (!prevGrabState && m_isInGrabState)
+        {
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabObject);
+        }
+        else if (prevGrabState && !m_isInGrabState)
+        {
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnEndGrabObject);
+        }
     }
 
     // Rotate object using physics or transforms, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is enabled.
@@ -661,6 +682,8 @@ namespace TestGem
         {
             return;
         }
+
+        const bool prevRotateState = m_isInRotateState;
 
         // Get right vector relative to the grabbing entity's transform
         m_rightVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
@@ -756,6 +779,16 @@ namespace TestGem
         {
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
         }
+
+        // Trigger an event notification when object enters Rotate State or exits Rotate state
+        if (!prevRotateState && m_isInRotateState)
+        {
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateObject);
+        }
+        else if (prevRotateState && !m_isInRotateState)
+        {
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnEndRotateObject);
+        }
     }
     // Apply linear impulse to object if it is a Dynamic Rigid Body
     void Grab::ThrowObject(const float& deltaTime)
@@ -774,12 +807,15 @@ namespace TestGem
 
         if (m_throwKeyValue && !m_isInThrowState)
         {
-            m_throwStateCounter = 0.f;
+            m_throwStateCounter = m_throwStateMaxTime;
 
             // Apply a Linear Impulse to the grabbed object.
             Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
                 m_forwardVector * m_throwImpulse);
+
+            // Trigger an event notification when object enters Throw State
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowObject);
 
             m_isInThrowState = true;
             m_isInGrabState = false;
@@ -797,21 +833,34 @@ namespace TestGem
 
         if (m_isInThrowState)
         {
-            m_throwStateCounter += deltaTime;
+            m_throwStateCounter -= deltaTime;
 
             // Set throw state to false if the thrown grabbed object is more than the distance of m_sphereCastDistance away.
             if (m_grabReference.GetTranslation().GetDistance(GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
             {
                 m_isInThrowState = false;
+                TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnMaxThrowDistance);
             }
-            // Set throw state to false if grabbed object is in throw state longer than m_throwStateTime
-            else if (m_throwStateCounter >= m_throwStateMaxTime)
+            // Set throw state to false if grabbed object is in throw state longer than m_throwStateMaxTime
+            else if (m_throwStateCounter <= 0.f)
             {
                 m_isInThrowState = false;
+                TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStateCounterZero);
             }
         }
     }
 
+    // Event Notification methods for use in scripts
+    void Grab::OnObjectSphereCastHit(){}
+    void Grab::OnGrabObject(){}
+    void Grab::OnEndGrabObject(){}
+    void Grab::OnRotateObject(){}
+    void Grab::OnEndRotateObject(){}
+    void Grab::OnThrowObject(){}
+    void Grab::OnMaxThrowDistance(){}
+    void Grab::OnThrowStateCounterZero(){}
+
+    // Request Bus getter and setter methods for use in scripts
     AZ::EntityId Grab::GetGrabbingEntityId() const
     {
         return m_grabbingEntityPtr->GetId();
