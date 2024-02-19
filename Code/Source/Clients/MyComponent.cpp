@@ -5,24 +5,23 @@ using namespace TestGem;
 
 void MyComponent::Reflect(AZ::ReflectContext* reflection)
 {
-	//AZ_UNUSED(reflection);
-	auto sc = azrtti_cast<AZ::SerializeContext*>(reflection);
-	if (!sc) return;
+    // AZ_UNUSED(reflection);
+    auto sc = azrtti_cast<AZ::SerializeContext*>(reflection);
+    if (!sc)
+        return;
 
-	sc->Class<MyComponent, Component>()
-		->Version(1);
+    sc->Class<MyComponent, Component>()->Version(1);
 
-	AZ::EditContext* ec = sc->GetEditContext();
-	if (!ec) return;
+    AZ::EditContext* ec = sc->GetEditContext();
+    if (!ec)
+        return;
 
-	using namespace AZ::Edit::Attributes;
+    using namespace AZ::Edit::Attributes;
 
-		// reflection of this component for O3DE Editor
+    // reflection of this component for O3DE Editor
 
-		ec->Class<MyComponent>("My Component", "[Test new component]")
-		->ClassElement(AZ::Edit::ClassElements::EditorData, "")
-		->Attribute(AppearsInAddComponentMenu, AZ_CRC("Game"))
-		->Attribute(Category, "TestGem");
+    ec->Class<MyComponent>("My Component", "[Test new component]")
+        ->ClassElement(AZ::Edit::ClassElements::EditorData, "")
+        ->Attribute(AppearsInAddComponentMenu, AZ_CRC("Game"))
+        ->Attribute(Category, "TestGem");
 }
-
-

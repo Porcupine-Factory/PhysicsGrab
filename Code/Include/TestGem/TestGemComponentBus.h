@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AzCore/Component/ComponentBus.h>
+#include <AzCore/Math/Vector3.h>
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzFramework/Physics/Collision/CollisionLayers.h>
 
@@ -26,8 +27,8 @@ namespace TestGem
         virtual void SetPrevGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetPrevGrabbedCollisionLayer() const = 0;
         virtual void SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
-		virtual AZStd::string GetTempGrabbedCollisionLayerName() const = 0;
-		virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
+        virtual AZStd::string GetTempGrabbedCollisionLayerName() const = 0;
+        virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
@@ -95,9 +96,18 @@ namespace TestGem
         , public AZ::BehaviorEBusHandler
     {
     public:
-        AZ_EBUS_BEHAVIOR_BINDER(TestGemNotificationHandler,
+        AZ_EBUS_BEHAVIOR_BINDER(
+            TestGemNotificationHandler,
             "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
-            AZ::SystemAllocator, OnObjectSphereCastHit, OnGrabObject, OnEndGrabObject, OnRotateObject, OnEndRotateObject, OnThrowObject, OnThrowStateCounterZero, OnMaxThrowDistance);
+            AZ::SystemAllocator,
+            OnObjectSphereCastHit,
+            OnGrabObject,
+            OnEndGrabObject,
+            OnRotateObject,
+            OnEndRotateObject,
+            OnThrowObject,
+            OnThrowStateCounterZero,
+            OnMaxThrowDistance);
 
         void OnObjectSphereCastHit() override
         {

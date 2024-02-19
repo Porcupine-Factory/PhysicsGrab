@@ -1,9 +1,9 @@
 
 #include "TestGemSystemComponent.h"
 
-#include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzCore/Serialization/EditContextConstants.inl>
+#include <AzCore/Serialization/SerializeContext.h>
 
 namespace TestGem
 {
@@ -11,16 +11,13 @@ namespace TestGem
     {
         if (AZ::SerializeContext* serialize = azrtti_cast<AZ::SerializeContext*>(context))
         {
-            serialize->Class<TestGemSystemComponent, AZ::Component>()
-                ->Version(0)
-                ;
+            serialize->Class<TestGemSystemComponent, AZ::Component>()->Version(0);
 
             if (AZ::EditContext* ec = serialize->GetEditContext())
             {
                 ec->Class<TestGemSystemComponent>("TestGem", "[Description of functionality provided by this System Component]")
                     ->ClassElement(AZ::Edit::ClassElements::EditorData, "")
-                        ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ;
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true);
             }
         }
     }

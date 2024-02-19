@@ -23,25 +23,22 @@ namespace TestGem
             if (AZ::EditContext* ec = sc->GetEditContext())
             {
                 using namespace AZ::Edit;
-                ec->Class<RaycastTest>(
-                    "Raycast Test",
-                    "[Component to test raycast funcionality]")
+                ec->Class<RaycastTest>("Raycast Test", "[Component to test raycast funcionality]")
                     ->ClassElement(ClassElements::EditorData, "")
-                    ->Attribute(
-                        Attributes::AppearsInAddComponentMenu,
-                        AZ_CRC_CE("Game"))
-                    ->DataElement(nullptr,
-                        &RaycastTest::m_groundCheckRadius,
-                        "Ground Check Radius", "Sphere Cast radius used for ground check")
-                    ->DataElement(nullptr,
+                    ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
+                    ->DataElement(
+                        nullptr, &RaycastTest::m_groundCheckRadius, "Ground Check Radius", "Sphere Cast radius used for ground check")
+                    ->DataElement(
+                        nullptr,
                         &RaycastTest::m_sphereCastDistance,
-                        "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
-                    ->DataElement(nullptr,
-                        &RaycastTest::m_sphereCastDirection,
-                        "Sphere Cast Direction", "Direction to cast Sphere")
-                    ->DataElement(nullptr,
+                        "Sphere Cast Distance",
+                        "Sphere Cast distance along m_sphereCastDirection")
+                    ->DataElement(nullptr, &RaycastTest::m_sphereCastDirection, "Sphere Cast Direction", "Direction to cast Sphere")
+                    ->DataElement(
+                        nullptr,
                         &RaycastTest::m_groundedCollisionGroupId,
-                        "Grounded Collision Group", "The collision group which will be used for the ground detection.");
+                        "Grounded Collision Group",
+                        "The collision group which will be used for the ground detection.");
             }
         }
     }
@@ -49,7 +46,7 @@ namespace TestGem
     {
         AZ::TickBus::Handler::BusConnect();
 
-        //Physics::CharacterNotificationBus::Handler::BusConnect(GetEntityId());
+        // Physics::CharacterNotificationBus::Handler::BusConnect(GetEntityId());
 
         Physics::CollisionRequestBus::BroadcastResult(
             m_groundedCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_groundedCollisionGroupId);
@@ -67,8 +64,8 @@ namespace TestGem
 
     void RaycastTest::RaycastCheck()
     {
-        // Get our entity's local translation   
-        //AZ::Vector3 currentTranslation = GetEntity()->GetTransform()->GetLocalTranslation();
+        // Get our entity's local translation
+        // AZ::Vector3 currentTranslation = GetEntity()->GetTransform()->GetLocalTranslation();
 
         /*
         // Perform a raycast query to check if entity is grounded
@@ -85,12 +82,14 @@ namespace TestGem
 
         // Get our entity's local transform and offset it along Z axis by m_groundCheckRadius distance
         AZ::Transform currentTransform = AZ::Transform::CreateIdentity();
-        currentTransform.SetTranslation(GetEntity()->GetTransform()->GetLocalTM().GetTranslation() + AZ::Vector3::CreateAxisZ(m_groundCheckRadius));
+        currentTransform.SetTranslation(
+            GetEntity()->GetTransform()->GetLocalTM().GetTranslation() + AZ::Vector3::CreateAxisZ(m_groundCheckRadius));
 
         // Perform a spherecast query to check if entity is grounded
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
 
-        AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(m_groundCheckRadius,
+        AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(
+            m_groundCheckRadius,
             currentTransform,
             AZ::Vector3(0.0f, 0.0f, m_sphereCastDirection),
             m_sphereCastDistance,
@@ -106,6 +105,4 @@ namespace TestGem
         // Print entity's grounded state
         AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
     }
-}
-
-
+} // namespace TestGem

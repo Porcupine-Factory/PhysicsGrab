@@ -13,9 +13,8 @@ namespace TestGem
         virtual ~TestGemRequests() = default;
         // Put your public methods here
     };
-    
-    class TestGemBusTraits
-        : public AZ::EBusTraits
+
+    class TestGemBusTraits : public AZ::EBusTraits
     {
     public:
         //////////////////////////////////////////////////////////////////////////

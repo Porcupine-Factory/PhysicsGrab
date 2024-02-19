@@ -2,10 +2,10 @@
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
-#include <AzFramework/Physics/NameConstants.h>
-#include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Physics/CollisionBus.h>
+#include <AzFramework/Physics/NameConstants.h>
+#include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
@@ -34,21 +34,26 @@ namespace TestGem
                 ->Field("Kinematic While Grabbing", &Grab::m_kinematicWhileGrabbing)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Default Grab Distance", &Grab::m_initialGrabDistance)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Min Grab Distance", &Grab::m_minGrabDistance)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Max Grab Distance", &Grab::m_maxGrabDistance)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &Grab::m_grabDistanceSpeed)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
                 ->Field("Throw Impulse", &Grab::m_throwImpulse)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Grab Response", &Grab::m_grabResponse)
-                    ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" s%s%s", Physics::NameConstants::GetSuperscriptMinus().c_str(), Physics::NameConstants::GetSuperscriptOne().c_str()))
+                ->Attribute(
+                    AZ::Edit::Attributes::Suffix,
+                    AZStd::string::format(
+                        " s%s%s",
+                        Physics::NameConstants::GetSuperscriptMinus().c_str(),
+                        Physics::NameConstants::GetSuperscriptOne().c_str()))
                 ->Field("Kinematic Rotate Scale", &Grab::m_kinematicRotateScale)
                 ->Field("Dynamic Rotate Scale", &Grab::m_dynamicRotateScale)
                 ->Field("Angular Damping", &Grab::m_tempObjectAngularDamping)
@@ -59,109 +64,107 @@ namespace TestGem
             if (AZ::EditContext* ec = sc->GetEditContext())
             {
                 using namespace AZ::Edit;
-                ec->Class<Grab>(
-                    "Grab",
-                    "[Grab Interaction Component]")
+                ec->Class<Grab>("Grab", "[Grab Interaction Component]")
                     ->ClassElement(ClassElements::EditorData, "")
-                    ->Attribute(
-                        Attributes::AppearsInAddComponentMenu,
-                        AZ_CRC_CE("Game"))
+                    ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
 
-
-                    ->DataElement(0,
-                        &Grab::m_grabbingEntityId, "Grab Entity", "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
+                    ->DataElement(
+                        0,
+                        &Grab::m_grabbingEntityId,
+                        "Grab Entity",
+                        "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
 
                     // Input Binding Keys
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr,
-                        &Grab::m_strGrab,
-                        "Grab Key", "Grab interaction input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strGrabDistance,
-                        "Grab Distance Key", "Grab distance input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strThrow,
-                        "Throw Input Key", "Throw object input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strRotate,
-                        "Rotate Enable Key", "Enable rotate object input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strRotatePitch,
-                        "Rotate Pitch Key", "Rotate object about X axis input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strRotateYaw,
-                        "Rotate Yaw Key", "Rotate object about Z axis input binding")
-                    ->DataElement(nullptr,
-                        &Grab::m_strRotateRoll,
-                        "Rotate Roll Key", "Rotate object about Y axis input binding")
-
+                    ->DataElement(nullptr, &Grab::m_strGrab, "Grab Key", "Grab interaction input binding")
+                    ->DataElement(nullptr, &Grab::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
+                    ->DataElement(nullptr, &Grab::m_strThrow, "Throw Input Key", "Throw object input binding")
+                    ->DataElement(nullptr, &Grab::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
+                    ->DataElement(nullptr, &Grab::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(nullptr, &Grab::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
+                    ->DataElement(nullptr, &Grab::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr,
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_grabEnableToggle,
-                        "Grab Enable Toggle", "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to maintain Grab mode.")
-                    ->DataElement(nullptr,
+                        "Grab Enable Toggle",
+                        "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to "
+                        "maintain Grab mode.")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_grabMaintained,
-                        "Maintain Grab", "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from flying off when quickly changing directions.")
-                    ->DataElement(nullptr,
-                        &Grab::m_kinematicWhileGrabbing,
-                        "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
-                    ->DataElement(nullptr,
+                        "Maintain Grab",
+                        "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from "
+                        "flying off when quickly changing directions.")
+                    ->DataElement(
+                        nullptr, &Grab::m_kinematicWhileGrabbing, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_rotateEnableToggle,
-                        "Rotate Enable Toggle", "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to maintain Rotate mode.")
-                    
-                    
+                        "Rotate Enable Toggle",
+                        "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
+                        "maintain Rotate mode.")
+
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr,
-                        &Grab::m_throwImpulse,
-                        "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
-                    ->DataElement(nullptr,
-                        &Grab::m_grabResponse,
-                        "Grab Response", "Linear velocity scale applied when holding grabbed object")
-                    ->DataElement(nullptr,
+                    ->DataElement(
+                        nullptr, &Grab::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
+                    ->DataElement(
+                        nullptr, &Grab::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_kinematicRotateScale,
-                        "Kinematic Rotate Scale", "Rotation speed scale applied when rotating kinematic object")
-                    ->DataElement(nullptr,
+                        "Kinematic Rotate Scale",
+                        "Rotation speed scale applied when rotating kinematic object")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_dynamicRotateScale,
-                        "Dynamic Rotate Scale", "Angular Velocity scale applied when rotating dynamic object")
-                    ->DataElement(nullptr,
-                        &Grab::m_tempObjectAngularDamping,
-                        "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
-
+                        "Dynamic Rotate Scale",
+                        "Angular Velocity scale applied when rotating dynamic object")
+                    ->DataElement(
+                        nullptr, &Grab::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr,
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_grabbedCollisionGroupId,
-                        "Sphere Cast Collision Group", "The collision group which will be used for detecting grabbable objects.")
-                    ->DataElement(nullptr,
+                        "Sphere Cast Collision Group",
+                        "The collision group which will be used for detecting grabbable objects.")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_tempGrabbedCollisionLayer,
-                        "Grabbed Object Temporary Collision Layer", "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
-                    ->DataElement(nullptr,
-                        &Grab::m_sphereCastRadius,
-                        "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
-                    ->DataElement(nullptr,
-                        &Grab::m_sphereCastDistance,
-                        "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
-
+                        "Grabbed Object Temporary Collision Layer",
+                        "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
+                    ->DataElement(nullptr, &Grab::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
+                    ->DataElement(
+                        nullptr, &Grab::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr,
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_initialGrabDistance,
-                        "Default Grab Distance", "Distance the grabbed object will default to when letting go of the object")
-                    ->DataElement(nullptr,
+                        "Default Grab Distance",
+                        "Distance the grabbed object will default to when letting go of the object")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_minGrabDistance,
-                        "Min Grab Distance", "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
-                    ->DataElement(nullptr,
+                        "Min Grab Distance",
+                        "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_maxGrabDistance,
-                        "Max Grab Distance", "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
-                    ->DataElement(nullptr,
+                        "Max Grab Distance",
+                        "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
+                    ->DataElement(
+                        nullptr,
                         &Grab::m_grabDistanceSpeed,
-                        "Grab Distance Speed", "The speed at which you move the grabbed object closer or away.");
+                        "Grab Distance Speed",
+                        "The speed at which you move the grabbed object closer or away.");
             }
         }
 
@@ -312,7 +315,7 @@ namespace TestGem
     {
         dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
     }
-    
+
     void Grab::OnCameraAdded(const AZ::EntityId& cameraId)
     {
         if (!m_grabbingEntityId.IsValid())
@@ -321,17 +324,16 @@ namespace TestGem
             m_grabbingEntityPtr = GetEntityPtr(cameraId);
         }
     }
-    
+
     AZ::Entity* Grab::GetActiveCameraEntityPtr() const
     {
         AZ::EntityId activeCameraId;
-        Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId,
-            &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
+        Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId, &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
 
         auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
         return ca->FindEntity(activeCameraId);
     }
- 
+
     // Recieve the input event in OnPressed method
     void Grab::OnPressed(float value)
     {
@@ -344,43 +346,43 @@ namespace TestGem
         if (*inputId == m_grabEventId)
         {
             m_grabKeyValue = value;
-            //AZ_Printf("Player", "Grab value %f", value);
+            // AZ_Printf("Player", "Grab value %f", value);
         }
 
         if (*inputId == m_grabDistanceEventId)
         {
             m_grabDistanceKeyValue = value;
-            //AZ_Printf("Object", "Grab Distance value %f", value);
+            // AZ_Printf("Object", "Grab Distance value %f", value);
         }
 
         if (*inputId == m_throwEventId)
         {
             m_throwKeyValue = value;
-            //AZ_Printf("Player", "Throw value %f", value);
+            // AZ_Printf("Player", "Throw value %f", value);
         }
 
         if (*inputId == m_rotateEventId)
         {
             m_rotateKeyValue = value;
-            //AZ_Printf("Player", "rotate value %f", value);
+            // AZ_Printf("Player", "rotate value %f", value);
         }
 
         if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
-            //AZ_Printf("Object", "Grab Object pitch value %f", value);
+            // AZ_Printf("Object", "Grab Object pitch value %f", value);
         }
 
         if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue = value;
-            //AZ_Printf("Object", "Grab Object yaw value %f", value);
+            // AZ_Printf("Object", "Grab Object yaw value %f", value);
         }
 
         if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue = value;
-            //AZ_Printf("Object", "Grab Object roll value %f", value);
+            // AZ_Printf("Object", "Grab Object roll value %f", value);
         }
     }
 
@@ -395,47 +397,46 @@ namespace TestGem
         if (*inputId == m_grabEventId)
         {
             m_grabKeyValue = value;
-            //AZ_Printf("Player", "Grab released value %f", value);
+            // AZ_Printf("Player", "Grab released value %f", value);
         }
         if (*inputId == m_grabDistanceEventId)
         {
             m_grabDistanceKeyValue = value;
-            //AZ_Printf("Player", "Grab Distance released value %f", value);
+            // AZ_Printf("Player", "Grab Distance released value %f", value);
         }
         if (*inputId == m_throwEventId)
         {
             m_throwKeyValue = value;
-            //AZ_Printf("Player", "Throw released value %f", value);
+            // AZ_Printf("Player", "Throw released value %f", value);
         }
         if (*inputId == m_rotateEventId)
         {
             m_rotateKeyValue = value;
-            //AZ_Printf("Player", "Throw released value %f", value);
+            // AZ_Printf("Player", "Throw released value %f", value);
         }
 
         if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
-            //AZ_Printf("Object", "Grab Object pitch released value %f", value);
+            // AZ_Printf("Object", "Grab Object pitch released value %f", value);
         }
 
         if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue = value;
-            //AZ_Printf("Object", "Grab Object yaw released value %f", value);
+            // AZ_Printf("Object", "Grab Object yaw released value %f", value);
         }
 
         if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue = value;
-            //AZ_Printf("Object", "Grab Object roll released value %f", value);
+            // AZ_Printf("Object", "Grab Object roll released value %f", value);
         }
     }
 
     void Grab::OnHeld(float value)
     {
-        const InputEventNotificationId* inputId =
-            InputEventNotificationBus::GetCurrentBusId();
+        const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
         {
             return;
@@ -443,25 +444,25 @@ namespace TestGem
         if (*inputId == m_throwEventId)
         {
             m_throwKeyValue = value;
-            //AZ_Printf("Player", "Throw held value %f", value);
+            // AZ_Printf("Player", "Throw held value %f", value);
         }
 
         if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
-            //AZ_Printf("Object", "Grab Object pitch held value %f", value);
+            // AZ_Printf("Object", "Grab Object pitch held value %f", value);
         }
 
         else if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue = value;
-            //AZ_Printf("Object", "Grab Object yaw held value %f", value);
+            // AZ_Printf("Object", "Grab Object yaw held value %f", value);
         }
 
         else if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue = value;
-            //AZ_Printf("Object", "Grab Object roll held value %f", value);
+            // AZ_Printf("Object", "Grab Object roll held value %f", value);
         }
     }
 
@@ -482,19 +483,21 @@ namespace TestGem
         return ca->FindEntity(pointer);
     }
 
-    // Perform a spherecast query to check if colliding with a grabbable object, then assign the first returned hit to m_grabbedObjectEntityId
+    // Perform a spherecast query to check if colliding with a grabbable object, then assign the first returned hit to
+    // m_grabbedObjectEntityId
     void Grab::CheckForObjects()
-    {   
+    {
         // Do not execute the function if Grab Key is not pressed and not currently in Grab State
         if (!m_grabKeyValue && !m_isInGrabState)
         {
             return;
         }
-        
+
         const bool prevObjectSphereCastHit = m_objectSphereCastHit;
 
         // Get forward vector relative to the grabbing entity's transform
-        m_forwardVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
+        m_forwardVector =
+            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
 
         // Get our grabbing entity's world transform
         m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
@@ -502,7 +505,8 @@ namespace TestGem
         // Perform a spherecast query to check if colliding with object
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
 
-        AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(m_sphereCastRadius,
+        AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(
+            m_sphereCastRadius,
             m_grabbingEntityTransform,
             m_forwardVector,
             m_sphereCastDistance,
@@ -530,9 +534,10 @@ namespace TestGem
         }
     }
 
-    // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is enabled. 
+    // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileGrabbing is
+    // enabled.
     void Grab::GrabObject(const float& deltaTime)
-    { 
+    {
         // Do not execute the function if there is no SphereCast hit and not in Grab State, or if the object is being thrown
         if ((!m_objectSphereCastHit && (!m_grabMaintained || (m_grabMaintained && !m_isInGrabState))) || m_isInThrowState)
         {
@@ -543,12 +548,16 @@ namespace TestGem
 
         const bool prevGrabState = m_isInGrabState;
 
-        // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively.
-        m_grabDistance = AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
+        // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
+        // and m_maxGrabDistance, respectively.
+        m_grabDistance =
+            AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
-        // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity. This can be thought of as the "hand".
+        // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity. This can be thought of as the
+        // "hand".
         m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
-        m_grabReference.SetTranslation(m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+        m_grabReference.SetTranslation(
+            m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
         m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
@@ -631,23 +640,27 @@ namespace TestGem
         // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
         if (m_isInGrabState && (m_kinematicWhileGrabbing || m_isInitialObjectKinematic))
         {
-            // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic 
+            // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic
             if (!GetGrabbedObjectIsKinematic())
             {
                 SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, true);
             }
 
-            // If object is NOT in rotate state, move object by setting its Translation directly. Only rotate object if it has been in rotate state
+            // If object is NOT in rotate state, move object by setting its Translation directly. Only rotate object if it has been in
+            // rotate state
             if (!m_isInRotateState)
             {
                 GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
-                // Keep Object rotation facing the grabbing entity if it has not be rotated. If it has been rotated, object will keep that rotation while translating
+                // Keep Object rotation facing the grabbing entity if it has not be rotated. If it has been rotated, object will keep that
+                // rotation while translating
                 if (!m_hasRotated)
                 {
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldRotation(m_grabReference.GetRotation().GetEulerRadians());
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)
+                        ->GetTransform()
+                        ->SetWorldRotation(m_grabReference.GetRotation().GetEulerRadians());
                 }
             }
-            // If object is in rotate state, move object by setting its Translation, but do not rotate it 
+            // If object is in rotate state, move object by setting its Translation, but do not rotate it
             else
             {
                 GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
@@ -656,10 +669,12 @@ namespace TestGem
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else if (m_isInGrabState && !GetGrabbedObjectIsKinematic() && (!m_kinematicWhileGrabbing || !m_isInitialObjectKinematic))
         {
-            // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the reference. Then apply a linear velocity to move the object toward the reference. 
-            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
+            // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the
+            // reference. Then apply a linear velocity to move the object toward the reference.
+            Physics::RigidBodyRequestBus::Event(
+                m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);   
+                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
         }
 
         // Trigger an event notification when object enters Grab state or exits Grab state
@@ -686,10 +701,12 @@ namespace TestGem
         const bool prevRotateState = m_isInRotateState;
 
         // Get right vector relative to the grabbing entity's transform
-        m_rightVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+        m_rightVector =
+            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
 
         // Get up vector relative to the grabbing entity's transform
-        m_upVector = AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
+        m_upVector =
+            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
 
         // Set object's Rotate state if m_rotateEnableToggle is true
         if (m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f)
@@ -726,7 +743,7 @@ namespace TestGem
                 // Set Angular Damping back to original value
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
-                m_isInRotateState = false;    
+                m_isInRotateState = false;
             }
         }
 
@@ -750,10 +767,10 @@ namespace TestGem
             newAngularVelocity = currentAngularVelocity + (m_delta_yaw + m_delta_pitch + m_delta_roll);
 
             SetGrabbedObjectAngularVelocity(newAngularVelocity);
-            
-            m_hasRotated = true;      
+
+            m_hasRotated = true;
         }
-        // Rotate the object using Rotation (Transform) if it is a Kinematic Rigid Body
+        // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         else
         {
             AZ::Vector3 current_Rotation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetLocalRotation();
@@ -770,11 +787,11 @@ namespace TestGem
             newRotation = current_Rotation + ((m_delta_yaw + m_delta_pitch + m_delta_roll) * deltaTime);
 
             GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetLocalRotation(newRotation);
-            
-            m_hasRotated = true;        
+
+            m_hasRotated = true;
         }
 
-        // Set Angular Velocity to zero when no longer rotating  
+        // Set Angular Velocity to zero when no longer rotating
         if (!m_isInRotateState)
         {
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
@@ -799,7 +816,8 @@ namespace TestGem
             return;
         }
 
-        // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating. This only happens temporarily, as the object will be set to Dynamic in order to throw.
+        // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating.
+        // This only happens temporarily, as the object will be set to Dynamic in order to throw.
         if (m_throwKeyValue && GetGrabbedObjectIsKinematic())
         {
             SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
@@ -810,9 +828,8 @@ namespace TestGem
             m_throwStateCounter = m_throwStateMaxTime;
 
             // Apply a Linear Impulse to the grabbed object.
-            Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-                &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse,
-                m_forwardVector * m_throwImpulse);
+            Physics::RigidBodyRequestBus::Event(
+                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, m_forwardVector * m_throwImpulse);
 
             // Trigger an event notification when object enters Throw State
             TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowObject);
@@ -836,7 +853,8 @@ namespace TestGem
             m_throwStateCounter -= deltaTime;
 
             // Set throw state to false if the thrown grabbed object is more than the distance of m_sphereCastDistance away.
-            if (m_grabReference.GetTranslation().GetDistance(GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
+            if (m_grabReference.GetTranslation().GetDistance(
+                    GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
             {
                 m_isInThrowState = false;
                 TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnMaxThrowDistance);
@@ -851,14 +869,30 @@ namespace TestGem
     }
 
     // Event Notification methods for use in scripts
-    void Grab::OnObjectSphereCastHit(){}
-    void Grab::OnGrabObject(){}
-    void Grab::OnEndGrabObject(){}
-    void Grab::OnRotateObject(){}
-    void Grab::OnEndRotateObject(){}
-    void Grab::OnThrowObject(){}
-    void Grab::OnMaxThrowDistance(){}
-    void Grab::OnThrowStateCounterZero(){}
+    void Grab::OnObjectSphereCastHit()
+    {
+    }
+    void Grab::OnGrabObject()
+    {
+    }
+    void Grab::OnEndGrabObject()
+    {
+    }
+    void Grab::OnRotateObject()
+    {
+    }
+    void Grab::OnEndRotateObject()
+    {
+    }
+    void Grab::OnThrowObject()
+    {
+    }
+    void Grab::OnMaxThrowDistance()
+    {
+    }
+    void Grab::OnThrowStateCounterZero()
+    {
+    }
 
     // Request Bus getter and setter methods for use in scripts
     AZ::EntityId Grab::GetGrabbingEntityId() const
@@ -888,7 +922,7 @@ namespace TestGem
 
     void Grab::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
     {
-       m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
+        m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
     }
 
     bool Grab::GetIsInGrabState() const
@@ -1048,11 +1082,13 @@ namespace TestGem
     {
         bool success = false;
         AzPhysics::CollisionGroup collisionGroup;
-        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionGroupByName, new_grabbedCollisionGroupName, collisionGroup);
+        Physics::CollisionRequestBus::BroadcastResult(
+            success, &Physics::CollisionRequests::TryGetCollisionGroupByName, new_grabbedCollisionGroupName, collisionGroup);
         if (success)
         {
             m_grabbedCollisionGroup = collisionGroup;
-            const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+            const AzPhysics::CollisionConfiguration& configuration =
+                AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
             m_grabbedCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabbedCollisionGroupName);
         }
     }
@@ -1060,7 +1096,10 @@ namespace TestGem
     AZStd::string Grab::GetCurrentGrabbedCollisionLayerName() const
     {
         AZStd::string currentGrabbedCollisionLayerName;
-        Physics::CollisionFilteringRequestBus::EventResult(currentGrabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        Physics::CollisionFilteringRequestBus::EventResult(
+            currentGrabbedCollisionLayerName,
+            m_lastGrabbedObjectEntityId,
+            &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
         return currentGrabbedCollisionLayerName;
     }
 
@@ -1068,35 +1107,48 @@ namespace TestGem
     {
         bool success = false;
         AzPhysics::CollisionLayer grabbedCollisionLayer;
-        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_currentGrabbedCollisionLayerName, grabbedCollisionLayer);
+        Physics::CollisionRequestBus::BroadcastResult(
+            success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_currentGrabbedCollisionLayerName, grabbedCollisionLayer);
         if (success)
         {
             m_currentGrabbedCollisionLayerName = new_currentGrabbedCollisionLayerName;
             m_currentGrabbedCollisionLayer = grabbedCollisionLayer;
-            Physics::CollisionFilteringRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer, m_currentGrabbedCollisionLayerName, AZ::Crc32());
+            Physics::CollisionFilteringRequestBus::Event(
+                m_lastGrabbedObjectEntityId,
+                &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
+                m_currentGrabbedCollisionLayerName,
+                AZ::Crc32());
         }
     }
 
     AzPhysics::CollisionLayer Grab::GetCurrentGrabbedCollisionLayer() const
     {
         AZStd::string grabbedCollisionLayerName;
-        Physics::CollisionFilteringRequestBus::EventResult(grabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        Physics::CollisionFilteringRequestBus::EventResult(
+            grabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
         AzPhysics::CollisionLayer grabbedCollisionLayer;
-        Physics::CollisionRequestBus::BroadcastResult(grabbedCollisionLayer, &Physics::CollisionRequests::GetCollisionLayerByName, grabbedCollisionLayerName);
+        Physics::CollisionRequestBus::BroadcastResult(
+            grabbedCollisionLayer, &Physics::CollisionRequests::GetCollisionLayerByName, grabbedCollisionLayerName);
         return grabbedCollisionLayer;
     }
 
     void Grab::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
     {
         m_currentGrabbedCollisionLayer = new_currentGrabbedCollisionLayer;
-        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        const AzPhysics::CollisionConfiguration& configuration =
+            AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         m_currentGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_currentGrabbedCollisionLayer);
-        Physics::CollisionFilteringRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer, m_currentGrabbedCollisionLayerName, AZ::Crc32());
+        Physics::CollisionFilteringRequestBus::Event(
+            m_lastGrabbedObjectEntityId,
+            &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
+            m_currentGrabbedCollisionLayerName,
+            AZ::Crc32());
     }
 
     AZStd::string Grab::GetPrevGrabbedCollisionLayerName() const
     {
-        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        const AzPhysics::CollisionConfiguration& configuration =
+            AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         return configuration.m_collisionLayers.GetName(m_prevGrabbedCollisionLayer);
     }
 
@@ -1104,7 +1156,8 @@ namespace TestGem
     {
         bool success = false;
         AzPhysics::CollisionLayer prevGrabbedCollisionLayer;
-        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_prevGrabbedCollisionLayerName, prevGrabbedCollisionLayer);
+        Physics::CollisionRequestBus::BroadcastResult(
+            success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_prevGrabbedCollisionLayerName, prevGrabbedCollisionLayer);
         if (success)
             m_prevGrabbedCollisionLayer = prevGrabbedCollisionLayer;
     }
@@ -1128,7 +1181,8 @@ namespace TestGem
     {
         bool success = false;
         AzPhysics::CollisionLayer tempGrabbedCollisionLayer;
-        Physics::CollisionRequestBus::BroadcastResult(success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_tempGrabbedCollisionLayerName, tempGrabbedCollisionLayer);
+        Physics::CollisionRequestBus::BroadcastResult(
+            success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_tempGrabbedCollisionLayerName, tempGrabbedCollisionLayer);
         if (success)
         {
             m_tempGrabbedCollisionLayerName = new_tempGrabbedCollisionLayerName;
@@ -1144,24 +1198,23 @@ namespace TestGem
     void Grab::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
     {
         m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
-        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        const AzPhysics::CollisionConfiguration& configuration =
+            AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
     }
 
     bool Grab::GetGrabbedObjectIsKinematic() const
     {
         bool isObjectKinematic = false;
-        Physics::RigidBodyRequestBus::EventResult(isObjectKinematic, m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequestBus::Events::IsKinematic);
+        Physics::RigidBodyRequestBus::EventResult(
+            isObjectKinematic, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::IsKinematic);
 
         return isObjectKinematic;
     }
 
     void Grab::SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic)
     {
-        Physics::RigidBodyRequestBus::Event(objectId,
-            &Physics::RigidBodyRequests::SetKinematic,
-            isKinematic);
+        Physics::RigidBodyRequestBus::Event(objectId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
 
         m_isObjectKinematic = isKinematic;
     }
@@ -1175,8 +1228,8 @@ namespace TestGem
     {
         float currentObjectAngularDamping = 0.f;
 
-        Physics::RigidBodyRequestBus::EventResult(currentObjectAngularDamping, m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequests::GetAngularDamping);
+        Physics::RigidBodyRequestBus::EventResult(
+            currentObjectAngularDamping, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularDamping);
 
         return currentObjectAngularDamping;
     }
@@ -1185,8 +1238,8 @@ namespace TestGem
     {
         m_currentObjectAngularDamping = new_currentObjectAngularDamping;
 
-        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
+        Physics::RigidBodyRequestBus::Event(
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
     }
 
     float Grab::GetPrevGrabbedObjectAngularDamping() const
@@ -1207,16 +1260,16 @@ namespace TestGem
     void Grab::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
     {
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
-        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
+        Physics::RigidBodyRequestBus::Event(
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
     }
 
     AZ::Vector3 Grab::GetGrabbedObjectAngularVelocity() const
     {
         AZ::Vector3 grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
 
-        Physics::RigidBodyRequestBus::EventResult(grabbedObjectAngularVelocity, m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequests::GetAngularVelocity);
+        Physics::RigidBodyRequestBus::EventResult(
+            grabbedObjectAngularVelocity, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularVelocity);
         return grabbedObjectAngularVelocity;
     }
 
@@ -1224,7 +1277,7 @@ namespace TestGem
     {
         m_grabbedObjectAngularVelocity = new_grabbedObjectAngularVelocity;
 
-        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId,
-            &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
+        Physics::RigidBodyRequestBus::Event(
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
     }
-}
+} // namespace TestGem
