@@ -750,43 +750,25 @@ namespace TestGem
         // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         if (!m_kinematicWhileGrabbing && !m_isInitialObjectKinematic)
         {
-            AZ::Vector3 currentAngularVelocity = AZ::Vector3::CreateZero();
-
-            currentAngularVelocity = GetGrabbedObjectAngularVelocity();
-
-            m_delta_yaw = m_upVector * m_yawKeyValue;
-            m_delta_pitch = m_rightVector * m_pitchKeyValue;
-            m_delta_roll = m_forwardVector * m_rollKeyValue;
-
-            m_delta_yaw *= m_dynamicRotateScale;
-            m_delta_pitch *= m_dynamicRotateScale;
-            m_delta_roll *= m_dynamicRotateScale;
-
-            AZ::Vector3 newAngularVelocity = AZ::Vector3::CreateZero();
-
-            newAngularVelocity = currentAngularVelocity + (m_delta_yaw + m_delta_pitch + m_delta_roll);
-
-            SetGrabbedObjectAngularVelocity(newAngularVelocity);
+            SetGrabbedObjectAngularVelocity(
+                GetGrabbedObjectAngularVelocity() + (m_rightVector * m_pitchKeyValue * m_dynamicRotateScale) +
+                (m_forwardVector * m_rollKeyValue * m_dynamicRotateScale) + (m_upVector * m_yawKeyValue * m_dynamicRotateScale));
 
             m_hasRotated = true;
         }
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         else
         {
-            AZ::Vector3 current_Rotation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetLocalRotation();
+            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, m_yawKeyValue * m_kinematicRotateScale * deltaTime) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, m_pitchKeyValue * m_kinematicRotateScale * deltaTime) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, m_rollKeyValue * m_kinematicRotateScale * deltaTime);
 
-            m_delta_yaw = AZ::Vector3::CreateAxisZ(m_yawKeyValue);
-            m_delta_pitch = AZ::Vector3::CreateAxisX(m_pitchKeyValue);
-            m_delta_roll = AZ::Vector3::CreateAxisY(m_rollKeyValue);
+            AZ::Transform transform = AZ::Transform::CreateIdentity();
+            AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
 
-            m_delta_yaw *= m_kinematicRotateScale;
-            m_delta_pitch *= m_kinematicRotateScale;
-            m_delta_pitch *= m_kinematicRotateScale;
+            transform.SetRotation((rotation * transform.GetRotation()).GetNormalized());
 
-            AZ::Vector3 newRotation = AZ::Vector3::CreateZero();
-            newRotation = current_Rotation + ((m_delta_yaw + m_delta_pitch + m_delta_roll) * deltaTime);
-
-            GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetLocalRotation(newRotation);
+            AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
 
             m_hasRotated = true;
         }
