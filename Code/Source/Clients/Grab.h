@@ -159,6 +159,7 @@ namespace TestGem
         AZ::Vector3 m_upVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_lastEntityRotation = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_grabbedObjectEntityId;
 

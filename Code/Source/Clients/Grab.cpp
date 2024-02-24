@@ -646,19 +646,26 @@ namespace TestGem
                 SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, true);
             }
 
-            // If object is NOT in rotate state, move object by setting its Translation directly. Only rotate object if it has been in
-            // rotate state
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to the character entity's local z rotation. 
             if (!m_isInRotateState)
             {
                 GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
-                // Keep Object rotation facing the grabbing entity if it has not be rotated. If it has been rotated, object will keep that
-                // rotation while translating
-                if (!m_hasRotated)
-                {
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)
-                        ->GetTransform()
-                        ->SetWorldRotation(m_grabReference.GetRotation().GetEulerRadians());
-                }
+
+                AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
+
+                const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
+
+                const AZ::Quaternion rotation =
+                    AZ::Quaternion::CreateFromAxisAngle(entityUpVector, (entityRotation.GetZ() - m_lastEntityRotation.GetZ()));
+
+                AZ::Transform transform = AZ::Transform::CreateIdentity();
+                AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+
+                transform.SetRotation((rotation * transform.GetRotation()).GetNormalized());
+
+                AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
+
+                m_lastEntityRotation = entityRotation;
             }
             // If object is in rotate state, move object by setting its Translation, but do not rotate it
             else
