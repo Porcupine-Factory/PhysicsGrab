@@ -80,11 +80,12 @@ namespace TestGem
     {
     public:
         virtual void OnObjectSphereCastHit() = 0;
-        virtual void OnGrabObject() = 0;
-        virtual void OnEndGrabObject() = 0;
-        virtual void OnRotateObject() = 0;
-        virtual void OnEndRotateObject() = 0;
-        virtual void OnThrowObject() = 0;
+        virtual void OnGrabStart() = 0;
+        virtual void OnGrabStop() = 0;
+        virtual void OnRotateStart() = 0;
+        virtual void OnRotateStop() = 0;
+        virtual void OnThrowStart() = 0;
+        virtual void OnThrowStop() = 0;
         virtual void OnThrowStateCounterZero() = 0;
         virtual void OnMaxThrowDistance() = 0;
     };
@@ -101,11 +102,12 @@ namespace TestGem
             "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
             AZ::SystemAllocator,
             OnObjectSphereCastHit,
-            OnGrabObject,
-            OnEndGrabObject,
-            OnRotateObject,
-            OnEndRotateObject,
-            OnThrowObject,
+            OnGrabStart,
+            OnGrabStop,
+            OnRotateStart,
+            OnRotateStop,
+            OnThrowStart,
+            OnThrowStop,
             OnThrowStateCounterZero,
             OnMaxThrowDistance);
 
@@ -113,25 +115,29 @@ namespace TestGem
         {
             Call(FN_OnObjectSphereCastHit);
         }
-        void OnGrabObject() override
+        void OnGrabStart() override
         {
-            Call(FN_OnGrabObject);
+            Call(FN_OnGrabStart);
         }
-        void OnEndGrabObject() override
+        void OnGrabStop() override
         {
-            Call(FN_OnEndGrabObject);
+            Call(FN_OnGrabStop);
         }
-        void OnRotateObject() override
+        void OnRotateStart() override
         {
-            Call(FN_OnRotateObject);
+            Call(FN_OnRotateStart);
         }
-        void OnEndRotateObject() override
+        void OnRotateStop() override
         {
-            Call(FN_OnEndRotateObject);
+            Call(FN_OnRotateStop);
         }
-        void OnThrowObject() override
+        void OnThrowStart() override
         {
-            Call(FN_OnThrowObject);
+            Call(FN_OnThrowStart);
+        }
+        void OnThrowStop() override
+        {
+            Call(FN_OnThrowStop);
         }
         void OnThrowStateCounterZero() override
         {

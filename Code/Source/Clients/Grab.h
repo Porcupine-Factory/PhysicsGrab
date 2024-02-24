@@ -142,11 +142,12 @@ namespace TestGem
 
         // TestGemNotificationBus
         void OnObjectSphereCastHit();
-        void OnGrabObject();
-        void OnEndGrabObject();
-        void OnRotateObject();
-        void OnEndRotateObject();
-        void OnThrowObject();
+        void OnGrabStart();
+        void OnGrabStop();
+        void OnRotateStart();
+        void OnRotateStop();
+        void OnThrowStart();
+        void OnThrowStop();
         void OnMaxThrowDistance();
         void OnThrowStateCounterZero();
 

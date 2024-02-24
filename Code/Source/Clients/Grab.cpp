@@ -680,11 +680,11 @@ namespace TestGem
         // Trigger an event notification when object enters Grab state or exits Grab state
         if (!prevGrabState && m_isInGrabState)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabObject);
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStart);
         }
         else if (prevGrabState && !m_isInGrabState)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnEndGrabObject);
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStop);
         }
     }
 
@@ -782,11 +782,11 @@ namespace TestGem
         // Trigger an event notification when object enters Rotate State or exits Rotate state
         if (!prevRotateState && m_isInRotateState)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateObject);
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStart);
         }
         else if (prevRotateState && !m_isInRotateState)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnEndRotateObject);
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStop);
         }
     }
     // Apply linear impulse to object if it is a Dynamic Rigid Body
@@ -814,7 +814,7 @@ namespace TestGem
                 m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, m_forwardVector * m_throwImpulse);
 
             // Trigger an event notification when object enters Throw State
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowObject);
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStart);
 
             m_isInThrowState = true;
             m_isInGrabState = false;
@@ -839,12 +839,14 @@ namespace TestGem
                     GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
             {
                 m_isInThrowState = false;
+                TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStop);
                 TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnMaxThrowDistance);
             }
             // Set throw state to false if grabbed object is in throw state longer than m_throwStateMaxTime
             else if (m_throwStateCounter <= 0.f)
             {
                 m_isInThrowState = false;
+                TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStop);
                 TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStateCounterZero);
             }
         }
@@ -854,19 +856,22 @@ namespace TestGem
     void Grab::OnObjectSphereCastHit()
     {
     }
-    void Grab::OnGrabObject()
+    void Grab::OnGrabStart()
     {
     }
-    void Grab::OnEndGrabObject()
+    void Grab::OnGrabStop()
     {
     }
-    void Grab::OnRotateObject()
+    void Grab::OnRotateStart()
     {
     }
-    void Grab::OnEndRotateObject()
+    void Grab::OnRotateStop()
     {
     }
-    void Grab::OnThrowObject()
+    void Grab::OnThrowStart()
+    {
+    }
+    void Grab::OnThrowStop()
     {
     }
     void Grab::OnMaxThrowDistance()
