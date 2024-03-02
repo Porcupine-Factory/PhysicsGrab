@@ -5,6 +5,7 @@
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Vector3.h>
+#include <AzCore/std/containers/map.h>
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
@@ -12,6 +13,15 @@
 
 namespace TestGem
 {
+    enum class GrabStates
+    {
+        idleState,
+        checkState,
+        holdState,
+        rotateState,
+        throwState
+    };
+
     class Grab
         : public AZ::Component
         , public AZ::EntityBus::Handler
@@ -69,9 +79,7 @@ namespace TestGem
         AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
         void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
-        bool GetIsInGrabState() const override;
-        bool GetIsInThrowState() const override;
-        bool GetIsInRotateState() const override;
+        AZStd::string GetStateString() const override;
         bool GetObjectSphereCastHit() const override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;
@@ -136,21 +144,28 @@ namespace TestGem
 
         void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
-        void GrabObject(const float& deltaTime);
+        void HoldObject(const float& deltaTime);
         void RotateObject(const float& deltaTime);
-        void ThrowObject(const float& deltaTime);
+        void ThrowObject();
         void TidalLock();
 
         // TestGemNotificationBus
         void OnObjectSphereCastHit();
-        void OnGrabStart();
-        void OnGrabStop();
+        void OnHoldStart();
+        void OnHoldStop();
         void OnRotateStart();
         void OnRotateStop();
         void OnThrowStart();
         void OnThrowStop();
         void OnMaxThrowDistance();
         void OnThrowStateCounterZero();
+
+        void ProcessStates(const float& deltaTime);
+        void IdleState();
+        void CheckForObjectsState();
+        void HoldObjectState(const float &deltaTime);
+        void RotateObjectState(const float &deltaTime);
+        void ThrowObjectState(const float &deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -206,7 +221,7 @@ namespace TestGem
         float m_throwStateCounter = 0.f;
 
         bool m_grabEnableToggle = false;
-        bool m_kinematicWhileGrabbing = false;
+        bool m_kinematicWhileHeld = false;
         bool m_rotateEnableToggle = true;
         bool m_tidalLock = true;
         bool m_isInitialObjectKinematic = false;
@@ -214,8 +229,17 @@ namespace TestGem
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
-        bool m_hasRotated = false;
         bool m_isObjectKinematic = false;
         bool m_objectSphereCastHit = false;
+
+        GrabStates m_state = GrabStates::idleState;
+
+        AZStd::map<GrabStates, AZStd::string> m_statesMap = {
+          {GrabStates::idleState,   "idleState"},
+          {GrabStates::checkState,  "checkState"},
+          {GrabStates::holdState,   "holdState"},
+          {GrabStates::rotateState, "rotateState"},
+          {GrabStates::throwState,  "throwState"}
+        };
     };
 } // namespace TestGem
