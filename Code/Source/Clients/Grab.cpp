@@ -33,6 +33,7 @@ namespace TestGem
                 ->Field("Maintain Grab", &Grab::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &Grab::m_kinematicWhileGrabbing)
                 ->Field("Rotate Enable Toggle", &Grab::m_rotateEnableToggle)
+                ->Field("Tidal Lock Grabbed Object", &Grab::m_tidalLock)
                 ->Field("Sphere Cast Radius", &Grab::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &Grab::m_sphereCastDistance)
@@ -107,6 +108,12 @@ namespace TestGem
                         "Rotate Enable Toggle",
                         "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
                         "maintain Rotate mode.")
+                    ->DataElement(
+                        nullptr,
+                        &Grab::m_tidalLock,
+                        "Tidal Lock Kinematic Object",
+                        "Determines whether a Kinematic Object is tidal locked when being grabbed. This means that the object will always "
+                        "face the Grabbing Entity in it's current relative rotation.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -225,8 +232,8 @@ namespace TestGem
                 ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
                 ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
                 ->Event("Set Grab Sphere Cast Distance", &TestGemComponentRequests::SetSphereCastDistance)
-                ->Event("Get Grabbed Object Is Kinematic", &TestGemComponentRequests::GetGrabbedObjectIsKinematic)
-                ->Event("Set Grabbed Object Is Kinematic", &TestGemComponentRequests::SetGrabbedObjectIsKinematic)
+                ->Event("Get Grabbed Object Is Kinematic", &TestGemComponentRequests::GetGrabbedObjectKinematicElseDynamic)
+                ->Event("Set Grabbed Object Is Kinematic", &TestGemComponentRequests::SetGrabbedObjectKinematicElseDynamic)
                 ->Event("Get Current Grabbed Object Angular Damping", &TestGemComponentRequests::GetCurrentGrabbedObjectAngularDamping)
                 ->Event("Set Current Grabbed Object Angular Damping", &TestGemComponentRequests::SetCurrentGrabbedObjectAngularDamping)
                 ->Event("Get Previous Grabbed Object Angular Damping", &TestGemComponentRequests::GetPrevGrabbedObjectAngularDamping)
@@ -567,7 +574,7 @@ namespace TestGem
             if (!m_isInGrabState)
             {
                 // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
-                m_isInitialObjectKinematic = GetGrabbedObjectIsKinematic();
+                m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
 
                 // Store initial collision layer
                 m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
@@ -601,7 +608,7 @@ namespace TestGem
             if (m_grabKeyValue != 0.f)
             {
                 // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
-                m_isInitialObjectKinematic = GetGrabbedObjectIsKinematic();
+                m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
 
                 // Store initial collision layer
                 m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
@@ -631,50 +638,44 @@ namespace TestGem
             }
         }
 
-        // Set Grabbed Object to Dynamic Rigid Body if previously Kinematic
-        if (!m_isInGrabState && (GetGrabbedObjectIsKinematic() && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic))
+        // Trigger an event notification when object enters Grab state or exits Grab state
+        if (!prevGrabState && m_isInGrabState)
         {
-            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
+            m_lastEntityRotation = GetEntity()->GetTransform()->GetWorldRotation();
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStart);
+        }
+        else if (prevGrabState && !m_isInGrabState)
+        {
+            // m_lastDynamicEntityRotation = AZ::Vector3::CreateZero();
+            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStop);
+        }
+
+        // Set Grabbed Object to Dynamic Rigid Body if m_kinematicWhileGrabbing is enabled and object is not initially Kinematic
+        if (!m_isInGrabState && (GetGrabbedObjectKinematicElseDynamic() && m_kinematicWhileGrabbing && !m_isInitialObjectKinematic))
+        {
+            SetGrabbedObjectKinematicElseDynamic(false);
         }
 
         // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
         if (m_isInGrabState && (m_kinematicWhileGrabbing || m_isInitialObjectKinematic))
         {
             // Set Grabbed Object to Kinematic Rigid Body if previously Dynamic
-            if (!GetGrabbedObjectIsKinematic())
+            if (!GetGrabbedObjectKinematicElseDynamic())
             {
-                SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, true);
+                SetGrabbedObjectKinematicElseDynamic(true);
             }
+
+            // Move object by setting its Translation
+            GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the character entity's local z rotation. 
-            if (!m_isInRotateState)
+            if (!m_isInRotateState && m_tidalLock)
             {
-                GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
-
-                AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
-
-                const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
-
-                const AZ::Quaternion rotation =
-                    AZ::Quaternion::CreateFromAxisAngle(entityUpVector, (entityRotation.GetZ() - m_lastEntityRotation.GetZ()));
-
-                AZ::Transform transform = AZ::Transform::CreateIdentity();
-                AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-
-                transform.SetRotation((rotation * transform.GetRotation()).GetNormalized());
-
-                AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
-
-                m_lastEntityRotation = entityRotation;
-            }
-            // If object is in rotate state, move object by setting its Translation, but do not rotate it
-            else
-            {
-                GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
-            }
+                TidalLock();
+            }        
         }
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
-        else if (m_isInGrabState && !GetGrabbedObjectIsKinematic() && (!m_kinematicWhileGrabbing || !m_isInitialObjectKinematic))
+        else if (m_isInGrabState && !GetGrabbedObjectKinematicElseDynamic() && (!m_kinematicWhileGrabbing || !m_isInitialObjectKinematic))
         {
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the
             // reference. Then apply a linear velocity to move the object toward the reference.
@@ -682,16 +683,16 @@ namespace TestGem
                 m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
-        }
 
-        // Trigger an event notification when object enters Grab state or exits Grab state
-        if (!prevGrabState && m_isInGrabState)
-        {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStart);
-        }
-        else if (prevGrabState && !m_isInGrabState)
-        {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnGrabStop);
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to the character entity's local z rotation.
+            if (!m_isInRotateState && m_tidalLock)
+            {
+                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::DisablePhysics);
+
+                TidalLock();
+
+                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::EnablePhysics);
+            }
         }
     }
 
@@ -807,9 +808,9 @@ namespace TestGem
 
         // Set Kinematic Rigid Body to Dynamic in order to prevent PhysX Rigid Body Warning in console when throwing object while rotating.
         // This only happens temporarily, as the object will be set to Dynamic in order to throw.
-        if (m_throwKeyValue && GetGrabbedObjectIsKinematic())
+        if (m_throwKeyValue && GetGrabbedObjectKinematicElseDynamic())
         {
-            SetGrabbedObjectIsKinematic(m_lastGrabbedObjectEntityId, false);
+            SetGrabbedObjectKinematicElseDynamic(false);
         }
 
         if (m_throwKeyValue && !m_isInThrowState)
@@ -858,7 +859,25 @@ namespace TestGem
             }
         }
     }
+    // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state.
+    void Grab::TidalLock()
+    {
+        AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
+        const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
+
+        const AZ::Quaternion Rotation =
+            AZ::Quaternion::CreateFromAxisAngle(entityUpVector, (entityRotation.GetZ() - m_lastEntityRotation.GetZ()));
+
+        AZ::Transform Transform = AZ::Transform::CreateIdentity();
+        AZ::TransformBus::EventResult(Transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+
+        Transform.SetRotation((Rotation * Transform.GetRotation()).GetNormalized());
+
+        AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, Transform);
+
+        m_lastEntityRotation = entityRotation;
+    }
     // Event Notification methods for use in scripts
     void Grab::OnObjectSphereCastHit()
     {
@@ -1197,7 +1216,7 @@ namespace TestGem
         m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
     }
 
-    bool Grab::GetGrabbedObjectIsKinematic() const
+    bool Grab::GetGrabbedObjectKinematicElseDynamic() const
     {
         bool isObjectKinematic = false;
         Physics::RigidBodyRequestBus::EventResult(
@@ -1206,11 +1225,9 @@ namespace TestGem
         return isObjectKinematic;
     }
 
-    void Grab::SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic)
+    void Grab::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
     {
-        Physics::RigidBodyRequestBus::Event(objectId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
-
-        m_isObjectKinematic = isKinematic;
+        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
     }
 
     bool Grab::GetInitialGrabbedObjectIsKinematic() const

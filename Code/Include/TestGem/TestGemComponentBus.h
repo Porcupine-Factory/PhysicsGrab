@@ -57,8 +57,8 @@ namespace TestGem
         virtual void SetSphereCastRadius(const float&) = 0;
         virtual float GetSphereCastDistance() const = 0;
         virtual void SetSphereCastDistance(const float&) = 0;
-        virtual bool GetGrabbedObjectIsKinematic() const = 0;
-        virtual void SetGrabbedObjectIsKinematic(const AZ::EntityId, const bool&) = 0;
+        virtual bool GetGrabbedObjectKinematicElseDynamic() const = 0;
+        virtual void SetGrabbedObjectKinematicElseDynamic(const bool&) = 0;
         virtual bool GetInitialGrabbedObjectIsKinematic() const = 0;
         virtual float GetCurrentGrabbedObjectAngularDamping() const = 0;
         virtual void SetCurrentGrabbedObjectAngularDamping(const float&) = 0;

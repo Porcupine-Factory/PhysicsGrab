@@ -98,8 +98,8 @@ namespace TestGem
         void SetSphereCastRadius(const float& new_sphereCastRadius) override;
         float GetSphereCastDistance() const override;
         void SetSphereCastDistance(const float& new_sphereCastDistance) override;
-        bool GetGrabbedObjectIsKinematic() const override;
-        void SetGrabbedObjectIsKinematic(AZ::EntityId objectId, const bool& isKinematic) override;
+        bool GetGrabbedObjectKinematicElseDynamic() const override;
+        void SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic) override;
         bool GetInitialGrabbedObjectIsKinematic() const override;
         float GetCurrentGrabbedObjectAngularDamping() const override;
         void SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping) override;
@@ -139,6 +139,7 @@ namespace TestGem
         void GrabObject(const float& deltaTime);
         void RotateObject(const float& deltaTime);
         void ThrowObject(const float& deltaTime);
+        void TidalLock();
 
         // TestGemNotificationBus
         void OnObjectSphereCastHit();
@@ -172,8 +173,8 @@ namespace TestGem
 
         AzPhysics::CollisionLayer m_prevGrabbedCollisionLayer;
         AzPhysics::CollisionLayer m_currentGrabbedCollisionLayer;
-        AZStd::string m_currentGrabbedCollisionLayerName;
         AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
+        AZStd::string m_currentGrabbedCollisionLayerName;
         AZStd::string m_tempGrabbedCollisionLayerName;
 
         // Event value multipliers
@@ -207,9 +208,10 @@ namespace TestGem
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileGrabbing = false;
         bool m_rotateEnableToggle = true;
+        bool m_tidalLock = true;
         bool m_isInitialObjectKinematic = false;
-        bool m_isInGrabState = false;
         bool m_grabMaintained = false;
+        bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
         bool m_hasRotated = false;
