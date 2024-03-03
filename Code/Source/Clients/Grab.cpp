@@ -1007,42 +1007,27 @@ namespace TestGem
 
     bool Grab::GetIsInIdleState() const
     {
-        if (m_statesMap.find(m_state)->second == "idleState")
-            return true;
-        else
-            return false;
+        return (m_state == GrabStates::idleState);
     }
 
     bool Grab::GetIsInCheckState() const
     {
-        if (m_statesMap.find(m_state)->second == "checkState")
-            return true;
-        else
-            return false;
+        return (m_state == GrabStates::checkState);
     }
 
     bool Grab::GetIsInHeldState() const
     {
-        if (m_statesMap.find(m_state)->second == "holdState")
-            return true;
-        else
-            return false;
+        return (m_state == GrabStates::holdState);
     }
 
     bool Grab::GetIsInRotateState() const
     {
-        if (m_statesMap.find(m_state)->second == "rotateState")
-            return true;
-        else
-            return false;
+        return (m_state == GrabStates::rotateState);
     }
 
     bool Grab::GetIsInThrowState() const
     {
-        if (m_statesMap.find(m_state)->second == "throwState")
-            return true;
-        else
-            return false;
+        return (m_state == GrabStates::throwState);
     }
 
     bool Grab::GetObjectSphereCastHit() const
