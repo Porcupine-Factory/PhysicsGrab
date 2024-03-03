@@ -80,6 +80,11 @@ namespace TestGem
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
         void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
         AZStd::string GetStateString() const override;
+        bool GetIsInIdleState() const override;
+        bool GetIsInCheckState() const override;
+        bool GetIsInHeldState() const override;
+        bool GetIsInRotateState() const override;
+        bool GetIsInThrowState() const override;
         bool GetObjectSphereCastHit() const override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;

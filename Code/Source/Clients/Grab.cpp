@@ -204,6 +204,11 @@ namespace TestGem
                 ->Event("Get Temporary Grabbed Layer", &TestGemComponentRequests::GetTempGrabbedCollisionLayer)
                 ->Event("Set Temporary Grabbed Layer", &TestGemComponentRequests::SetTempGrabbedCollisionLayer)
                 ->Event("Get State String", &TestGemComponentRequests::GetStateString)
+                ->Event("Get Is In Idle State", &TestGemComponentRequests::GetIsInIdleState)
+                ->Event("Get Is In Check State", &TestGemComponentRequests::GetIsInCheckState)
+                ->Event("Get Is In Held State", &TestGemComponentRequests::GetIsInHeldState)
+                ->Event("Get Is In Rotate State", &TestGemComponentRequests::GetIsInRotateState)
+                ->Event("Get Is In Throw State", &TestGemComponentRequests::GetIsInThrowState)
                 ->Event("Get Object Sphere Cast Hit", &TestGemComponentRequests::GetObjectSphereCastHit)
                 ->Event("Get Grabbed Object Distance", &TestGemComponentRequests::GetGrabbedObjectDistance)
                 ->Event("Set Grabbed Object Distance", &TestGemComponentRequests::SetGrabbedObjectDistance)
@@ -998,6 +1003,46 @@ namespace TestGem
     AZStd::string Grab::GetStateString() const
     {
         return m_statesMap.find(m_state)->second;
+    }
+
+    bool Grab::GetIsInIdleState() const
+    {
+        if (m_statesMap.find(m_state)->second == "idleState")
+            return true;
+        else
+            return false;
+    }
+
+    bool Grab::GetIsInCheckState() const
+    {
+        if (m_statesMap.find(m_state)->second == "checkState")
+            return true;
+        else
+            return false;
+    }
+
+    bool Grab::GetIsInHeldState() const
+    {
+        if (m_statesMap.find(m_state)->second == "holdState")
+            return true;
+        else
+            return false;
+    }
+
+    bool Grab::GetIsInRotateState() const
+    {
+        if (m_statesMap.find(m_state)->second == "rotateState")
+            return true;
+        else
+            return false;
+    }
+
+    bool Grab::GetIsInThrowState() const
+    {
+        if (m_statesMap.find(m_state)->second == "throwState")
+            return true;
+        else
+            return false;
     }
 
     bool Grab::GetObjectSphereCastHit() const

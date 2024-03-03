@@ -69,6 +69,11 @@ namespace TestGem
         virtual AZ::Vector3 GetGrabbedObjectAngularVelocity() const = 0;
         virtual void SetGrabbedObjectAngularVelocity(const AZ::Vector3&) = 0;
         virtual AZStd::string GetStateString() const = 0;
+        virtual bool GetIsInIdleState() const = 0;
+        virtual bool GetIsInCheckState() const = 0;
+        virtual bool GetIsInHeldState() const = 0;
+        virtual bool GetIsInRotateState() const = 0;
+        virtual bool GetIsInThrowState() const = 0;
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
