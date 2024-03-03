@@ -68,9 +68,7 @@ namespace TestGem
         virtual void SetTempGrabbedObjectAngularDamping(const float&) = 0;
         virtual AZ::Vector3 GetGrabbedObjectAngularVelocity() const = 0;
         virtual void SetGrabbedObjectAngularVelocity(const AZ::Vector3&) = 0;
-        virtual bool GetIsInGrabState() const = 0;
-        virtual bool GetIsInThrowState() const = 0;
-        virtual bool GetIsInRotateState() const = 0;
+        virtual AZStd::string GetStateString() const = 0;
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
@@ -80,8 +78,8 @@ namespace TestGem
     {
     public:
         virtual void OnObjectSphereCastHit() = 0;
-        virtual void OnGrabStart() = 0;
-        virtual void OnGrabStop() = 0;
+        virtual void OnHoldStart() = 0;
+        virtual void OnHoldStop() = 0;
         virtual void OnRotateStart() = 0;
         virtual void OnRotateStop() = 0;
         virtual void OnThrowStart() = 0;
@@ -102,8 +100,8 @@ namespace TestGem
             "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
             AZ::SystemAllocator,
             OnObjectSphereCastHit,
-            OnGrabStart,
-            OnGrabStop,
+            OnHoldStart,
+            OnHoldStop,
             OnRotateStart,
             OnRotateStop,
             OnThrowStart,
@@ -115,13 +113,13 @@ namespace TestGem
         {
             Call(FN_OnObjectSphereCastHit);
         }
-        void OnGrabStart() override
+        void OnHoldStart() override
         {
-            Call(FN_OnGrabStart);
+            Call(FN_OnHoldStart);
         }
-        void OnGrabStop() override
+        void OnHoldStop() override
         {
-            Call(FN_OnGrabStop);
+            Call(FN_OnHoldStop);
         }
         void OnRotateStart() override
         {
