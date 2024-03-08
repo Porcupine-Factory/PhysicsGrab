@@ -222,6 +222,10 @@ namespace TestGem
                 ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabbedObjectDistanceSpeed)
                 ->Event("Get Grab Response", &TestGemComponentRequests::GetGrabResponse)
                 ->Event("Set Grab Response", &TestGemComponentRequests::SetGrabResponse)
+                ->Event("Get Dynamic Object Tidal Lock", &TestGemComponentRequests::GetDynamicTidalLock)
+                ->Event("Set Dynamic Object Tidal Lock", &TestGemComponentRequests::SetDynamicTidalLock)
+                ->Event("Get Kinematic Object Tidal Lock", &TestGemComponentRequests::GetKinematicTidalLock)
+                ->Event("Set Kinematic Object Tidal Lock", &TestGemComponentRequests::SetKinematicTidalLock)
                 ->Event("Get Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::GetDynamicRotateScale)
                 ->Event("Set Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::SetDynamicRotateScale)
                 ->Event("Get Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::GetKinematicRotateScale)
@@ -831,7 +835,7 @@ namespace TestGem
             GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation. 
-            if (m_tidalLock)
+            if (m_tidalLock && m_kinematicTidalLock)
             {
                 TidalLock();
             }
@@ -847,7 +851,7 @@ namespace TestGem
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation.
-            if (m_tidalLock)
+            if (m_tidalLock && m_dynamicTidalLock)
             {
                 Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::DisablePhysics);
 
@@ -1093,6 +1097,26 @@ namespace TestGem
     void Grab::SetGrabResponse(const float& new_grabResponse)
     {
         m_grabResponse = new_grabResponse;
+    }
+
+    bool Grab::GetDynamicTidalLock() const
+    {
+        return m_dynamicTidalLock;
+    }
+
+    void Grab::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
+    {
+        m_dynamicTidalLock = new_dynamicTidalLock;
+    }
+
+    bool Grab::GetKinematicTidalLock() const
+    {
+        return m_kinematicTidalLock;
+    }
+
+    void Grab::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
+    {
+        m_kinematicTidalLock = new_kinematicTidalLock;
     }
 
     float Grab::GetDynamicRotateScale() const

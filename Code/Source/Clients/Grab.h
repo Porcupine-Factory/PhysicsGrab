@@ -98,6 +98,10 @@ namespace TestGem
         void SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
         float GetGrabResponse() const override;
         void SetGrabResponse(const float& new_grabStrength) override;
+        bool GetDynamicTidalLock() const override;
+        void SetDynamicTidalLock(const bool& new_dynamicTidalLock) override;
+        bool GetKinematicTidalLock() const override;
+        void SetKinematicTidalLock(const bool& new_kinematicTidalLock) override;
         float GetDynamicRotateScale() const override;
         void SetDynamicRotateScale(const float& new_dynamicRotateScale) override;
         float GetKinematicRotateScale() const override;
@@ -229,6 +233,8 @@ namespace TestGem
         bool m_kinematicWhileHeld = false;
         bool m_rotateEnableToggle = true;
         bool m_tidalLock = true;
+        bool m_dynamicTidalLock = true;
+        bool m_kinematicTidalLock = true;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
         bool m_isInGrabState = false;
