@@ -11,6 +11,10 @@
 #include <StartingPointInput/InputEventNotificationBus.h>
 #include <TestGem/TestGemComponentBus.h>
 
+#if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
+#include <FirstPersonController/FirstPersonControllerComponentBus.h>
+#endif
+
 namespace TestGem
 {
     enum class GrabStates
@@ -157,7 +161,9 @@ namespace TestGem
         void RotateObject(const float& deltaTime);
         void ThrowObject();
         void TidalLock();
+        #ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
+        #endif
 
         // TestGemNotificationBus
         void OnObjectSphereCastHit();

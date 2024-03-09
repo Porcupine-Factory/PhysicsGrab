@@ -8,7 +8,6 @@
 #include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
-#include <FirstPersonController/FirstPersonControllerComponentBus.h>
 
 namespace TestGem
 {
@@ -30,7 +29,9 @@ namespace TestGem
                 ->Field("Rotate Roll Key", &Grab::m_strRotateRoll)
 
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
+                #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Freeze Character Rotation", &Grab::m_freezeCharacterRotation)
+                #endif
                 ->Field("Grab Enable Toggle", &Grab::m_grabEnableToggle)
                 ->Field("Maintain Grab", &Grab::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &Grab::m_kinematicWhileHeld)
@@ -90,11 +91,13 @@ namespace TestGem
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &Grab::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Enables character controller rotation while in Rotate State.")
+                    #endif
                     ->DataElement(
                         nullptr,
                         &Grab::m_grabEnableToggle,
@@ -670,10 +673,12 @@ namespace TestGem
 
         HoldObject(deltaTime);
 
+        #ifdef FIRST_PERSON_CONTROLLER
         if (m_freezeCharacterRotation)
         {
             FreezeCharacterRotation();
         }
+        #endif
 
         RotateObject(deltaTime);
 
@@ -951,6 +956,7 @@ namespace TestGem
         m_lastEntityRotation = entityRotation;
     }
 
+    #ifdef FIRST_PERSON_CONTROLLER
     void Grab::FreezeCharacterRotation()
     {
         FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
@@ -958,6 +964,7 @@ namespace TestGem
         FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
             GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
     }
+    #endif
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
     {
