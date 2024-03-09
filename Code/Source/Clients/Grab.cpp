@@ -29,6 +29,7 @@ namespace TestGem
                 ->Field("Rotate Roll Key", &Grab::m_strRotateRoll)
 
                 ->Field("GrabbingEntityId", &Grab::m_grabbingEntityId)
+                ->Field("Freeze Character Rotation", &Grab::m_freezeCharacterRotation)
                 ->Field("Grab Enable Toggle", &Grab::m_grabEnableToggle)
                 ->Field("Maintain Grab", &Grab::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &Grab::m_kinematicWhileHeld)
@@ -88,6 +89,11 @@ namespace TestGem
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &Grab::m_freezeCharacterRotation,
+                        "Freeze Character Rotation",
+                        "Enables character controller rotation while in Rotate State.")
                     ->DataElement(
                         nullptr,
                         &Grab::m_grabEnableToggle,
@@ -308,7 +314,7 @@ namespace TestGem
         Camera::CameraNotificationBus::Handler::BusDisconnect();
     }
 
-    void Grab::GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required)
+    void Grab::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
         required.push_back(AZ_CRC_CE("InputConfigurationService"));
         required.push_back(AZ_CRC_CE("TransformService"));
@@ -662,6 +668,12 @@ namespace TestGem
         }
 
         HoldObject(deltaTime);
+
+        if (m_freezeCharacterRotation)
+        {
+            FreezeCharacterRotation();
+        }
+
         RotateObject(deltaTime);
 
         if ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
@@ -936,6 +948,14 @@ namespace TestGem
         AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, Transform);
 
         m_lastEntityRotation = entityRotation;
+    }
+
+    void Grab::FreezeCharacterRotation()
+    {
+        FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
+            GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraYaw, 0.f, false);
+        FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
+            GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
     }
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const

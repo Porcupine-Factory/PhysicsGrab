@@ -9,6 +9,7 @@
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
+#include <FirstPersonController/FirstPersonControllerComponentBus.h>
 #include <TestGem/TestGemComponentBus.h>
 
 namespace TestGem
@@ -157,6 +158,7 @@ namespace TestGem
         void RotateObject(const float& deltaTime);
         void ThrowObject();
         void TidalLock();
+        void FreezeCharacterRotation();
 
         // TestGemNotificationBus
         void OnObjectSphereCastHit();
@@ -231,6 +233,7 @@ namespace TestGem
 
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;
+        bool m_freezeCharacterRotation = true;
         bool m_rotateEnableToggle = true;
         bool m_tidalLock = true;
         bool m_dynamicTidalLock = true;
