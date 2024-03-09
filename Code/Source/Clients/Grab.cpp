@@ -959,10 +959,13 @@ namespace TestGem
     #ifdef FIRST_PERSON_CONTROLLER
     void Grab::FreezeCharacterRotation()
     {
-        FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
-            GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraYaw, 0.f, false);
-        FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
-            GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
+        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers())
+        {
+            FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
+                GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraYaw, 0.f, false);
+            FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
+                GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
+        }
     }
     #endif
 
