@@ -9,7 +9,6 @@
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
-#include <FirstPersonController/FirstPersonControllerComponentBus.h>
 #include <TestGem/TestGemComponentBus.h>
 
 namespace TestGem

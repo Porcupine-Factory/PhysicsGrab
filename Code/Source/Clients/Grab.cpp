@@ -8,6 +8,7 @@
 #include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
+#include <FirstPersonController/FirstPersonControllerComponentBus.h>
 
 namespace TestGem
 {
