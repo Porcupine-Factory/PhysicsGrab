@@ -2,7 +2,7 @@
 #include <AzCore/Memory/SystemAllocator.h>
 #include <AzCore/Module/Module.h>
 #include <Clients/ObjectInteractionSystemComponent.h>
-#include <Clients/Grab.h>
+#include <Clients/ObjectInteraction.h>
 
 namespace ObjectInteraction
 {
@@ -21,7 +21,7 @@ namespace ObjectInteraction
             // This happens through the [MyComponent]::Reflect() function.
             m_descriptors.insert(m_descriptors.end(), {
                 ObjectInteractionSystemComponent::CreateDescriptor(),
-                Grab::CreateDescriptor()
+                ObjectInteraction::CreateDescriptor()
                 });
         }
 

@@ -17,7 +17,7 @@
 
 namespace ObjectInteraction
 {
-    enum class GrabStates
+    enum class ObjectInteractionStates
     {
         idleState,
         checkState,
@@ -26,7 +26,7 @@ namespace ObjectInteraction
         throwState
     };
 
-    class Grab
+    class ObjectInteraction
         : public AZ::Component
         , public AZ::EntityBus::Handler
         , public AZ::TickBus::Handler
@@ -35,7 +35,7 @@ namespace ObjectInteraction
         , Camera::CameraNotificationBus::Handler
     {
     public:
-        AZ_COMPONENT(Grab, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
+        AZ_COMPONENT(ObjectInteraction, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
 
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
@@ -254,14 +254,14 @@ namespace ObjectInteraction
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
 
-        GrabStates m_state = GrabStates::idleState;
+        ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
 
-        AZStd::map<GrabStates, AZStd::string> m_statesMap = {
-          {GrabStates::idleState,   "idleState"},
-          {GrabStates::checkState,  "checkState"},
-          {GrabStates::holdState,   "holdState"},
-          {GrabStates::rotateState, "rotateState"},
-          {GrabStates::throwState,  "throwState"}
+        AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
+          {ObjectInteractionStates::idleState,   "idleState"},
+          {ObjectInteractionStates::checkState,  "checkState"},
+          {ObjectInteractionStates::holdState,   "holdState"},
+          {ObjectInteractionStates::rotateState, "rotateState"},
+          {ObjectInteractionStates::throwState,  "throwState"}
         };
     };
 } // namespace ObjectInteraction
