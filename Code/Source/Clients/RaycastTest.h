@@ -5,7 +5,7 @@
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 // #include <PhysXCharacters/API/CharacterController.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     // An example of a simple O3DE component
     class RaycastTest
@@ -36,4 +36,4 @@ namespace TestGem
         float m_sphereCastDistance = 0.001f;
         float m_sphereCastDirection = -1.0f;
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

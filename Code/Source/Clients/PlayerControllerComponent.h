@@ -8,7 +8,7 @@
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     // Define the action we want. In this case, notify when forward key is pressed
     const StartingPointInput::InputEventNotificationId MoveFwdEventId("move forward");
@@ -97,4 +97,4 @@ namespace TestGem
         bool m_isJumping = false;
         bool m_grounded = true;
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

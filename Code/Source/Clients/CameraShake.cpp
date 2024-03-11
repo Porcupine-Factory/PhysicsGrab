@@ -6,7 +6,7 @@
 #include <AzCore/Serialization/EditContext.h>
 #include <AzFramework/Components/CameraBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     using namespace StartingPointInput;
 
@@ -274,4 +274,4 @@ namespace TestGem
         // AZ_Printf("", "Perlin FAST Number = %.10f", m_perlinFastNoise);
         return m_perlinFastNoise;
     }
-} // namespace TestGem
+} // namespace ObjectInteraction

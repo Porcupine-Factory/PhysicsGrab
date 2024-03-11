@@ -3,17 +3,17 @@
 
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
-#include <TestGem/TestGemBus.h>
+#include <ObjectInteraction/ObjectInteractionBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
-    class TestGemSystemComponent
+    class ObjectInteractionSystemComponent
         : public AZ::Component
-        , protected TestGemRequestBus::Handler
+        , protected ObjectInteractionRequestBus::Handler
         , public AZ::TickBus::Handler
     {
     public:
-        AZ_COMPONENT(TestGemSystemComponent, "{2CF1EBBE-80F8-4508-9251-7F1FEF6B7511}");
+        AZ_COMPONENT(ObjectInteractionSystemComponent, "{2CF1EBBE-80F8-4508-9251-7F1FEF6B7511}");
 
         static void Reflect(AZ::ReflectContext* context);
 
@@ -22,12 +22,12 @@ namespace TestGem
         static void GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required);
         static void GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent);
 
-        TestGemSystemComponent();
-        ~TestGemSystemComponent();
+        ObjectInteractionSystemComponent();
+        ~ObjectInteractionSystemComponent();
 
     protected:
         ////////////////////////////////////////////////////////////////////////
-        // TestGemRequestBus interface implementation
+        // ObjectInteractionRequestBus interface implementation
 
         ////////////////////////////////////////////////////////////////////////
 
@@ -44,4 +44,4 @@ namespace TestGem
         ////////////////////////////////////////////////////////////////////////
     };
 
-} // namespace TestGem
+} // namespace ObjectInteraction

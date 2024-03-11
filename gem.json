@@ -1,15 +1,15 @@
 {
-  "gem_name": "TestGem",
+  "gem_name": "ObjectInteraction",
   "version": "1.0.0",
-  "display_name": "TestGem",
+  "display_name": "ObjectInteraction",
   "license": "MIT",
   "license_url": "",
   "origin": "NanaYellen",
-  "origin_uri": "https://gitlab.com/NanaYellen/testgem.git",
+  "origin_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
   "sha256": "",
   "last_updated": "2023-10-28",
   "type": "Code",
-  "summary": "The TestGem provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
+  "summary": "The ObjectInteraction provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
   "canonical_tags": [
     "Gem"
   ],
@@ -30,8 +30,8 @@
     "StartingPointInput",
     "FastNoise"
   ],
-  "repo_uri": "https://gitlab.com/NanaYellen/testgem.git",
+  "repo_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
   "compatible_engines": [],
   "engine_api_dependencies": [],
-  "restricted": "TestGem"
+  "restricted": "ObjectInteraction"
 }

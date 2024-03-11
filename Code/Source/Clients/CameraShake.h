@@ -6,7 +6,7 @@
 #include <External/FastNoise/FastNoise.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
 
     class CameraShake
@@ -69,4 +69,4 @@ namespace TestGem
         float m_perlinNoise = 0.f;
         float m_ShakeKey = 0.f;
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

@@ -2,13 +2,13 @@
     "Amazon": {
         "AssetProcessor": {
             "Settings": {
-                "ScanFolder TestGem/Assets": {
-                    "watch": "@GEMROOT:TestGem@/Assets",
+                "ScanFolder ObjectInteraction/Assets": {
+                    "watch": "@GEMROOT:ObjectInteraction@/Assets",
                     "recursive": 1,
                     "order": 101
                 },
-                "ScanFolder TestGem/Registry": {
-                    "watch": "@GEMROOT:TestGem@/Registry",
+                "ScanFolder ObjectInteraction/Registry": {
+                    "watch": "@GEMROOT:ObjectInteraction@/Registry",
                     "recursive": 1,
                     "order": 102
                 }

@@ -4,7 +4,7 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     void HeadBob::Reflect(AZ::ReflectContext* rc)
     {
@@ -121,4 +121,4 @@ namespace TestGem
             m_offset = m_rightLocalVector * horizontalOffset + AZ::Vector3::CreateAxisZ(verticalOffset);
         }
     }
-} // namespace TestGem
+} // namespace ObjectInteraction

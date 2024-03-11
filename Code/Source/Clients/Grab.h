@@ -9,13 +9,13 @@
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
-#include <TestGem/TestGemComponentBus.h>
+#include <ObjectInteraction/ObjectInteractionComponentBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
 #include <FirstPersonController/FirstPersonControllerComponentBus.h>
 #endif
 
-namespace TestGem
+namespace ObjectInteraction
 {
     enum class GrabStates
     {
@@ -31,7 +31,7 @@ namespace TestGem
         , public AZ::EntityBus::Handler
         , public AZ::TickBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
-        , public TestGemComponentRequestBus::Handler
+        , public ObjectInteractionComponentRequestBus::Handler
         , Camera::CameraNotificationBus::Handler
     {
     public:
@@ -62,7 +62,7 @@ namespace TestGem
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
 
-        // TestGemRequestBus
+        // ObjectInteractionRequestBus
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
@@ -165,7 +165,7 @@ namespace TestGem
         void FreezeCharacterRotation();
         #endif
 
-        // TestGemNotificationBus
+        // ObjectInteractionNotificationBus
         void OnObjectSphereCastHit();
         void OnHoldStart();
         void OnHoldStop();
@@ -261,4 +261,4 @@ namespace TestGem
           {GrabStates::throwState,  "throwState"}
         };
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

@@ -5,12 +5,12 @@
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzFramework/Physics/Collision/CollisionLayers.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
-    class TestGemComponentRequests : public AZ::ComponentBus
+    class ObjectInteractionComponentRequests : public AZ::ComponentBus
     {
     public:
-        ~TestGemComponentRequests() override = default;
+        ~ObjectInteractionComponentRequests() override = default;
 
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
@@ -81,9 +81,9 @@ namespace TestGem
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
-    using TestGemComponentRequestBus = AZ::EBus<TestGemComponentRequests>;
+    using ObjectInteractionComponentRequestBus = AZ::EBus<ObjectInteractionComponentRequests>;
 
-    class TestGemNotifications : public AZ::ComponentBus
+    class ObjectInteractionNotifications : public AZ::ComponentBus
     {
     public:
         virtual void OnObjectSphereCastHit() = 0;
@@ -97,15 +97,15 @@ namespace TestGem
         virtual void OnMaxThrowDistance() = 0;
     };
 
-    using TestGemNotificationBus = AZ::EBus<TestGemNotifications>;
+    using ObjectInteractionNotificationBus = AZ::EBus<ObjectInteractionNotifications>;
 
-    class TestGemNotificationHandler
-        : public TestGemNotificationBus::Handler
+    class ObjectInteractionNotificationHandler
+        : public ObjectInteractionNotificationBus::Handler
         , public AZ::BehaviorEBusHandler
     {
     public:
         AZ_EBUS_BEHAVIOR_BINDER(
-            TestGemNotificationHandler,
+            ObjectInteractionNotificationHandler,
             "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
             AZ::SystemAllocator,
             OnObjectSphereCastHit,
@@ -155,4 +155,4 @@ namespace TestGem
             Call(FN_OnMaxThrowDistance);
         }
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

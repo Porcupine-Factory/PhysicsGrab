@@ -8,7 +8,7 @@
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     using namespace StartingPointInput;
 
@@ -423,4 +423,4 @@ namespace TestGem
         handleGravity();
         handleJump();
     }
-} // namespace TestGem
+} // namespace ObjectInteraction

@@ -7,7 +7,7 @@
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     void RaycastTest::Reflect(AZ::ReflectContext* rc)
     {
@@ -105,4 +105,4 @@ namespace TestGem
         // Print entity's grounded state
         AZ_Printf("", "%s", m_grounded ? "Grounded" : "NOT Grounded");
     }
-} // namespace TestGem
+} // namespace ObjectInteraction

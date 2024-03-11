@@ -1,24 +1,24 @@
 
-#include <TestGemModuleInterface.h>
-#include "TestGemEditorSystemComponent.h"
+#include <ObjectInteractionModuleInterface.h>
+#include "ObjectInteractionEditorSystemComponent.h"
 
-namespace TestGem
+namespace ObjectInteraction
 {
-    class TestGemEditorModule
-        : public TestGemModuleInterface
+    class ObjectInteractionEditorModule
+        : public ObjectInteractionModuleInterface
     {
     public:
-        AZ_RTTI(TestGemEditorModule, "{852D08C1-2525-4131-A9DF-280B77AD7D8B}", TestGemModuleInterface);
-        AZ_CLASS_ALLOCATOR(TestGemEditorModule, AZ::SystemAllocator, 0);
+        AZ_RTTI(ObjectInteractionEditorModule, "{852D08C1-2525-4131-A9DF-280B77AD7D8B}", ObjectInteractionModuleInterface);
+        AZ_CLASS_ALLOCATOR(ObjectInteractionEditorModule, AZ::SystemAllocator, 0);
 
-        TestGemEditorModule()
+        ObjectInteractionEditorModule()
         {
             // Push results of [MyComponent]::CreateDescriptor() into m_descriptors here.
             // Add ALL components descriptors associated with this gem to m_descriptors.
             // This will associate the AzTypeInfo information for the components with the the SerializeContext, BehaviorContext and EditContext.
             // This happens through the [MyComponent]::Reflect() function.
             m_descriptors.insert(m_descriptors.end(), {
-                TestGemEditorSystemComponent::CreateDescriptor(),
+                ObjectInteractionEditorSystemComponent::CreateDescriptor(),
             });
         }
 
@@ -29,10 +29,10 @@ namespace TestGem
         AZ::ComponentTypeList GetRequiredSystemComponents() const override
         {
             return AZ::ComponentTypeList {
-                azrtti_typeid<TestGemEditorSystemComponent>(),
+                azrtti_typeid<ObjectInteractionEditorSystemComponent>(),
             };
         }
     };
-}// namespace TestGem
+}// namespace ObjectInteraction
 
-AZ_DECLARE_MODULE_CLASS(Gem_TestGem, TestGem::TestGemEditorModule)
+AZ_DECLARE_MODULE_CLASS(Gem_ObjectInteraction, ObjectInteraction::ObjectInteractionEditorModule)

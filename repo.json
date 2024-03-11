@@ -1,12 +1,12 @@
 {
-  "repo_name": "TestGem",
+  "repo_name": "ObjectInteraction",
   "origin": "NanaYellen",
-  "repo_uri": "https://gitlab.com/NanaYellen/testgem.git",
-  "summary": "The TestGem provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
+  "repo_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
+  "summary": "The ObjectInteraction provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
   "additional_info": "",
   "last_updated": "2023-10-28",
   "gems": [
-    "https://gitlab.com/NanaYellen/testgem.git"
+    "https://gitlab.com/NanaYellen/ObjectInteraction.git"
   ]
 }
  

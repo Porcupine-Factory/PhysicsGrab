@@ -9,7 +9,7 @@
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     using namespace StartingPointInput;
 
@@ -187,78 +187,78 @@ namespace TestGem
 
         if (auto bc = azrtti_cast<AZ::BehaviorContext*>(rc))
         {
-            bc->EBus<TestGemNotificationBus>("GrabNotificationBus", "GrabComponentNotificationBus", "Notifications for Grab Component")
-                ->Handler<TestGemNotificationHandler>();
+            bc->EBus<ObjectInteractionNotificationBus>("GrabNotificationBus", "GrabComponentNotificationBus", "Notifications for Grab Component")
+                ->Handler<ObjectInteractionNotificationHandler>();
 
-            bc->EBus<TestGemComponentRequestBus>("TestGemComponentRequestBus")
+            bc->EBus<ObjectInteractionComponentRequestBus>("ObjectInteractionComponentRequestBus")
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
                 ->Attribute(AZ::Script::Attributes::Category, "Grab")
-                ->Event("Get Grabbing EntityId", &TestGemComponentRequests::GetGrabbingEntityId)
-                ->Event("Get Active Camera EntityId", &TestGemComponentRequests::GetActiveCameraEntityId)
-                ->Event("Get Grabbed Object EntityId", &TestGemComponentRequests::GetGrabbedObjectEntityId)
-                ->Event("Get Last Grabbed Object EntityId", &TestGemComponentRequests::GetLastGrabbedObjectEntityId)
-                ->Event("Set Grabbing Entity", &TestGemComponentRequests::SetGrabbingEntity)
-                ->Event("Get Grabbed Collision Group", &TestGemComponentRequests::GetGrabbedCollisionGroup)
-                ->Event("Set Grabbed Collision Group", &TestGemComponentRequests::SetGrabbedCollisionGroup)
-                ->Event("Get Current Grabbed Layer Name", &TestGemComponentRequests::GetCurrentGrabbedCollisionLayerName)
-                ->Event("Set Current Grabbed Layer By Name", &TestGemComponentRequests::SetCurrentGrabbedCollisionLayerByName)
-                ->Event("Get Current Grabbed Layer", &TestGemComponentRequests::GetCurrentGrabbedCollisionLayer)
-                ->Event("Set Current Grabbed Layer", &TestGemComponentRequests::SetCurrentGrabbedCollisionLayer)
-                ->Event("Get Previous Grabbed Layer Name", &TestGemComponentRequests::GetPrevGrabbedCollisionLayerName)
-                ->Event("Set Previous Grabbed Layer Name By Name", &TestGemComponentRequests::SetPrevGrabbedCollisionLayerByName)
-                ->Event("Get Previous Grabbed Layer", &TestGemComponentRequests::GetPrevGrabbedCollisionLayer)
-                ->Event("Set Previous Grabbed Layer", &TestGemComponentRequests::SetPrevGrabbedCollisionLayer)
-                ->Event("Get Temporary Grabbed Layer Name", &TestGemComponentRequests::GetTempGrabbedCollisionLayerName)
-                ->Event("Set Temporary Grabbed Layer By Name", &TestGemComponentRequests::SetTempGrabbedCollisionLayerByName)
-                ->Event("Get Temporary Grabbed Layer", &TestGemComponentRequests::GetTempGrabbedCollisionLayer)
-                ->Event("Set Temporary Grabbed Layer", &TestGemComponentRequests::SetTempGrabbedCollisionLayer)
-                ->Event("Get State String", &TestGemComponentRequests::GetStateString)
-                ->Event("Get Is In Idle State", &TestGemComponentRequests::GetIsInIdleState)
-                ->Event("Get Is In Check State", &TestGemComponentRequests::GetIsInCheckState)
-                ->Event("Get Is In Held State", &TestGemComponentRequests::GetIsInHeldState)
-                ->Event("Get Is In Rotate State", &TestGemComponentRequests::GetIsInRotateState)
-                ->Event("Get Is In Throw State", &TestGemComponentRequests::GetIsInThrowState)
-                ->Event("Get Object Sphere Cast Hit", &TestGemComponentRequests::GetObjectSphereCastHit)
-                ->Event("Get Grabbed Object Distance", &TestGemComponentRequests::GetGrabbedObjectDistance)
-                ->Event("Set Grabbed Object Distance", &TestGemComponentRequests::SetGrabbedObjectDistance)
-                ->Event("Get Minimum Grabbed Object Distance", &TestGemComponentRequests::GetMinGrabbedObjectDistance)
-                ->Event("Set Minimum Grabbed Object Distance", &TestGemComponentRequests::SetMinGrabbedObjectDistance)
-                ->Event("Get Maximum Grabbed Objectt Distance", &TestGemComponentRequests::GetMaxGrabbedObjectDistance)
-                ->Event("Set Maximum Grabbed Object Distance", &TestGemComponentRequests::SetMaxGrabbedObjectDistance)
-                ->Event("Get Initial Grabbed Object Distance", &TestGemComponentRequests::GetInitialGrabbedObjectDistance)
-                ->Event("Set Initial Grabbed Objectt Distance", &TestGemComponentRequests::SetInitialGrabbedObjectDistance)
-                ->Event("Get Grabbed Object Distance Speed", &TestGemComponentRequests::GetGrabbedObjectDistanceSpeed)
-                ->Event("Set Grabbed Object Distance Speed", &TestGemComponentRequests::SetGrabbedObjectDistanceSpeed)
-                ->Event("Get Grab Response", &TestGemComponentRequests::GetGrabResponse)
-                ->Event("Set Grab Response", &TestGemComponentRequests::SetGrabResponse)
-                ->Event("Get Dynamic Object Tidal Lock", &TestGemComponentRequests::GetDynamicTidalLock)
-                ->Event("Set Dynamic Object Tidal Lock", &TestGemComponentRequests::SetDynamicTidalLock)
-                ->Event("Get Kinematic Object Tidal Lock", &TestGemComponentRequests::GetKinematicTidalLock)
-                ->Event("Set Kinematic Object Tidal Lock", &TestGemComponentRequests::SetKinematicTidalLock)
-                ->Event("Get Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::GetDynamicRotateScale)
-                ->Event("Set Grabbed Dynamic Object Rotation Scale", &TestGemComponentRequests::SetDynamicRotateScale)
-                ->Event("Get Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::GetKinematicRotateScale)
-                ->Event("Set Grabbed Kinematic Object Rotation Scale", &TestGemComponentRequests::SetKinematicRotateScale)
-                ->Event("Get Grab Throw Impulse", &TestGemComponentRequests::GetThrowImpulse)
-                ->Event("Set Grab Throw Impulse", &TestGemComponentRequests::SetThrowImpulse)
-                ->Event("Get Grabbed Object Throw State Counter", &TestGemComponentRequests::GetGrabbedObjectThrowStateCounter)
-                ->Event("Get Grabbed Object Throw State Max Time", &TestGemComponentRequests::GetGrabbedObjectThrowStateTime)
-                ->Event("Set Grabbed Object Throw State Max Time", &TestGemComponentRequests::SetGrabbedObjectThrowStateTime)
-                ->Event("Get Grab Sphere Cast Radius", &TestGemComponentRequests::GetSphereCastRadius)
-                ->Event("Set Grab Sphere Cast Radius", &TestGemComponentRequests::SetSphereCastRadius)
-                ->Event("Get Grab Sphere Cast Distance", &TestGemComponentRequests::GetSphereCastDistance)
-                ->Event("Set Grab Sphere Cast Distance", &TestGemComponentRequests::SetSphereCastDistance)
-                ->Event("Get Grabbed Object Is Kinematic", &TestGemComponentRequests::GetGrabbedObjectKinematicElseDynamic)
-                ->Event("Set Grabbed Object Is Kinematic", &TestGemComponentRequests::SetGrabbedObjectKinematicElseDynamic)
-                ->Event("Get Current Grabbed Object Angular Damping", &TestGemComponentRequests::GetCurrentGrabbedObjectAngularDamping)
-                ->Event("Set Current Grabbed Object Angular Damping", &TestGemComponentRequests::SetCurrentGrabbedObjectAngularDamping)
-                ->Event("Get Previous Grabbed Object Angular Damping", &TestGemComponentRequests::GetPrevGrabbedObjectAngularDamping)
-                ->Event("Set Previous Grabbed Object Angular Damping", &TestGemComponentRequests::SetPrevGrabbedObjectAngularDamping)
-                ->Event("Get Temporary Grabbed Object Angular Damping", &TestGemComponentRequests::GetTempGrabbedObjectAngularDamping)
-                ->Event("Set Temporary Grabbed Object Angular Damping", &TestGemComponentRequests::SetTempGrabbedObjectAngularDamping);
+                ->Event("Get Grabbing EntityId", &ObjectInteractionComponentRequests::GetGrabbingEntityId)
+                ->Event("Get Active Camera EntityId", &ObjectInteractionComponentRequests::GetActiveCameraEntityId)
+                ->Event("Get Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetGrabbedObjectEntityId)
+                ->Event("Get Last Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetLastGrabbedObjectEntityId)
+                ->Event("Set Grabbing Entity", &ObjectInteractionComponentRequests::SetGrabbingEntity)
+                ->Event("Get Grabbed Collision Group", &ObjectInteractionComponentRequests::GetGrabbedCollisionGroup)
+                ->Event("Set Grabbed Collision Group", &ObjectInteractionComponentRequests::SetGrabbedCollisionGroup)
+                ->Event("Get Current Grabbed Layer Name", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayerName)
+                ->Event("Set Current Grabbed Layer By Name", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayerByName)
+                ->Event("Get Current Grabbed Layer", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayer)
+                ->Event("Set Current Grabbed Layer", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayer)
+                ->Event("Get Previous Grabbed Layer Name", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayerName)
+                ->Event("Set Previous Grabbed Layer Name By Name", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayerByName)
+                ->Event("Get Previous Grabbed Layer", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayer)
+                ->Event("Set Previous Grabbed Layer", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayer)
+                ->Event("Get Temporary Grabbed Layer Name", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayerName)
+                ->Event("Set Temporary Grabbed Layer By Name", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayerByName)
+                ->Event("Get Temporary Grabbed Layer", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayer)
+                ->Event("Set Temporary Grabbed Layer", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayer)
+                ->Event("Get State String", &ObjectInteractionComponentRequests::GetStateString)
+                ->Event("Get Is In Idle State", &ObjectInteractionComponentRequests::GetIsInIdleState)
+                ->Event("Get Is In Check State", &ObjectInteractionComponentRequests::GetIsInCheckState)
+                ->Event("Get Is In Held State", &ObjectInteractionComponentRequests::GetIsInHeldState)
+                ->Event("Get Is In Rotate State", &ObjectInteractionComponentRequests::GetIsInRotateState)
+                ->Event("Get Is In Throw State", &ObjectInteractionComponentRequests::GetIsInThrowState)
+                ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
+                ->Event("Get Grabbed Object Distance", &ObjectInteractionComponentRequests::GetGrabbedObjectDistance)
+                ->Event("Set Grabbed Object Distance", &ObjectInteractionComponentRequests::SetGrabbedObjectDistance)
+                ->Event("Get Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::GetMinGrabbedObjectDistance)
+                ->Event("Set Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMinGrabbedObjectDistance)
+                ->Event("Get Maximum Grabbed Objectt Distance", &ObjectInteractionComponentRequests::GetMaxGrabbedObjectDistance)
+                ->Event("Set Maximum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMaxGrabbedObjectDistance)
+                ->Event("Get Initial Grabbed Object Distance", &ObjectInteractionComponentRequests::GetInitialGrabbedObjectDistance)
+                ->Event("Set Initial Grabbed Objectt Distance", &ObjectInteractionComponentRequests::SetInitialGrabbedObjectDistance)
+                ->Event("Get Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::GetGrabbedObjectDistanceSpeed)
+                ->Event("Set Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::SetGrabbedObjectDistanceSpeed)
+                ->Event("Get Grab Response", &ObjectInteractionComponentRequests::GetGrabResponse)
+                ->Event("Set Grab Response", &ObjectInteractionComponentRequests::SetGrabResponse)
+                ->Event("Get Dynamic Object Tidal Lock", &ObjectInteractionComponentRequests::GetDynamicTidalLock)
+                ->Event("Set Dynamic Object Tidal Lock", &ObjectInteractionComponentRequests::SetDynamicTidalLock)
+                ->Event("Get Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::GetKinematicTidalLock)
+                ->Event("Set Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::SetKinematicTidalLock)
+                ->Event("Get Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::GetDynamicRotateScale)
+                ->Event("Set Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::SetDynamicRotateScale)
+                ->Event("Get Grabbed Kinematic Object Rotation Scale", &ObjectInteractionComponentRequests::GetKinematicRotateScale)
+                ->Event("Set Grabbed Kinematic Object Rotation Scale", &ObjectInteractionComponentRequests::SetKinematicRotateScale)
+                ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
+                ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
+                ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
+                ->Event("Get Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateTime)
+                ->Event("Set Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateTime)
+                ->Event("Get Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::GetSphereCastRadius)
+                ->Event("Set Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::SetSphereCastRadius)
+                ->Event("Get Grab Sphere Cast Distance", &ObjectInteractionComponentRequests::GetSphereCastDistance)
+                ->Event("Set Grab Sphere Cast Distance", &ObjectInteractionComponentRequests::SetSphereCastDistance)
+                ->Event("Get Grabbed Object Is Kinematic", &ObjectInteractionComponentRequests::GetGrabbedObjectKinematicElseDynamic)
+                ->Event("Set Grabbed Object Is Kinematic", &ObjectInteractionComponentRequests::SetGrabbedObjectKinematicElseDynamic)
+                ->Event("Get Current Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetCurrentGrabbedObjectAngularDamping)
+                ->Event("Set Current Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetCurrentGrabbedObjectAngularDamping)
+                ->Event("Get Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetPrevGrabbedObjectAngularDamping)
+                ->Event("Set Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectAngularDamping)
+                ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
+                ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping);
 
-            bc->Class<Grab>()->RequestBus("TestGemComponentRequestBus");
+            bc->Class<Grab>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
     }
     void Grab::Activate()
@@ -291,7 +291,7 @@ namespace TestGem
             m_grabbedCollisionGroup, &Physics::CollisionRequests::GetCollisionGroupById, m_grabbedCollisionGroupId);
 
         // Connect the handler to the request bus
-        TestGemComponentRequestBus::Handler::BusConnect(GetEntityId());
+        ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
 
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready.
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
@@ -313,7 +313,7 @@ namespace TestGem
         InputEventNotificationBus::MultiHandler::BusDisconnect();
 
         // Disconnect the handler from the request bus
-        TestGemComponentRequestBus::Handler::BusDisconnect();
+        ObjectInteractionComponentRequestBus::Handler::BusDisconnect();
 
         Camera::CameraNotificationBus::Handler::BusDisconnect();
     }
@@ -537,7 +537,7 @@ namespace TestGem
 
         if (m_objectSphereCastHit)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStart);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
             m_lastEntityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
@@ -567,7 +567,7 @@ namespace TestGem
 
             m_state = GrabStates::holdState;
             // Broadcast a grab start notification event
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStart);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
         }
         else if (!(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f))
         {
@@ -587,7 +587,7 @@ namespace TestGem
         if (!m_objectSphereCastHit)
         {
             m_state = GrabStates::idleState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             return;
         }
 
@@ -622,7 +622,7 @@ namespace TestGem
             m_objectSphereCastHit = false;
 
             m_state = GrabStates::idleState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
         }
         else if ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
                  (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))
@@ -633,7 +633,7 @@ namespace TestGem
             SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
 
             m_state = GrabStates::rotateState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStart);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
         }
         else if (m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
         {
@@ -649,8 +649,8 @@ namespace TestGem
             m_objectSphereCastHit = false;
 
             m_state = GrabStates::throwState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStart);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
         }
         else
         {
@@ -666,8 +666,8 @@ namespace TestGem
         if (!m_objectSphereCastHit)
         {
             m_state = GrabStates::idleState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             return;
         }
 
@@ -691,7 +691,7 @@ namespace TestGem
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_state = GrabStates::holdState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
         }
         else if ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
                  (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))
@@ -726,8 +726,8 @@ namespace TestGem
             m_objectSphereCastHit = false;
 
             m_state = GrabStates::idleState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
         }
         else if (m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
         {
@@ -748,9 +748,9 @@ namespace TestGem
             m_objectSphereCastHit = false;
 
             m_state = GrabStates::throwState;
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnRotateStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnHoldStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStart);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
         }
         else
         {
@@ -771,15 +771,15 @@ namespace TestGem
         if (m_grabReference.GetTranslation().GetDistance(
                 GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnMaxThrowDistance);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnMaxThrowDistance);
             m_state = GrabStates::idleState;
         }
         // Escape from the throw state if grabbed object is in throw state longer than m_throwStateMaxTime
         else if (m_throwStateCounter <= 0.f)
         {
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStop);
-            TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStateCounterZero);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStateCounterZero);
             m_state = GrabStates::idleState;
         }
         else
@@ -922,7 +922,7 @@ namespace TestGem
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, m_forwardVector * m_throwImpulse);
 
         // Trigger an event notification when object enters Throw State
-        TestGemNotificationBus::Broadcast(&TestGemNotificationBus::Events::OnThrowStart);
+        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
 
         m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
 
@@ -1423,4 +1423,4 @@ namespace TestGem
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
     }
-} // namespace TestGem
+} // namespace ObjectInteraction

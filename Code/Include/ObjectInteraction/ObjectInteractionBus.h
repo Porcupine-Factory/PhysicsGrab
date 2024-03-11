@@ -4,17 +4,17 @@
 #include <AzCore/EBus/EBus.h>
 #include <AzCore/Interface/Interface.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
-    class TestGemRequests
+    class ObjectInteractionRequests
     {
     public:
-        AZ_RTTI(TestGemRequests, "{90038155-369C-44D7-8CCE-265B26E9A188}");
-        virtual ~TestGemRequests() = default;
+        AZ_RTTI(ObjectInteractionRequests, "{90038155-369C-44D7-8CCE-265B26E9A188}");
+        virtual ~ObjectInteractionRequests() = default;
         // Put your public methods here
     };
 
-    class TestGemBusTraits : public AZ::EBusTraits
+    class ObjectInteractionBusTraits : public AZ::EBusTraits
     {
     public:
         //////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@ namespace TestGem
         //////////////////////////////////////////////////////////////////////////
     };
 
-    using TestGemRequestBus = AZ::EBus<TestGemRequests, TestGemBusTraits>;
-    using TestGemInterface = AZ::Interface<TestGemRequests>;
+    using ObjectInteractionRequestBus = AZ::EBus<ObjectInteractionRequests, ObjectInteractionBusTraits>;
+    using ObjectInteractionInterface = AZ::Interface<ObjectInteractionRequests>;
 
-} // namespace TestGem
+} // namespace ObjectInteraction

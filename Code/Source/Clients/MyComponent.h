@@ -2,7 +2,7 @@
 #include <AzCore/Component/Component.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     // An example of a simple O3DE component
     class MyComponent : public AZ::Component
@@ -21,4 +21,4 @@ namespace TestGem
         // Provide runtime reflection, if any
         static void Reflect(AZ::ReflectContext* reflection);
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

@@ -3,22 +3,22 @@
 
 #include <AzToolsFramework/API/ToolsApplicationAPI.h>
 
-#include <Clients/TestGemSystemComponent.h>
+#include <Clients/ObjectInteractionSystemComponent.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
-    /// System component for TestGem editor
-    class TestGemEditorSystemComponent
-        : public TestGemSystemComponent
+    /// System component for ObjectInteraction editor
+    class ObjectInteractionEditorSystemComponent
+        : public ObjectInteractionSystemComponent
         , protected AzToolsFramework::EditorEvents::Bus::Handler
     {
-        using BaseSystemComponent = TestGemSystemComponent;
+        using BaseSystemComponent = ObjectInteractionSystemComponent;
     public:
-        AZ_COMPONENT(TestGemEditorSystemComponent, "{C4A42620-D49B-4853-B06C-275FE75268F5}", BaseSystemComponent);
+        AZ_COMPONENT(ObjectInteractionEditorSystemComponent, "{C4A42620-D49B-4853-B06C-275FE75268F5}", BaseSystemComponent);
         static void Reflect(AZ::ReflectContext* context);
 
-        TestGemEditorSystemComponent();
-        ~TestGemEditorSystemComponent();
+        ObjectInteractionEditorSystemComponent();
+        ~ObjectInteractionEditorSystemComponent();
 
     private:
         static void GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided);
@@ -30,4 +30,4 @@ namespace TestGem
         void Activate() override;
         void Deactivate() override;
     };
-} // namespace TestGem
+} // namespace ObjectInteraction

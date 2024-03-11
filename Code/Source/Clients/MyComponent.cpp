@@ -1,7 +1,7 @@
 #include "MyComponent.h"
 #include <AzCore/Serialization/EditContext.h>
 
-using namespace TestGem;
+using namespace ObjectInteraction;
 
 void MyComponent::Reflect(AZ::ReflectContext* reflection)
 {
@@ -23,5 +23,5 @@ void MyComponent::Reflect(AZ::ReflectContext* reflection)
     ec->Class<MyComponent>("My Component", "[Test new component]")
         ->ClassElement(AZ::Edit::ClassElements::EditorData, "")
         ->Attribute(AppearsInAddComponentMenu, AZ_CRC("Game"))
-        ->Attribute(Category, "TestGem");
+        ->Attribute(Category, "ObjectInteraction");
 }

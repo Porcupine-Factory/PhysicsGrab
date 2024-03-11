@@ -7,7 +7,7 @@
 #include <AzFramework/Physics/CharacterBus.h>
 #include <FirstPersonController/FirstPersonControllerComponentBus.h>
 
-namespace TestGem
+namespace ObjectInteraction
 {
     class HeadBob
         : public AZ::Component
@@ -46,4 +46,4 @@ namespace TestGem
 
         bool m_isWalking = false;
     };
-} // namespace TestGem
+} // namespace ObjectInteraction
