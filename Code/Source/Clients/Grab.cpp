@@ -956,18 +956,25 @@ namespace ObjectInteraction
         m_lastEntityRotation = entityRotation;
     }
 
-    #ifdef FIRST_PERSON_CONTROLLER
+   #ifdef FIRST_PERSON_CONTROLLER
     void Grab::FreezeCharacterRotation()
     {
-        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers())
+        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraYaw, 0.f, false);
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
         }
+        else if (m_freezeCharacterRotation)
+        {
+            AZ_Warning(
+                "Object Interaction Component",
+                false,
+                "No First Person Controller Component handler available to freeze character rotation.")
+        }
     }
-    #endif
+#endif
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
     {
