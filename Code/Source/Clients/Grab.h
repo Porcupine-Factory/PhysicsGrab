@@ -35,7 +35,7 @@ namespace ObjectInteraction
         , Camera::CameraNotificationBus::Handler
     {
     public:
-        AZ_COMPONENT(Grab, "{D5628156-EF36-41E9-9C15-4BD66B7B834E}");
+        AZ_COMPONENT(Grab, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
 
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);

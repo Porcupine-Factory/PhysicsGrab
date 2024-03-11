@@ -9,7 +9,7 @@ namespace ObjectInteraction
     class ObjectInteractionRequests
     {
     public:
-        AZ_RTTI(ObjectInteractionRequests, "{90038155-369C-44D7-8CCE-265B26E9A188}");
+        AZ_RTTI(ObjectInteractionRequests, "{0A402AE5-14A5-4C61-9EA8-9F9ABCF36F5E}");
         virtual ~ObjectInteractionRequests() = default;
         // Put your public methods here
     };

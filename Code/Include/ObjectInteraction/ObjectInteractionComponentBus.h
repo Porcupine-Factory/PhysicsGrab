@@ -106,7 +106,7 @@ namespace ObjectInteraction
     public:
         AZ_EBUS_BEHAVIOR_BINDER(
             ObjectInteractionNotificationHandler,
-            "{2F5A85D9-94C0-47EA-8CCE-5CFD1FAE8A7E}",
+            "{4B8267D2-7D33-4AE4-AA30-FD933D6CF0E3}",
             AZ::SystemAllocator,
             OnObjectSphereCastHit,
             OnHoldStart,

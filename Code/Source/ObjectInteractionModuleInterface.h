@@ -2,11 +2,6 @@
 #include <AzCore/Memory/SystemAllocator.h>
 #include <AzCore/Module/Module.h>
 #include <Clients/ObjectInteractionSystemComponent.h>
-#include <Clients/MyComponent.h>
-#include <Clients/PlayerControllerComponent.h>
-#include <Clients/RaycastTest.h>
-#include <Clients/HeadBob.h>
-#include <Clients/CameraShake.h>
 #include <Clients/Grab.h>
 
 namespace ObjectInteraction
@@ -15,7 +10,7 @@ namespace ObjectInteraction
         : public AZ::Module
     {
     public:
-        AZ_RTTI(ObjectInteractionModuleInterface, "{66E60AA9-AA13-41C7-A73F-5378670BAF94}", AZ::Module);
+        AZ_RTTI(ObjectInteractionModuleInterface, "{14CDD3AC-F126-4D63-877D-7D4316EA32C9}", AZ::Module);
         AZ_CLASS_ALLOCATOR(ObjectInteractionModuleInterface, AZ::SystemAllocator, 0);
 
         ObjectInteractionModuleInterface()
@@ -26,11 +21,6 @@ namespace ObjectInteraction
             // This happens through the [MyComponent]::Reflect() function.
             m_descriptors.insert(m_descriptors.end(), {
                 ObjectInteractionSystemComponent::CreateDescriptor(),
-                MyComponent::CreateDescriptor(),
-                PlayerControllerComponent::CreateDescriptor(),
-                RaycastTest::CreateDescriptor(),
-                HeadBob::CreateDescriptor(),
-                CameraShake::CreateDescriptor(),
                 Grab::CreateDescriptor()
                 });
         }

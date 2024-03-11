@@ -52,7 +52,6 @@ ly_add_target(
             AZ::AzFramework
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
-	    Gem::FastNoise.Static
 	    Gem::FirstPersonController
 )
 

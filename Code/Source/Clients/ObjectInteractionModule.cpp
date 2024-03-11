@@ -8,7 +8,7 @@ namespace ObjectInteraction
     class ObjectInteractionModule : public ObjectInteractionModuleInterface
     {
     public:
-        AZ_RTTI(ObjectInteractionModule, "{852D08C1-2525-4131-A9DF-280B77AD7D8B}", ObjectInteractionModuleInterface);
+        AZ_RTTI(ObjectInteractionModule, "{07648EAA-D367-4B4F-A123-15F1055A68F9}", ObjectInteractionModuleInterface);
         AZ_CLASS_ALLOCATOR(ObjectInteractionModule, AZ::SystemAllocator, 0);
     };
 } // namespace ObjectInteraction
