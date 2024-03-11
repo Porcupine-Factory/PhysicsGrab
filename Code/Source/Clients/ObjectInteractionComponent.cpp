@@ -1,4 +1,4 @@
-#include "ObjectInteraction.h"
+#include "ObjectInteractionComponent.h"
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
@@ -13,114 +13,114 @@ namespace ObjectInteraction
 {
     using namespace StartingPointInput;
 
-    void ObjectInteraction::Reflect(AZ::ReflectContext* rc)
+    void ObjectInteractionComponent::Reflect(AZ::ReflectContext* rc)
     {
         if (auto sc = azrtti_cast<AZ::SerializeContext*>(rc))
         {
-            sc->Class<ObjectInteraction, AZ::Component>()
+            sc->Class<ObjectInteractionComponent, AZ::Component>()
 
                 // Grab Input Binding Keys
-                ->Field("Grab Input Key", &ObjectInteraction::m_strGrab)
-                ->Field("Grab Distance Input Key", &ObjectInteraction::m_strGrabDistance)
-                ->Field("Throw Input Key", &ObjectInteraction::m_strThrow)
-                ->Field("Rotate Enable Input Key", &ObjectInteraction::m_strRotate)
-                ->Field("Rotate Pitch Key", &ObjectInteraction::m_strRotatePitch)
-                ->Field("Rotate Yaw Key", &ObjectInteraction::m_strRotateYaw)
-                ->Field("Rotate Roll Key", &ObjectInteraction::m_strRotateRoll)
+                ->Field("Grab Input Key", &ObjectInteractionComponent::m_strGrab)
+                ->Field("Grab Distance Input Key", &ObjectInteractionComponent::m_strGrabDistance)
+                ->Field("Throw Input Key", &ObjectInteractionComponent::m_strThrow)
+                ->Field("Rotate Enable Input Key", &ObjectInteractionComponent::m_strRotate)
+                ->Field("Rotate Pitch Key", &ObjectInteractionComponent::m_strRotatePitch)
+                ->Field("Rotate Yaw Key", &ObjectInteractionComponent::m_strRotateYaw)
+                ->Field("Rotate Roll Key", &ObjectInteractionComponent::m_strRotateRoll)
 
-                ->Field("GrabbingEntityId", &ObjectInteraction::m_grabbingEntityId)
+                ->Field("GrabbingEntityId", &ObjectInteractionComponent::m_grabbingEntityId)
                 #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Freeze Character Rotation", &ObjectInteraction::m_freezeCharacterRotation)
+                ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
                 #endif
-                ->Field("Grab Enable Toggle", &ObjectInteraction::m_grabEnableToggle)
-                ->Field("Maintain Grab", &ObjectInteraction::m_grabMaintained)
-                ->Field("Kinematic While Grabbing", &ObjectInteraction::m_kinematicWhileHeld)
-                ->Field("Rotate Enable Toggle", &ObjectInteraction::m_rotateEnableToggle)
-                ->Field("Tidal Lock Grabbed Object", &ObjectInteraction::m_tidalLock)
-                ->Field("Sphere Cast Radius", &ObjectInteraction::m_sphereCastRadius)
+                ->Field("Grab Enable Toggle", &ObjectInteractionComponent::m_grabEnableToggle)
+                ->Field("Maintain Grab", &ObjectInteractionComponent::m_grabMaintained)
+                ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
+                ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
+                ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
+                ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Sphere Cast Distance", &ObjectInteraction::m_sphereCastDistance)
+                ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Default Grab Distance", &ObjectInteraction::m_initialGrabDistance)
+                ->Field("Default Grab Distance", &ObjectInteractionComponent::m_initialGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Min Grab Distance", &ObjectInteraction::m_minGrabDistance)
+                ->Field("Min Grab Distance", &ObjectInteractionComponent::m_minGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Max Grab Distance", &ObjectInteraction::m_maxGrabDistance)
+                ->Field("Max Grab Distance", &ObjectInteractionComponent::m_maxGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Grab Distance Speed", &ObjectInteraction::m_grabDistanceSpeed)
+                ->Field("Grab Distance Speed", &ObjectInteractionComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
-                ->Field("Throw Impulse", &ObjectInteraction::m_throwImpulse)
+                ->Field("Throw Impulse", &ObjectInteractionComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Grab Response", &ObjectInteraction::m_grabResponse)
+                ->Field("Grab Response", &ObjectInteractionComponent::m_grabResponse)
                 ->Attribute(
                     AZ::Edit::Attributes::Suffix,
                     AZStd::string::format(
                         " s%s%s",
                         Physics::NameConstants::GetSuperscriptMinus().c_str(),
                         Physics::NameConstants::GetSuperscriptOne().c_str()))
-                ->Field("Kinematic Rotate Scale", &ObjectInteraction::m_kinematicRotateScale)
-                ->Field("Dynamic Rotate Scale", &ObjectInteraction::m_dynamicRotateScale)
-                ->Field("Angular Damping", &ObjectInteraction::m_tempObjectAngularDamping)
-                ->Field("Grabbed Object Collision Group", &ObjectInteraction::m_grabbedCollisionGroupId)
-                ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteraction::m_tempGrabbedCollisionLayer)
+                ->Field("Kinematic Rotate Scale", &ObjectInteractionComponent::m_kinematicRotateScale)
+                ->Field("Dynamic Rotate Scale", &ObjectInteractionComponent::m_dynamicRotateScale)
+                ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
+                ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
+                ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
             {
                 using namespace AZ::Edit;
-                ec->Class<ObjectInteraction>("Object Interaction", "[Object Interaction Component]")
+                ec->Class<ObjectInteractionComponent>("Object Interaction", "[Object Interaction Component]")
                     ->ClassElement(ClassElements::EditorData, "")
                     ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
 
                     ->DataElement(
                         0,
-                        &ObjectInteraction::m_grabbingEntityId,
+                        &ObjectInteractionComponent::m_grabbingEntityId,
                         "Grab Entity",
                         "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
 
                     // Input Binding Keys
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr, &ObjectInteraction::m_strGrab, "Grab Key", "Grab interaction input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strThrow, "Throw Input Key", "Throw object input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
-                    ->DataElement(nullptr, &ObjectInteraction::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_freezeCharacterRotation,
+                        &ObjectInteractionComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Enables character controller rotation while in Rotate State.")
                     #endif
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_grabEnableToggle,
+                        &ObjectInteractionComponent::m_grabEnableToggle,
                         "Grab Enable Toggle",
                         "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to "
                         "maintain Grab mode.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_grabMaintained,
+                        &ObjectInteractionComponent::m_grabMaintained,
                         "Maintain Grab",
                         "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from "
                         "flying off when quickly changing directions.")
                     ->DataElement(
-                        nullptr, &ObjectInteraction::m_kinematicWhileHeld, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
+                        nullptr, &ObjectInteractionComponent::m_kinematicWhileHeld, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_rotateEnableToggle,
+                        &ObjectInteractionComponent::m_rotateEnableToggle,
                         "Rotate Enable Toggle",
                         "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
                         "maintain Rotate mode.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_tidalLock,
+                        &ObjectInteractionComponent::m_tidalLock,
                         "Tidal Lock Kinematic Object",
                         "Determines whether a Kinematic Object is tidal locked when being grabbed. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
@@ -128,58 +128,58 @@ namespace ObjectInteraction
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
-                        nullptr, &ObjectInteraction::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
+                        nullptr, &ObjectInteractionComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
                     ->DataElement(
-                        nullptr, &ObjectInteraction::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
+                        nullptr, &ObjectInteractionComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_kinematicRotateScale,
+                        &ObjectInteractionComponent::m_kinematicRotateScale,
                         "Kinematic Rotate Scale",
                         "Rotation speed scale applied when rotating kinematic object")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_dynamicRotateScale,
+                        &ObjectInteractionComponent::m_dynamicRotateScale,
                         "Dynamic Rotate Scale",
                         "Angular Velocity scale applied when rotating dynamic object")
                     ->DataElement(
-                        nullptr, &ObjectInteraction::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
+                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_grabbedCollisionGroupId,
+                        &ObjectInteractionComponent::m_grabbedCollisionGroupId,
                         "Sphere Cast Collision Group",
                         "The collision group which will be used for detecting grabbable objects.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_tempGrabbedCollisionLayer,
+                        &ObjectInteractionComponent::m_tempGrabbedCollisionLayer,
                         "Grabbed Object Temporary Collision Layer",
                         "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
-                    ->DataElement(nullptr, &ObjectInteraction::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
+                    ->DataElement(nullptr, &ObjectInteractionComponent::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
                     ->DataElement(
-                        nullptr, &ObjectInteraction::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
+                        nullptr, &ObjectInteractionComponent::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_initialGrabDistance,
+                        &ObjectInteractionComponent::m_initialGrabDistance,
                         "Default Grab Distance",
                         "Distance the grabbed object will default to when letting go of the object")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_minGrabDistance,
+                        &ObjectInteractionComponent::m_minGrabDistance,
                         "Min Grab Distance",
                         "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_maxGrabDistance,
+                        &ObjectInteractionComponent::m_maxGrabDistance,
                         "Max Grab Distance",
                         "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteraction::m_grabDistanceSpeed,
+                        &ObjectInteractionComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
                         "The speed at which you move the grabbed object closer or away.");
             }
@@ -260,10 +260,10 @@ namespace ObjectInteraction
                 ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
                 ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping);
 
-            bc->Class<ObjectInteraction>()->RequestBus("ObjectInteractionComponentRequestBus");
+            bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
     }
-    void ObjectInteraction::Activate()
+    void ObjectInteractionComponent::Activate()
     {
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
@@ -299,7 +299,7 @@ namespace ObjectInteraction
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
     }
 
-    void ObjectInteraction::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
+    void ObjectInteractionComponent::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
     {
         AZ::EntityBus::Handler::BusDisconnect();
 
@@ -309,7 +309,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::Deactivate()
+    void ObjectInteractionComponent::Deactivate()
     {
         AZ::TickBus::Handler::BusDisconnect();
         InputEventNotificationBus::MultiHandler::BusDisconnect();
@@ -320,29 +320,29 @@ namespace ObjectInteraction
         Camera::CameraNotificationBus::Handler::BusDisconnect();
     }
 
-    void ObjectInteraction::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
+    void ObjectInteractionComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
         required.push_back(AZ_CRC_CE("InputConfigurationService"));
         required.push_back(AZ_CRC_CE("TransformService"));
     }
 
-    void ObjectInteraction::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
+    void ObjectInteractionComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
     {
         provided.push_back(AZ_CRC_CE("GrabService"));
     }
 
-    void ObjectInteraction::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
+    void ObjectInteractionComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
     {
         incompatible.push_back(AZ_CRC_CE("GrabService"));
         incompatible.push_back(AZ_CRC_CE("InputService"));
     }
 
-    void ObjectInteraction::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
+    void ObjectInteractionComponent::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
         dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
     }
 
-    void ObjectInteraction::OnCameraAdded(const AZ::EntityId& cameraId)
+    void ObjectInteractionComponent::OnCameraAdded(const AZ::EntityId& cameraId)
     {
         if (!m_grabbingEntityId.IsValid())
         {
@@ -351,7 +351,7 @@ namespace ObjectInteraction
         }
     }
 
-    AZ::Entity* ObjectInteraction::GetActiveCameraEntityPtr() const
+    AZ::Entity* ObjectInteractionComponent::GetActiveCameraEntityPtr() const
     {
         AZ::EntityId activeCameraId;
         Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId, &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
@@ -361,7 +361,7 @@ namespace ObjectInteraction
     }
 
     // Recieve the input event in OnPressed method
-    void ObjectInteraction::OnPressed(float value)
+    void ObjectInteractionComponent::OnPressed(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -413,7 +413,7 @@ namespace ObjectInteraction
     }
 
     // Recieve the input event in OnReleased method
-    void ObjectInteraction::OnReleased(float value)
+    void ObjectInteractionComponent::OnReleased(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -460,7 +460,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::OnHeld(float value)
+    void ObjectInteractionComponent::OnHeld(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -492,7 +492,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::ProcessStates(const float& deltaTime)
+    void ObjectInteractionComponent::ProcessStates(const float& deltaTime)
     {
         switch(m_state)
         {
@@ -520,12 +520,12 @@ namespace ObjectInteraction
         m_prevRotateKeyValue = m_rotateKeyValue;
     }
 
-    void ObjectInteraction::OnTick(float deltaTime, AZ::ScriptTimePoint)
+    void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         ProcessStates(deltaTime);
     }
 
-    void ObjectInteraction::IdleState()
+    void ObjectInteractionComponent::IdleState()
     {
         if ((m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) && !m_stayInIdleState)
         {
@@ -533,7 +533,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::CheckForObjectsState()
+    void ObjectInteractionComponent::CheckForObjectsState()
     {
         CheckForObjects();
 
@@ -581,7 +581,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::HoldObjectState(const float &deltaTime)
+    void ObjectInteractionComponent::HoldObjectState(const float &deltaTime)
     {
         if (!m_grabMaintained)
             CheckForObjects();
@@ -660,7 +660,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::RotateObjectState(const float &deltaTime)
+    void ObjectInteractionComponent::RotateObjectState(const float &deltaTime)
     {
         if (!m_grabMaintained)
             CheckForObjects();
@@ -760,7 +760,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteraction::ThrowObjectState(const float &deltaTime)
+    void ObjectInteractionComponent::ThrowObjectState(const float &deltaTime)
     {
         if (m_throwStateCounter == m_throwStateMaxTime)
         {
@@ -792,7 +792,7 @@ namespace ObjectInteraction
 
     // Perform a spherecast query to check if colliding with a grabbable object, then assign the first returned hit to
     // m_grabbedObjectEntityId
-    void ObjectInteraction::CheckForObjects()
+    void ObjectInteractionComponent::CheckForObjects()
     {
         // Get forward vector relative to the grabbing entity's transform
         m_forwardVector =
@@ -830,7 +830,7 @@ namespace ObjectInteraction
 
     // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileHeld is
     // enabled.
-    void ObjectInteraction::HoldObject(const float& deltaTime)
+    void ObjectInteractionComponent::HoldObject(const float& deltaTime)
     {
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
         // and m_maxGrabDistance, respectively.
@@ -883,7 +883,7 @@ namespace ObjectInteraction
     }
 
     // Rotate object using physics or transforms, based on object's starting Rigid Body type, or if KinematicWhileHeld is enabled.
-    void ObjectInteraction::RotateObject(const float& deltaTime)
+    void ObjectInteractionComponent::RotateObject(const float& deltaTime)
     {
         // Get right vector relative to the grabbing entity's transform
         m_rightVector =
@@ -917,7 +917,7 @@ namespace ObjectInteraction
     }
 
     // Apply linear impulse to object if it is a Dynamic Rigid Body
-    void ObjectInteraction::ThrowObject()
+    void ObjectInteractionComponent::ThrowObject()
     {
         // Apply a Linear Impulse to the grabbed object.
         Physics::RigidBodyRequestBus::Event(
@@ -939,7 +939,7 @@ namespace ObjectInteraction
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state.
-    void ObjectInteraction::TidalLock()
+    void ObjectInteractionComponent::TidalLock()
     {
         AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
@@ -959,7 +959,7 @@ namespace ObjectInteraction
     }
 
     #ifdef FIRST_PERSON_CONTROLLER
-    void ObjectInteraction::FreezeCharacterRotation()
+    void ObjectInteractionComponent::FreezeCharacterRotation()
     {
         if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
         {
@@ -978,263 +978,263 @@ namespace ObjectInteraction
     }
     #endif
 
-    AZ::Entity* ObjectInteraction::GetEntityPtr(AZ::EntityId pointer) const
+    AZ::Entity* ObjectInteractionComponent::GetEntityPtr(AZ::EntityId pointer) const
     {
         auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
         return ca->FindEntity(pointer);
     }
 
     // Event Notification methods for use in scripts
-    void ObjectInteraction::OnObjectSphereCastHit()
+    void ObjectInteractionComponent::OnObjectSphereCastHit()
     {
     }
-    void ObjectInteraction::OnHoldStart()
+    void ObjectInteractionComponent::OnHoldStart()
     {
     }
-    void ObjectInteraction::OnHoldStop()
+    void ObjectInteractionComponent::OnHoldStop()
     {
     }
-    void ObjectInteraction::OnRotateStart()
+    void ObjectInteractionComponent::OnRotateStart()
     {
     }
-    void ObjectInteraction::OnRotateStop()
+    void ObjectInteractionComponent::OnRotateStop()
     {
     }
-    void ObjectInteraction::OnThrowStart()
+    void ObjectInteractionComponent::OnThrowStart()
     {
     }
-    void ObjectInteraction::OnThrowStop()
+    void ObjectInteractionComponent::OnThrowStop()
     {
     }
-    void ObjectInteraction::OnMaxThrowDistance()
+    void ObjectInteractionComponent::OnMaxThrowDistance()
     {
     }
-    void ObjectInteraction::OnThrowStateCounterZero()
+    void ObjectInteractionComponent::OnThrowStateCounterZero()
     {
     }
 
     // Request Bus getter and setter methods for use in scripts
-    AZ::EntityId ObjectInteraction::GetGrabbingEntityId() const
+    AZ::EntityId ObjectInteractionComponent::GetGrabbingEntityId() const
     {
         return m_grabbingEntityPtr->GetId();
     }
 
-    AZ::EntityId ObjectInteraction::GetActiveCameraEntityId() const
+    AZ::EntityId ObjectInteractionComponent::GetActiveCameraEntityId() const
     {
         return GetActiveCameraEntityPtr()->GetId();
     }
 
-    AZ::EntityId ObjectInteraction::GetGrabbedObjectEntityId() const
+    AZ::EntityId ObjectInteractionComponent::GetGrabbedObjectEntityId() const
     {
         return m_grabbedObjectEntityId;
     }
 
-    AZ::EntityId ObjectInteraction::GetLastGrabbedObjectEntityId() const
+    AZ::EntityId ObjectInteractionComponent::GetLastGrabbedObjectEntityId() const
     {
         return m_lastGrabbedObjectEntityId;
     }
 
-    AZ::EntityId ObjectInteraction::GetThrownGrabbedObjectEntityId() const
+    AZ::EntityId ObjectInteractionComponent::GetThrownGrabbedObjectEntityId() const
     {
         return m_thrownGrabbedObjectEntityId;
     }
 
-    void ObjectInteraction::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
+    void ObjectInteractionComponent::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
     {
         m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
     }
 
-    AZStd::string ObjectInteraction::GetStateString() const
+    AZStd::string ObjectInteractionComponent::GetStateString() const
     {
         return m_statesMap.find(m_state)->second;
     }
 
-    bool ObjectInteraction::GetIsInIdleState() const
+    bool ObjectInteractionComponent::GetIsInIdleState() const
     {
         return (m_state == ObjectInteractionStates::idleState);
     }
 
-    bool ObjectInteraction::GetIsInCheckState() const
+    bool ObjectInteractionComponent::GetIsInCheckState() const
     {
         return (m_state == ObjectInteractionStates::checkState);
     }
 
-    bool ObjectInteraction::GetIsInHeldState() const
+    bool ObjectInteractionComponent::GetIsInHeldState() const
     {
         return (m_state == ObjectInteractionStates::holdState);
     }
 
-    bool ObjectInteraction::GetIsInRotateState() const
+    bool ObjectInteractionComponent::GetIsInRotateState() const
     {
         return (m_state == ObjectInteractionStates::rotateState);
     }
 
-    bool ObjectInteraction::GetIsInThrowState() const
+    bool ObjectInteractionComponent::GetIsInThrowState() const
     {
         return (m_state == ObjectInteractionStates::throwState);
     }
 
-    bool ObjectInteraction::GetObjectSphereCastHit() const
+    bool ObjectInteractionComponent::GetObjectSphereCastHit() const
     {
         return m_objectSphereCastHit;
     }
 
-    bool ObjectInteraction::GetStayInIdleState() const
+    bool ObjectInteractionComponent::GetStayInIdleState() const
     {
         return m_stayInIdleState;
     }
 
-    void ObjectInteraction::SetStayInIdleState(const bool& new_stayInIdleState)
+    void ObjectInteractionComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
     }
 
-    float ObjectInteraction::GetGrabbedObjectDistance() const
+    float ObjectInteractionComponent::GetGrabbedObjectDistance() const
     {
         return m_grabDistance;
     }
 
-    void ObjectInteraction::SetGrabbedObjectDistance(const float& new_grabDistance)
+    void ObjectInteractionComponent::SetGrabbedObjectDistance(const float& new_grabDistance)
     {
         m_grabDistance = AZ::GetClamp(new_grabDistance, m_minGrabDistance, m_maxGrabDistance);
     }
 
-    float ObjectInteraction::GetMinGrabbedObjectDistance() const
+    float ObjectInteractionComponent::GetMinGrabbedObjectDistance() const
     {
         return m_minGrabDistance;
     }
 
-    void ObjectInteraction::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
+    void ObjectInteractionComponent::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
     {
         m_minGrabDistance = new_minGrabDistance;
     }
 
-    float ObjectInteraction::GetMaxGrabbedObjectDistance() const
+    float ObjectInteractionComponent::GetMaxGrabbedObjectDistance() const
     {
         return m_maxGrabDistance;
     }
 
-    void ObjectInteraction::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
+    void ObjectInteractionComponent::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
     {
         m_maxGrabDistance = new_maxGrabDistance;
     }
 
-    float ObjectInteraction::GetInitialGrabbedObjectDistance() const
+    float ObjectInteractionComponent::GetInitialGrabbedObjectDistance() const
     {
         return m_initialGrabDistance;
     }
 
-    void ObjectInteraction::SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance)
+    void ObjectInteractionComponent::SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance)
     {
         m_initialGrabDistance = new_initialGrabDistance;
     }
 
-    float ObjectInteraction::GetGrabbedObjectDistanceSpeed() const
+    float ObjectInteractionComponent::GetGrabbedObjectDistanceSpeed() const
     {
         return m_grabDistanceSpeed;
     }
 
-    void ObjectInteraction::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
+    void ObjectInteractionComponent::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
     {
         m_grabDistanceSpeed = new_grabDistanceSpeed;
     }
 
-    float ObjectInteraction::GetGrabResponse() const
+    float ObjectInteractionComponent::GetGrabResponse() const
     {
         return m_grabResponse;
     }
 
-    void ObjectInteraction::SetGrabResponse(const float& new_grabResponse)
+    void ObjectInteractionComponent::SetGrabResponse(const float& new_grabResponse)
     {
         m_grabResponse = new_grabResponse;
     }
 
-    bool ObjectInteraction::GetDynamicTidalLock() const
+    bool ObjectInteractionComponent::GetDynamicTidalLock() const
     {
         return m_dynamicTidalLock;
     }
 
-    void ObjectInteraction::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
+    void ObjectInteractionComponent::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
     {
         m_dynamicTidalLock = new_dynamicTidalLock;
     }
 
-    bool ObjectInteraction::GetKinematicTidalLock() const
+    bool ObjectInteractionComponent::GetKinematicTidalLock() const
     {
         return m_kinematicTidalLock;
     }
 
-    void ObjectInteraction::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
+    void ObjectInteractionComponent::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
     {
         m_kinematicTidalLock = new_kinematicTidalLock;
     }
 
-    float ObjectInteraction::GetDynamicRotateScale() const
+    float ObjectInteractionComponent::GetDynamicRotateScale() const
     {
         return m_dynamicRotateScale;
     }
 
-    void ObjectInteraction::SetDynamicRotateScale(const float& new_dynamicRotateScale)
+    void ObjectInteractionComponent::SetDynamicRotateScale(const float& new_dynamicRotateScale)
     {
         m_dynamicRotateScale = new_dynamicRotateScale;
     }
 
-    float ObjectInteraction::GetKinematicRotateScale() const
+    float ObjectInteractionComponent::GetKinematicRotateScale() const
     {
         return m_kinematicRotateScale;
     }
 
-    void ObjectInteraction::SetKinematicRotateScale(const float& new_kinematicRotateScale)
+    void ObjectInteractionComponent::SetKinematicRotateScale(const float& new_kinematicRotateScale)
     {
         m_kinematicRotateScale = new_kinematicRotateScale;
     }
 
-    float ObjectInteraction::GetThrowImpulse() const
+    float ObjectInteractionComponent::GetThrowImpulse() const
     {
         return m_throwImpulse;
     }
 
-    void ObjectInteraction::SetThrowImpulse(const float& new_throwImpulse)
+    void ObjectInteractionComponent::SetThrowImpulse(const float& new_throwImpulse)
     {
         m_throwImpulse = new_throwImpulse;
     }
 
-    float ObjectInteraction::GetGrabbedObjectThrowStateCounter() const
+    float ObjectInteractionComponent::GetGrabbedObjectThrowStateCounter() const
     {
         return m_throwStateCounter;
     }
 
-    float ObjectInteraction::GetGrabbedObjectThrowStateTime() const
+    float ObjectInteractionComponent::GetGrabbedObjectThrowStateTime() const
     {
         return m_throwStateMaxTime;
     }
 
-    void ObjectInteraction::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
+    void ObjectInteractionComponent::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
     {
         m_throwStateMaxTime = new_throwStateMaxTime;
     }
 
-    float ObjectInteraction::GetSphereCastRadius() const
+    float ObjectInteractionComponent::GetSphereCastRadius() const
     {
         return m_sphereCastRadius;
     }
 
-    void ObjectInteraction::SetSphereCastRadius(const float& new_sphereCastRadius)
+    void ObjectInteractionComponent::SetSphereCastRadius(const float& new_sphereCastRadius)
     {
         m_sphereCastRadius = new_sphereCastRadius;
     }
 
-    float ObjectInteraction::GetSphereCastDistance() const
+    float ObjectInteractionComponent::GetSphereCastDistance() const
     {
         return m_sphereCastDistance;
     }
 
-    void ObjectInteraction::SetSphereCastDistance(const float& new_sphereCastDistance)
+    void ObjectInteractionComponent::SetSphereCastDistance(const float& new_sphereCastDistance)
     {
         m_sphereCastDistance = new_sphereCastDistance;
     }
 
-    AZStd::string ObjectInteraction::GetGrabbedCollisionGroup() const
+    AZStd::string ObjectInteractionComponent::GetGrabbedCollisionGroup() const
     {
         AZStd::string groupName;
         Physics::CollisionRequestBus::BroadcastResult(
@@ -1242,7 +1242,7 @@ namespace ObjectInteraction
         return groupName;
     }
 
-    void ObjectInteraction::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
+    void ObjectInteractionComponent::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
     {
         bool success = false;
         AzPhysics::CollisionGroup collisionGroup;
@@ -1257,7 +1257,7 @@ namespace ObjectInteraction
         }
     }
 
-    AZStd::string ObjectInteraction::GetCurrentGrabbedCollisionLayerName() const
+    AZStd::string ObjectInteractionComponent::GetCurrentGrabbedCollisionLayerName() const
     {
         AZStd::string currentGrabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
@@ -1267,7 +1267,7 @@ namespace ObjectInteraction
         return currentGrabbedCollisionLayerName;
     }
 
-    void ObjectInteraction::SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName)
+    void ObjectInteractionComponent::SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer grabbedCollisionLayer;
@@ -1285,7 +1285,7 @@ namespace ObjectInteraction
         }
     }
 
-    AzPhysics::CollisionLayer ObjectInteraction::GetCurrentGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer ObjectInteractionComponent::GetCurrentGrabbedCollisionLayer() const
     {
         AZStd::string grabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
@@ -1296,7 +1296,7 @@ namespace ObjectInteraction
         return grabbedCollisionLayer;
     }
 
-    void ObjectInteraction::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
+    void ObjectInteractionComponent::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
     {
         m_currentGrabbedCollisionLayer = new_currentGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration =
@@ -1309,14 +1309,14 @@ namespace ObjectInteraction
             AZ::Crc32());
     }
 
-    AZStd::string ObjectInteraction::GetPrevGrabbedCollisionLayerName() const
+    AZStd::string ObjectInteractionComponent::GetPrevGrabbedCollisionLayerName() const
     {
         const AzPhysics::CollisionConfiguration& configuration =
             AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         return configuration.m_collisionLayers.GetName(m_prevGrabbedCollisionLayer);
     }
 
-    void ObjectInteraction::SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName)
+    void ObjectInteractionComponent::SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer prevGrabbedCollisionLayer;
@@ -1326,22 +1326,22 @@ namespace ObjectInteraction
             m_prevGrabbedCollisionLayer = prevGrabbedCollisionLayer;
     }
 
-    AzPhysics::CollisionLayer ObjectInteraction::GetPrevGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer ObjectInteractionComponent::GetPrevGrabbedCollisionLayer() const
     {
         return m_prevGrabbedCollisionLayer;
     }
 
-    void ObjectInteraction::SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer)
+    void ObjectInteractionComponent::SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer)
     {
         m_prevGrabbedCollisionLayer = new_prevGrabbedCollisionLayer;
     }
 
-    AZStd::string ObjectInteraction::GetTempGrabbedCollisionLayerName() const
+    AZStd::string ObjectInteractionComponent::GetTempGrabbedCollisionLayerName() const
     {
         return m_tempGrabbedCollisionLayerName;
     }
 
-    void ObjectInteraction::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
+    void ObjectInteractionComponent::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer tempGrabbedCollisionLayer;
@@ -1354,12 +1354,12 @@ namespace ObjectInteraction
         }
     }
 
-    AzPhysics::CollisionLayer ObjectInteraction::GetTempGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer ObjectInteractionComponent::GetTempGrabbedCollisionLayer() const
     {
         return m_tempGrabbedCollisionLayer;
     }
 
-    void ObjectInteraction::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
+    void ObjectInteractionComponent::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
     {
         m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration =
@@ -1367,7 +1367,7 @@ namespace ObjectInteraction
         m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
     }
 
-    bool ObjectInteraction::GetGrabbedObjectKinematicElseDynamic() const
+    bool ObjectInteractionComponent::GetGrabbedObjectKinematicElseDynamic() const
     {
         bool isObjectKinematic = false;
         Physics::RigidBodyRequestBus::EventResult(
@@ -1376,17 +1376,17 @@ namespace ObjectInteraction
         return isObjectKinematic;
     }
 
-    void ObjectInteraction::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
+    void ObjectInteractionComponent::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
     {
         Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
     }
 
-    bool ObjectInteraction::GetInitialGrabbedObjectIsKinematic() const
+    bool ObjectInteractionComponent::GetInitialGrabbedObjectIsKinematic() const
     {
         return m_isInitialObjectKinematic;
     }
 
-    float ObjectInteraction::GetCurrentGrabbedObjectAngularDamping() const
+    float ObjectInteractionComponent::GetCurrentGrabbedObjectAngularDamping() const
     {
         float currentObjectAngularDamping = 0.f;
 
@@ -1396,7 +1396,7 @@ namespace ObjectInteraction
         return currentObjectAngularDamping;
     }
 
-    void ObjectInteraction::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
+    void ObjectInteractionComponent::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
     {
         m_currentObjectAngularDamping = new_currentObjectAngularDamping;
 
@@ -1404,29 +1404,29 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
     }
 
-    float ObjectInteraction::GetPrevGrabbedObjectAngularDamping() const
+    float ObjectInteractionComponent::GetPrevGrabbedObjectAngularDamping() const
     {
         return m_prevObjectAngularDamping;
     }
 
-    void ObjectInteraction::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
+    void ObjectInteractionComponent::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
     {
         m_prevObjectAngularDamping = new_prevObjectAngularDamping;
     }
 
-    float ObjectInteraction::GetTempGrabbedObjectAngularDamping() const
+    float ObjectInteractionComponent::GetTempGrabbedObjectAngularDamping() const
     {
         return m_tempObjectAngularDamping;
     }
 
-    void ObjectInteraction::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
+    void ObjectInteractionComponent::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
     {
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
     }
 
-    AZ::Vector3 ObjectInteraction::GetGrabbedObjectAngularVelocity() const
+    AZ::Vector3 ObjectInteractionComponent::GetGrabbedObjectAngularVelocity() const
     {
         AZ::Vector3 grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
 
@@ -1435,7 +1435,7 @@ namespace ObjectInteraction
         return grabbedObjectAngularVelocity;
     }
 
-    void ObjectInteraction::SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity)
+    void ObjectInteractionComponent::SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity)
     {
         m_grabbedObjectAngularVelocity = new_grabbedObjectAngularVelocity;
 

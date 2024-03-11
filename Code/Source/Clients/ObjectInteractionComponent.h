@@ -26,7 +26,7 @@ namespace ObjectInteraction
         throwState
     };
 
-    class ObjectInteraction
+    class ObjectInteractionComponent
         : public AZ::Component
         , public AZ::EntityBus::Handler
         , public AZ::TickBus::Handler
@@ -35,7 +35,7 @@ namespace ObjectInteraction
         , Camera::CameraNotificationBus::Handler
     {
     public:
-        AZ_COMPONENT(ObjectInteraction, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
+        AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
 
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
