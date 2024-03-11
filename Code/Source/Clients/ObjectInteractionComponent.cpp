@@ -676,10 +676,7 @@ namespace ObjectInteraction
         HoldObject(deltaTime);
 
         #ifdef FIRST_PERSON_CONTROLLER
-        if (m_freezeCharacterRotation)
-        {
-            FreezeCharacterRotation();
-        }
+        FreezeCharacterRotation();
         #endif
 
         RotateObject(deltaTime);
