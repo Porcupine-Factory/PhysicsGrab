@@ -90,6 +90,8 @@ namespace ObjectInteraction
         bool GetIsInRotateState() const override;
         bool GetIsInThrowState() const override;
         bool GetObjectSphereCastHit() const override;
+        bool GetStayInIdleState() const override;
+        void SetStayInIdleState(const bool& new_stayInIdleState) override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;
         float GetMinGrabbedObjectDistance() const override;
@@ -250,6 +252,7 @@ namespace ObjectInteraction
         bool m_isInThrowState = false;
         bool m_isObjectKinematic = false;
         bool m_objectSphereCastHit = false;
+        bool m_stayInIdleState = false;
 
         GrabStates m_state = GrabStates::idleState;
 

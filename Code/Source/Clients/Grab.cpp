@@ -220,6 +220,8 @@ namespace ObjectInteraction
                 ->Event("Get Is In Rotate State", &ObjectInteractionComponentRequests::GetIsInRotateState)
                 ->Event("Get Is In Throw State", &ObjectInteractionComponentRequests::GetIsInThrowState)
                 ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
+                ->Event("Get Stay In Idle State", &ObjectInteractionComponentRequests::GetStayInIdleState)
+                ->Event("Set Stay In Idle State", &ObjectInteractionComponentRequests::SetStayInIdleState)
                 ->Event("Get Grabbed Object Distance", &ObjectInteractionComponentRequests::GetGrabbedObjectDistance)
                 ->Event("Set Grabbed Object Distance", &ObjectInteractionComponentRequests::SetGrabbedObjectDistance)
                 ->Event("Get Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::GetMinGrabbedObjectDistance)
@@ -525,7 +527,7 @@ namespace ObjectInteraction
 
     void Grab::IdleState()
     {
-        if (m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)
+        if ((m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) && !m_stayInIdleState)
         {
             m_state = GrabStates::checkState;
         }
@@ -956,7 +958,7 @@ namespace ObjectInteraction
         m_lastEntityRotation = entityRotation;
     }
 
-   #ifdef FIRST_PERSON_CONTROLLER
+    #ifdef FIRST_PERSON_CONTROLLER
     void Grab::FreezeCharacterRotation()
     {
         if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
@@ -974,7 +976,7 @@ namespace ObjectInteraction
                 "No First Person Controller Component handler available to freeze character rotation.")
         }
     }
-#endif
+    #endif
 
     AZ::Entity* Grab::GetEntityPtr(AZ::EntityId pointer) const
     {
@@ -1075,6 +1077,16 @@ namespace ObjectInteraction
     bool Grab::GetObjectSphereCastHit() const
     {
         return m_objectSphereCastHit;
+    }
+
+    bool Grab::GetStayInIdleState() const
+    {
+        return m_stayInIdleState;
+    }
+
+    void Grab::SetStayInIdleState(const bool& new_stayInIdleState)
+    {
+        m_stayInIdleState = new_stayInIdleState;
     }
 
     float Grab::GetGrabbedObjectDistance() const

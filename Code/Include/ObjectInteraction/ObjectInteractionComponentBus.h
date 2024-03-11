@@ -44,6 +44,8 @@ namespace ObjectInteraction
         virtual void SetGrabbedObjectDistanceSpeed(const float&) = 0;
         virtual float GetGrabResponse() const = 0;
         virtual void SetGrabResponse(const float&) = 0;
+        virtual bool GetStayInIdleState() const = 0;
+        virtual void SetStayInIdleState(const bool&) = 0;
         virtual bool GetDynamicTidalLock() const = 0;
         virtual void SetDynamicTidalLock(const bool&) = 0;
         virtual bool GetKinematicTidalLock() const = 0;
