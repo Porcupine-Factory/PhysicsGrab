@@ -216,7 +216,6 @@ namespace ObjectInteraction
         float m_rotateKeyValue = 0.f;
         float m_prevRotateKeyValue = 0.f;
         float m_grabDistanceKeyValue = 0.f;
-        float m_grabDistance = 0.f;
         float m_pitchKeyValue = 0.f;
         float m_yawKeyValue = 0.f;
         float m_rollKeyValue = 0.f;
@@ -225,6 +224,7 @@ namespace ObjectInteraction
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 3.f;
         float m_initialGrabDistance = 1.75f;
+        float m_grabDistance = m_initialGrabDistance;
         float m_kinematicRotateScale = 0.5f;
         float m_dynamicRotateScale = 0.3f;
         float m_prevObjectAngularDamping = 0.f;
