@@ -32,6 +32,12 @@ namespace ObjectInteraction
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
+        virtual float GetPitchKeyValue() const = 0;
+        virtual void SetPitchKeyValue(const float&) = 0;
+        virtual float GetYawKeyValue() const = 0;
+        virtual void SetYawKeyValue(const float&) = 0;
+        virtual float GetRollKeyValue() const = 0;
+        virtual void SetRollKeyValue(const float&) = 0;
         virtual float GetGrabbedObjectDistance() const = 0;
         virtual void SetGrabbedObjectDistance(const float&) = 0;
         virtual float GetMinGrabbedObjectDistance() const = 0;

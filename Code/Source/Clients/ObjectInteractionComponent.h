@@ -92,6 +92,12 @@ namespace ObjectInteraction
         bool GetObjectSphereCastHit() const override;
         bool GetStayInIdleState() const override;
         void SetStayInIdleState(const bool& new_stayInIdleState) override;
+        float GetPitchKeyValue() const override;
+        void SetPitchKeyValue(const float& new_pitchKeyValue) override;
+        float GetYawKeyValue() const override;
+        void SetYawKeyValue(const float& new_yawKeyValue) override;
+        float GetRollKeyValue() const override;
+        void SetRollKeyValue(const float& new_rollKeyValue) override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;
         float GetMinGrabbedObjectDistance() const override;

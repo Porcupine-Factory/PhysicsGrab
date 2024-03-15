@@ -222,6 +222,12 @@ namespace ObjectInteraction
                 ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
                 ->Event("Get Stay In Idle State", &ObjectInteractionComponentRequests::GetStayInIdleState)
                 ->Event("Set Stay In Idle State", &ObjectInteractionComponentRequests::SetStayInIdleState)
+                ->Event("Get Pitch Key Value", &ObjectInteractionComponentRequests::GetPitchKeyValue)
+                ->Event("Set Pitch Key Value", &ObjectInteractionComponentRequests::SetPitchKeyValue)
+                ->Event("Get Yaw Key Value", &ObjectInteractionComponentRequests::GetYawKeyValue)
+                ->Event("Set Yaw Key Value", &ObjectInteractionComponentRequests::SetYawKeyValue)
+                ->Event("Get Roll Key Value", &ObjectInteractionComponentRequests::GetRollKeyValue)
+                ->Event("Set Roll Key Value", &ObjectInteractionComponentRequests::SetRollKeyValue)         
                 ->Event("Get Grabbed Object Distance", &ObjectInteractionComponentRequests::GetGrabbedObjectDistance)
                 ->Event("Set Grabbed Object Distance", &ObjectInteractionComponentRequests::SetGrabbedObjectDistance)
                 ->Event("Get Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::GetMinGrabbedObjectDistance)
@@ -1084,6 +1090,36 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
+    }
+
+     float ObjectInteractionComponent::GetPitchKeyValue() const
+    {
+         return m_pitchKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetPitchKeyValue(const float& new_pitchKeyValue)
+    {
+        m_pitchKeyValue = new_pitchKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetYawKeyValue() const
+    {
+        return m_yawKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetYawKeyValue(const float& new_yawKeyValue)
+    {
+        m_yawKeyValue = new_yawKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetRollKeyValue() const
+    {
+        return m_rollKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetRollKeyValue(const float& new_rollKeyValue)
+    {
+        m_rollKeyValue = new_rollKeyValue;
     }
 
     float ObjectInteractionComponent::GetGrabbedObjectDistance() const
