@@ -140,6 +140,8 @@ namespace ObjectInteraction
         void SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping) override;
         AZ::Vector3 GetGrabbedObjectAngularVelocity() const override;
         void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
+        bool GetInitialAngularVelocityZero() const override;
+        void SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero) override;
 
     private:
         AZ::Entity* m_grabbingEntityPtr = nullptr;
@@ -262,6 +264,7 @@ namespace ObjectInteraction
         bool m_isObjectKinematic = false;
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
+        bool m_initialAngularVelocityZero = false;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
 

@@ -266,7 +266,9 @@ namespace ObjectInteraction
                 ->Event("Get Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetPrevGrabbedObjectAngularDamping)
                 ->Event("Set Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectAngularDamping)
                 ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
-                ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping);
+                ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping)
+                ->Event("Get Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::GetInitialAngularVelocityZero)
+                ->Event("Set Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::SetInitialAngularVelocityZero);
 
             bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
@@ -576,6 +578,13 @@ namespace ObjectInteraction
             m_state = ObjectInteractionStates::holdState;
             // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
+
+            // Set angular velocity to 0 when first picking up a dynamic rigid body object
+            if (!m_kinematicWhileHeld && m_initialAngularVelocityZero)
+            {
+                SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+            }
+
         }
         else if (!(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f))
         {
@@ -1480,5 +1489,15 @@ namespace ObjectInteraction
 
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
+    }
+
+    bool ObjectInteractionComponent::GetInitialAngularVelocityZero() const
+    {
+        return m_initialAngularVelocityZero;
+    }
+
+    void ObjectInteractionComponent::SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero)
+    {
+        m_initialAngularVelocityZero = new_initialAngularVelocityZero;
     }
 } // namespace ObjectInteraction
