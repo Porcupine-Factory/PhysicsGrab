@@ -98,6 +98,8 @@ namespace ObjectInteraction
         void SetYawKeyValue(const float& new_yawKeyValue) override;
         float GetRollKeyValue() const override;
         void SetRollKeyValue(const float& new_rollKeyValue) override;
+        float GetGrabbedDistanceKeyValue() const override;
+        void SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue) override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;
         float GetMinGrabbedObjectDistance() const override;

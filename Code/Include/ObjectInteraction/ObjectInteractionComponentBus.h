@@ -38,6 +38,8 @@ namespace ObjectInteraction
         virtual void SetYawKeyValue(const float&) = 0;
         virtual float GetRollKeyValue() const = 0;
         virtual void SetRollKeyValue(const float&) = 0;
+        virtual float GetGrabbedDistanceKeyValue() const = 0;
+        virtual void SetGrabbedDistanceKeyValue(const float&) = 0;
         virtual float GetGrabbedObjectDistance() const = 0;
         virtual void SetGrabbedObjectDistance(const float&) = 0;
         virtual float GetMinGrabbedObjectDistance() const = 0;

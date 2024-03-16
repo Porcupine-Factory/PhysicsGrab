@@ -227,7 +227,9 @@ namespace ObjectInteraction
                 ->Event("Get Yaw Key Value", &ObjectInteractionComponentRequests::GetYawKeyValue)
                 ->Event("Set Yaw Key Value", &ObjectInteractionComponentRequests::SetYawKeyValue)
                 ->Event("Get Roll Key Value", &ObjectInteractionComponentRequests::GetRollKeyValue)
-                ->Event("Set Roll Key Value", &ObjectInteractionComponentRequests::SetRollKeyValue)         
+                ->Event("Set Roll Key Value", &ObjectInteractionComponentRequests::SetRollKeyValue)
+                ->Event("Get Grab Distance Key Value", &ObjectInteractionComponentRequests::GetGrabbedDistanceKeyValue)
+                ->Event("Set Grab Distance Key Value", &ObjectInteractionComponentRequests::SetGrabbedDistanceKeyValue)         
                 ->Event("Get Grabbed Object Distance", &ObjectInteractionComponentRequests::GetGrabbedObjectDistance)
                 ->Event("Set Grabbed Object Distance", &ObjectInteractionComponentRequests::SetGrabbedObjectDistance)
                 ->Event("Get Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::GetMinGrabbedObjectDistance)
@@ -1114,6 +1116,16 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetRollKeyValue(const float& new_rollKeyValue)
     {
         m_rollKeyValue = new_rollKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetGrabbedDistanceKeyValue() const
+    {
+        return m_grabDistanceKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue)
+    {
+        m_grabDistanceKeyValue = new_grabDistanceKeyValue;
     }
 
     float ObjectInteractionComponent::GetGrabbedObjectDistance() const
