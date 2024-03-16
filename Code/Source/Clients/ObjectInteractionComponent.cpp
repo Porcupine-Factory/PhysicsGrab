@@ -798,8 +798,7 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::CheckForObjects()
     {
         // Get forward vector relative to the grabbing entity's transform
-        m_forwardVector =
-            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
+        m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
 
         // Get our grabbing entity's world transform
         m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
@@ -841,8 +840,7 @@ namespace ObjectInteraction
             AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
         // Get forward vector relative to the grabbing entity's transform
-        m_forwardVector =
-            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisY());
+        m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
 
         // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
         m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
@@ -889,12 +887,10 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::RotateObject(const float& deltaTime)
     {
         // Get right vector relative to the grabbing entity's transform
-        m_rightVector =
-            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisX());
+        m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
 
         // Get up vector relative to the grabbing entity's transform
-        m_upVector =
-            AZ::Quaternion(m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion()).TransformVector(AZ::Vector3::CreateAxisZ());
+        m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
 
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
