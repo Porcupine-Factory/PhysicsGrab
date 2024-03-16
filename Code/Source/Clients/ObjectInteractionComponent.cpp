@@ -478,19 +478,17 @@ namespace ObjectInteraction
             m_throwKeyValue = value;
             // AZ_Printf("Player", "Throw held value %f", value);
         }
-
+        
         if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
             // AZ_Printf("Object", "Grab Object pitch held value %f", value);
         }
-
         else if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue = value;
             // AZ_Printf("Object", "Grab Object yaw held value %f", value);
         }
-
         else if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue = value;
@@ -509,10 +507,10 @@ namespace ObjectInteraction
                 CheckForObjectsState();
                 break;
             case ObjectInteractionStates::holdState:
-                HoldObjectState(deltaTime);
+                HoldObjectState();
                 break;
             case ObjectInteractionStates::rotateState:
-                RotateObjectState(deltaTime);
+                RotateObjectState();
                 break;
             case ObjectInteractionStates::throwState:
                 ThrowObjectState(deltaTime);
@@ -587,7 +585,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::HoldObjectState(const float &deltaTime)
+    void ObjectInteractionComponent::HoldObjectState()
     {
         if (!m_grabMaintained)
             CheckForObjects();
@@ -599,7 +597,7 @@ namespace ObjectInteraction
             return;
         }
 
-        HoldObject(deltaTime);
+        HoldObject();
 
         // Set object's Grab state if m_grabEnableToggle is true
         if ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
@@ -666,7 +664,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::RotateObjectState(const float &deltaTime)
+    void ObjectInteractionComponent::RotateObjectState()
     {
         if (!m_grabMaintained)
             CheckForObjects();
@@ -679,13 +677,13 @@ namespace ObjectInteraction
             return;
         }
 
-        HoldObject(deltaTime);
+        HoldObject();
 
         #ifdef FIRST_PERSON_CONTROLLER
         FreezeCharacterRotation();
         #endif
 
-        RotateObject(deltaTime);
+        RotateObject();
 
         if ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
             (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))
@@ -832,12 +830,12 @@ namespace ObjectInteraction
 
     // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileHeld is
     // enabled.
-    void ObjectInteractionComponent::HoldObject(const float& deltaTime)
+    void ObjectInteractionComponent::HoldObject()
     {
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
         // and m_maxGrabDistance, respectively.
         m_grabDistance =
-            AZ::GetClamp(m_grabDistance + (m_grabDistanceKeyValue * deltaTime * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
+            AZ::GetClamp(m_grabDistance + ((m_grabDistanceKeyValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
         // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -884,7 +882,7 @@ namespace ObjectInteraction
     }
 
     // Rotate object using physics or transforms, based on object's starting Rigid Body type, or if KinematicWhileHeld is enabled.
-    void ObjectInteractionComponent::RotateObject(const float& deltaTime)
+    void ObjectInteractionComponent::RotateObject()
     {
         // Get right vector relative to the grabbing entity's transform
         m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
@@ -895,9 +893,9 @@ namespace ObjectInteraction
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
-            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, m_yawKeyValue * m_kinematicRotateScale * deltaTime) +
-                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, m_pitchKeyValue * m_kinematicRotateScale * deltaTime) +
-                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, m_rollKeyValue * m_kinematicRotateScale * deltaTime);
+            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, m_yawKeyValue * (m_kinematicRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, m_pitchKeyValue * (m_kinematicRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, m_rollKeyValue * (m_kinematicRotateScale * 0.01f));
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);

@@ -165,8 +165,8 @@ namespace ObjectInteraction
 
         void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
-        void HoldObject(const float& deltaTime);
-        void RotateObject(const float& deltaTime);
+        void HoldObject();
+        void RotateObject();
         void ThrowObject();
         void TidalLock();
         #ifdef FIRST_PERSON_CONTROLLER
@@ -183,12 +183,13 @@ namespace ObjectInteraction
         void OnThrowStop();
         void OnMaxThrowDistance();
         void OnThrowStateCounterZero();
-
+        
+        // State machine functions
         void ProcessStates(const float& deltaTime);
         void IdleState();
         void CheckForObjectsState();
-        void HoldObjectState(const float &deltaTime);
-        void RotateObjectState(const float &deltaTime);
+        void HoldObjectState();
+        void RotateObjectState();
         void ThrowObjectState(const float &deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
