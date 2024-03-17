@@ -93,11 +93,11 @@ namespace ObjectInteraction
         bool GetStayInIdleState() const override;
         void SetStayInIdleState(const bool& new_stayInIdleState) override;
         float GetPitchKeyValue() const override;
-        void SetPitchKeyValue(const float& new_pitchKeyValue) override;
+        void SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue) override;
         float GetYawKeyValue() const override;
-        void SetYawKeyValue(const float& new_yawKeyValue) override;
+        void SetYawKeyValue(const float& new_yawKeyValue, const bool& new_ignoreYawKeyInputValue) override;
         float GetRollKeyValue() const override;
-        void SetRollKeyValue(const float& new_rollKeyValue) override;
+        void SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue) override;
         float GetGrabbedDistanceKeyValue() const override;
         void SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue) override;
         float GetGrabbedObjectDistance() const override;
@@ -248,6 +248,9 @@ namespace ObjectInteraction
         float m_sphereCastDistance = 3.f;
         float m_throwStateMaxTime = 0.5f;
         float m_throwStateCounter = 0.f;
+        float m_pitch = 0.f;
+        float m_yaw = 0.f;
+        float m_roll = 0.f;
 
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;
@@ -265,6 +268,9 @@ namespace ObjectInteraction
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
         bool m_initialAngularVelocityZero = false;
+        bool m_ignoreYawKeyInputValue = true;
+        bool m_ignorePitchKeyInputValue = true;
+        bool m_ignoreRollKeyInputValue = true;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
 

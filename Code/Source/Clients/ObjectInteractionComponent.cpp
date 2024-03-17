@@ -599,7 +599,9 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::HoldObjectState()
     {
         if (!m_grabMaintained)
+        {
             CheckForObjects();
+        }
 
         if (!m_objectSphereCastHit)
         {
@@ -678,7 +680,9 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::RotateObjectState()
     {
         if (!m_grabMaintained)
+        {
             CheckForObjects();
+        }
 
         if (!m_objectSphereCastHit)
         {
@@ -901,12 +905,20 @@ namespace ObjectInteraction
         // Get up vector relative to the grabbing entity's transform
         m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
 
+        // Pitch value depends on whether pitch input key is ignored via SetPitchKeyValue()
+        const float pitchValue = m_ignorePitchKeyInputValue ? m_pitchKeyValue : m_pitch;
+        // Yaw value depends on whether yaw input key is ignored via SetYawKeyValue()
+        const float yawValue = m_ignoreYawKeyInputValue ? m_yawKeyValue : m_yaw;
+        // Roll value depends on whether roll input key is ignored via SetRollKeyValue()
+        const float rollValue = m_ignoreRollKeyInputValue ? m_rollKeyValue : m_roll;
+
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
-            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, m_yawKeyValue * (m_kinematicRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, m_pitchKeyValue * (m_kinematicRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, m_rollKeyValue * (m_kinematicRotateScale * 0.01f));
+            AZ::Quaternion rotation =
+                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * (m_kinematicRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * (m_kinematicRotateScale * 0.01f));
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -919,8 +931,8 @@ namespace ObjectInteraction
         else
         {
             SetGrabbedObjectAngularVelocity(
-                GetGrabbedObjectAngularVelocity() + (m_rightVector * m_pitchKeyValue * m_dynamicRotateScale) +
-                (m_forwardVector * m_rollKeyValue * m_dynamicRotateScale) + (m_upVector * m_yawKeyValue * m_dynamicRotateScale));
+                GetGrabbedObjectAngularVelocity() + (m_rightVector * pitchValue * m_dynamicRotateScale) +
+                (m_forwardVector * rollValue * m_dynamicRotateScale) + (m_upVector * yawValue * m_dynamicRotateScale));
         }
     }
 
@@ -1102,9 +1114,19 @@ namespace ObjectInteraction
          return m_pitchKeyValue;
     }
 
-    void ObjectInteractionComponent::SetPitchKeyValue(const float& new_pitchKeyValue)
+    void ObjectInteractionComponent::SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue)
     {
-        m_pitchKeyValue = new_pitchKeyValue;
+        if (new_ignorePitchKeyInputValue)
+        {
+            m_pitchKeyValue = new_pitchKeyValue;
+            m_ignorePitchKeyInputValue = true;
+        }
+        else
+        {
+            const float newPitch = m_pitchKeyValue;
+            m_pitch = new_pitchKeyValue + newPitch;
+            m_ignorePitchKeyInputValue = false;
+        }
     }
 
     float ObjectInteractionComponent::GetYawKeyValue() const
@@ -1112,9 +1134,19 @@ namespace ObjectInteraction
         return m_yawKeyValue;
     }
 
-    void ObjectInteractionComponent::SetYawKeyValue(const float& new_yawKeyValue)
+    void ObjectInteractionComponent::SetYawKeyValue(const float& new_yawKeyValue, const bool& new_ignoreYawKeyInputValue)
     {
-        m_yawKeyValue = new_yawKeyValue;
+        if (new_ignoreYawKeyInputValue)
+        {
+            m_yawKeyValue = new_yawKeyValue;
+            m_ignoreYawKeyInputValue = true;
+        }
+        else
+        {
+            const float newYaw = m_yawKeyValue;
+            m_yaw = new_yawKeyValue + newYaw;
+            m_ignoreYawKeyInputValue = false;
+        }
     }
 
     float ObjectInteractionComponent::GetRollKeyValue() const
@@ -1122,9 +1154,19 @@ namespace ObjectInteraction
         return m_rollKeyValue;
     }
 
-    void ObjectInteractionComponent::SetRollKeyValue(const float& new_rollKeyValue)
+    void ObjectInteractionComponent::SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue)
     {
-        m_rollKeyValue = new_rollKeyValue;
+        if (new_ignoreRollKeyInputValue)
+        {
+            m_rollKeyValue = new_rollKeyValue;
+            m_ignoreRollKeyInputValue = true;
+        }
+        else
+        {
+            const float newRoll = m_rollKeyValue;
+            m_roll = new_rollKeyValue + newRoll;
+            m_ignoreRollKeyInputValue = false;
+        }
     }
 
     float ObjectInteractionComponent::GetGrabbedDistanceKeyValue() const
