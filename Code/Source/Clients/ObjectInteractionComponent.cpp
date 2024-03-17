@@ -847,7 +847,7 @@ namespace ObjectInteraction
     // enabled.
     void ObjectInteractionComponent::HoldObject()
     {
-        // Grab distance value depends on whether grab distance input key is ignored via SetGrabDistanceKeyValue()
+        // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
 
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
