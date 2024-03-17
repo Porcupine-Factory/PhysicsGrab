@@ -847,10 +847,13 @@ namespace ObjectInteraction
     // enabled.
     void ObjectInteractionComponent::HoldObject()
     {
+        // Grab distance value depends on whether grab distance input key is ignored via SetGrabDistanceKeyValue()
+        const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
+
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
         // and m_maxGrabDistance, respectively.
         m_grabDistance =
-            AZ::GetClamp(m_grabDistance + ((m_grabDistanceKeyValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
+            AZ::GetClamp(m_grabDistance + ((grabDistanceValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
         // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -1174,9 +1177,19 @@ namespace ObjectInteraction
         return m_grabDistanceKeyValue;
     }
 
-    void ObjectInteractionComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue)
+    void ObjectInteractionComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
     {
-        m_grabDistanceKeyValue = new_grabDistanceKeyValue;
+        if (new_ignoreGrabDistanceKeyInputValue)
+        {
+            m_grabDistanceKeyValue = new_grabDistanceKeyValue;
+            m_ignoreGrabDistanceKeyInputValue = true;
+        }
+        else
+        {
+            const float newGrabDistance = m_grabDistanceKeyValue;
+            m_combinedGrabDistance = new_grabDistanceKeyValue + newGrabDistance;
+            m_ignoreGrabDistanceKeyInputValue = false;
+        }
     }
 
     float ObjectInteractionComponent::GetGrabbedObjectDistance() const

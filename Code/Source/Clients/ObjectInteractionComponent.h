@@ -99,7 +99,7 @@ namespace ObjectInteraction
         float GetRollKeyValue() const override;
         void SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue) override;
         float GetGrabbedDistanceKeyValue() const override;
-        void SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue) override;
+        void SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue) override;
         float GetGrabbedObjectDistance() const override;
         void SetGrabbedObjectDistance(const float& new_grabDistance) override;
         float GetMinGrabbedObjectDistance() const override;
@@ -244,10 +244,11 @@ namespace ObjectInteraction
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 7000.f;
-        float m_sphereCastRadius = 0.3f;
+        float m_sphereCastRadius = 0.2f;
         float m_sphereCastDistance = 3.f;
         float m_throwStateMaxTime = 0.5f;
         float m_throwStateCounter = 0.f;
+        float m_combinedGrabDistance = 0.f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -268,6 +269,7 @@ namespace ObjectInteraction
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
         bool m_initialAngularVelocityZero = false;
+        bool m_ignoreGrabDistanceKeyInputValue = true;
         bool m_ignoreYawKeyInputValue = true;
         bool m_ignorePitchKeyInputValue = true;
         bool m_ignoreRollKeyInputValue = true;
