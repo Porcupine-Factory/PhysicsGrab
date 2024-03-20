@@ -987,7 +987,7 @@ namespace ObjectInteraction
         if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
-                GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraYaw, 0.f, false);
+                GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCharacterAndCameraYaw, 0.f, false);
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
         }
