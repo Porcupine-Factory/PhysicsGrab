@@ -268,7 +268,7 @@ namespace ObjectInteraction
         bool m_isObjectKinematic = false;
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
-        bool m_initialAngularVelocityZero = false;
+        bool m_initialAngularVelocityZero = true;
         bool m_ignoreGrabDistanceKeyInputValue = true;
         bool m_ignoreYawKeyInputValue = true;
         bool m_ignorePitchKeyInputValue = true;
