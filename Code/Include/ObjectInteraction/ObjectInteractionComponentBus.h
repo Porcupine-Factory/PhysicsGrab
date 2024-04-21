@@ -65,6 +65,7 @@ namespace ObjectInteraction
         virtual float GetThrowImpulse() const = 0;
         virtual void SetThrowImpulse(const float&) = 0;
         virtual float GetGrabbedObjectThrowStateCounter() const = 0;
+        virtual void SetGrabbedObjectThrowStateCounter(const float&) = 0;
         virtual float GetGrabbedObjectThrowStateTime() const = 0;
         virtual void SetGrabbedObjectThrowStateTime(const float&) = 0;
         virtual float GetSphereCastRadius() const = 0;

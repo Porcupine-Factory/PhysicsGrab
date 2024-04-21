@@ -258,6 +258,7 @@ namespace ObjectInteraction
                 ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
                 ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
                 ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
+                ->Event("Set Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateCounter)
                 ->Event("Get Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateTime)
                 ->Event("Set Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateTime)
                 ->Event("Get Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::GetSphereCastRadius)
@@ -310,7 +311,7 @@ namespace ObjectInteraction
         // Connect the handler to the request bus
         ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
 
-        // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready.
+        // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
     }
 
@@ -783,14 +784,23 @@ namespace ObjectInteraction
 
     void ObjectInteractionComponent::ThrowObjectState(const float &deltaTime)
     {
+        // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it is recommended to assign a 
+        // value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
         if (m_throwStateCounter == m_throwStateMaxTime)
         {
             ThrowObject();
         }
 
+        if (!m_thrownGrabbedObjectEntityId.IsValid())
+        {
+            AZ_Printf("", "No EntityId assigned to m_thrownGrabbedObjectEntityId!", "");
+            m_state = ObjectInteractionStates::idleState;
+            return;
+        }
+
         m_throwStateCounter -= deltaTime;
 
-        // Escape from the throw state if the thrown grabbed object is more than the distance of m_sphereCastDistance away.
+        // Escape from the throw state if the thrown grabbed object is more than the distance of m_sphereCastDistance away
         if (m_grabReference.GetTranslation().GetDistance(
                 GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
         {
@@ -839,7 +849,7 @@ namespace ObjectInteraction
         const bool prevObjectSphereCastHit = m_objectSphereCastHit;
         m_objectSphereCastHit = hits ? true : false;
 
-        // Prevents Grabbing new object if currently grabbing.
+        // Prevents Grabbing new object if currently grabbing
         if (!prevObjectSphereCastHit && m_objectSphereCastHit)
         {
             // Takes first hit from spherecast query vector, and assigns this EntityID to m_grabbedObjectEntityId
@@ -849,14 +859,14 @@ namespace ObjectInteraction
     }
 
     // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileHeld is
-    // enabled.
+    // enabled
     void ObjectInteractionComponent::HoldObject()
     {
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
 
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and maximum grab distances determined by m_minGrabDistance
-        // and m_maxGrabDistance, respectively.
+        // and m_maxGrabDistance, respectively
         m_grabDistance =
             AZ::GetClamp(m_grabDistance + ((grabDistanceValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
@@ -886,13 +896,13 @@ namespace ObjectInteraction
         else
         {
             // Subtract object's translation from our reference position, which gives you a vector pointing from the object to the
-            // reference. Then apply a linear velocity to move the object toward the reference.
+            // reference. Then apply a linear velocity to move the object toward the reference
             Physics::RigidBodyRequestBus::Event(
                 m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
 
-            // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation.
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
             {
                 Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::DisablePhysics);
@@ -947,7 +957,7 @@ namespace ObjectInteraction
     // Apply linear impulse to object if it is a Dynamic Rigid Body
     void ObjectInteractionComponent::ThrowObject()
     {
-        // Apply a Linear Impulse to the grabbed object.
+        // Apply a Linear Impulse to the grabbed object
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, m_forwardVector * m_throwImpulse);
 
@@ -966,7 +976,7 @@ namespace ObjectInteraction
         SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
     }
 
-    // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state.
+    // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
     void ObjectInteractionComponent::TidalLock()
     {
         AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
@@ -1350,6 +1360,11 @@ namespace ObjectInteraction
     float ObjectInteractionComponent::GetGrabbedObjectThrowStateCounter() const
     {
         return m_throwStateCounter;
+    }
+    
+    void ObjectInteractionComponent::SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter)
+    {
+        m_throwStateCounter = new_throwStateCounter;
     }
 
     float ObjectInteractionComponent::GetGrabbedObjectThrowStateTime() const

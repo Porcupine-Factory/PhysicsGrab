@@ -128,6 +128,7 @@ namespace ObjectInteraction
         float GetThrowImpulse() const override;
         void SetThrowImpulse(const float& new_throwImpulse) override;
         float GetGrabbedObjectThrowStateCounter() const override;
+        void SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter) override;
         float GetGrabbedObjectThrowStateTime() const override;
         void SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime) override;
         float GetSphereCastRadius() const override;
