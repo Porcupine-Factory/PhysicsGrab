@@ -17,6 +17,7 @@ namespace ObjectInteraction
         virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
         virtual AZ::EntityId GetLastGrabbedObjectEntityId() const = 0;
         virtual AZ::EntityId GetThrownGrabbedObjectEntityId() const = 0;
+        virtual void SetThrownGrabbedObjectEntityId(const AZ::EntityId) = 0;
         virtual AZStd::string GetGrabbedCollisionGroup() const = 0;
         virtual void SetGrabbedCollisionGroup(const AZStd::string&) = 0;
         virtual AZStd::string GetCurrentGrabbedCollisionLayerName() const = 0;

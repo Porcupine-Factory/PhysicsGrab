@@ -198,6 +198,8 @@ namespace ObjectInteraction
                 ->Event("Get Active Camera EntityId", &ObjectInteractionComponentRequests::GetActiveCameraEntityId)
                 ->Event("Get Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetGrabbedObjectEntityId)
                 ->Event("Get Last Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetLastGrabbedObjectEntityId)
+                ->Event("Get Thrown Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetThrownGrabbedObjectEntityId)
+                ->Event("Set Thrown Grabbed Object EntityId", &ObjectInteractionComponentRequests::SetThrownGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &ObjectInteractionComponentRequests::SetGrabbingEntity)
                 ->Event("Get Grabbed Collision Group", &ObjectInteractionComponentRequests::GetGrabbedCollisionGroup)
                 ->Event("Set Grabbed Collision Group", &ObjectInteractionComponentRequests::SetGrabbedCollisionGroup)
@@ -793,7 +795,7 @@ namespace ObjectInteraction
 
         if (!m_thrownGrabbedObjectEntityId.IsValid())
         {
-            AZ_Printf("", "No EntityId assigned to m_thrownGrabbedObjectEntityId!", "");
+            AZ_Printf("", "No EntityId assigned to m_thrownGrabbedObjectEntityId! Returning to idleState.", "");
             m_state = ObjectInteractionStates::idleState;
             return;
         }
@@ -1075,6 +1077,11 @@ namespace ObjectInteraction
     AZ::EntityId ObjectInteractionComponent::GetThrownGrabbedObjectEntityId() const
     {
         return m_thrownGrabbedObjectEntityId;
+    }
+
+    void ObjectInteractionComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId)
+    {
+        m_thrownGrabbedObjectEntityId = new_thrownGrabbedObjectEntityId;
     }
 
     void ObjectInteractionComponent::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)

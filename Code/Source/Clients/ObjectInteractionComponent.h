@@ -68,6 +68,7 @@ namespace ObjectInteraction
         AZ::EntityId GetGrabbedObjectEntityId() const override;
         AZ::EntityId GetLastGrabbedObjectEntityId() const override;
         AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
+        void SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId) override;
         AZStd::string GetGrabbedCollisionGroup() const override;
         void SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupId) override;
         AZStd::string GetCurrentGrabbedCollisionLayerName() const override;
