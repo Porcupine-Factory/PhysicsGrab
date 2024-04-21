@@ -219,6 +219,11 @@ namespace ObjectInteraction
                 ->Event("Get Is In Held State", &ObjectInteractionComponentRequests::GetIsInHeldState)
                 ->Event("Get Is In Rotate State", &ObjectInteractionComponentRequests::GetIsInRotateState)
                 ->Event("Get Is In Throw State", &ObjectInteractionComponentRequests::GetIsInThrowState)
+                ->Event("Set Idle State", &ObjectInteractionComponentRequests::SetIdleState)
+                ->Event("Set Check State", &ObjectInteractionComponentRequests::SetCheckState)
+                ->Event("Set Hold State", &ObjectInteractionComponentRequests::SetHoldState)
+                ->Event("Set Rotate State", &ObjectInteractionComponentRequests::SetRotateState)
+                ->Event("Set Throw State", &ObjectInteractionComponentRequests::SetThrowState)
                 ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
                 ->Event("Get Stay In Idle State", &ObjectInteractionComponentRequests::GetStayInIdleState)
                 ->Event("Set Stay In Idle State", &ObjectInteractionComponentRequests::SetStayInIdleState)
@@ -1106,7 +1111,47 @@ namespace ObjectInteraction
     {
         return m_stayInIdleState;
     }
+    
+    void ObjectInteractionComponent::SetIdleState(const bool& enterIdleState)
+    {   
+        if (enterIdleState)
+        {
+            m_state = ObjectInteractionStates::idleState;
+        }
+    }
 
+    void ObjectInteractionComponent::SetCheckState(const bool& enterCheckState)
+    {
+        if (enterCheckState)
+        {
+            m_state = ObjectInteractionStates::checkState;
+        }
+    }
+
+    void ObjectInteractionComponent::SetHoldState(const bool& enterHoldState)
+    {
+        if (enterHoldState)
+        {
+            m_state = ObjectInteractionStates::holdState;
+        }
+    }
+
+    void ObjectInteractionComponent::SetRotateState(const bool& enterRotateState)
+    {
+        if (enterRotateState)
+        {
+            m_state = ObjectInteractionStates::rotateState;
+        }
+    }
+
+    void ObjectInteractionComponent::SetThrowState(const bool& enterThrowState)
+    {
+        if (enterThrowState)
+        {
+            m_state = ObjectInteractionStates::throwState;
+        }
+    }
+    
     void ObjectInteractionComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;

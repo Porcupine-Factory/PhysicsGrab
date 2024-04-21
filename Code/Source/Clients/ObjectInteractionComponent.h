@@ -91,6 +91,11 @@ namespace ObjectInteraction
         bool GetIsInThrowState() const override;
         bool GetObjectSphereCastHit() const override;
         bool GetStayInIdleState() const override;
+        void SetIdleState(const bool& enterIdleState) override;
+        void SetCheckState(const bool& enterCheckState) override;
+        void SetHoldState(const bool& enterHoldState) override;
+        void SetRotateState(const bool& enterRotateState) override;
+        void SetThrowState(const bool& enterThrowState) override;
         void SetStayInIdleState(const bool& new_stayInIdleState) override;
         float GetPitchKeyValue() const override;
         void SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue) override;

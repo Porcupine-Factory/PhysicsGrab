@@ -90,6 +90,11 @@ namespace ObjectInteraction
         virtual bool GetIsInHeldState() const = 0;
         virtual bool GetIsInRotateState() const = 0;
         virtual bool GetIsInThrowState() const = 0;
+        virtual void SetIdleState(const bool&) = 0;
+        virtual void SetCheckState(const bool&) = 0;
+        virtual void SetHoldState(const bool&) = 0;
+        virtual void SetRotateState(const bool&) = 0;
+        virtual void SetThrowState(const bool&) = 0;
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
