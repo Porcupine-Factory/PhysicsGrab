@@ -221,14 +221,19 @@ namespace ObjectInteraction
                 ->Event("Get Is In Held State", &ObjectInteractionComponentRequests::GetIsInHeldState)
                 ->Event("Get Is In Rotate State", &ObjectInteractionComponentRequests::GetIsInRotateState)
                 ->Event("Get Is In Throw State", &ObjectInteractionComponentRequests::GetIsInThrowState)
-                ->Event("Set Idle State", &ObjectInteractionComponentRequests::SetIdleState)
-                ->Event("Set Check State", &ObjectInteractionComponentRequests::SetCheckState)
-                ->Event("Set Hold State", &ObjectInteractionComponentRequests::SetHoldState)
-                ->Event("Set Rotate State", &ObjectInteractionComponentRequests::SetRotateState)
-                ->Event("Set Throw State", &ObjectInteractionComponentRequests::SetThrowState)
                 ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
                 ->Event("Get Stay In Idle State", &ObjectInteractionComponentRequests::GetStayInIdleState)
                 ->Event("Set Stay In Idle State", &ObjectInteractionComponentRequests::SetStayInIdleState)
+                ->Event("Get Grab Enable Toggle", &ObjectInteractionComponentRequests::GetGrabEnableToggle)
+                ->Event("Set Grab Enable Toggle", &ObjectInteractionComponentRequests::SetGrabEnableToggle)
+                ->Event("Get Rotate Enable Toggle", &ObjectInteractionComponentRequests::GetRotateEnableToggle)
+                ->Event("Set Rotate Enable Toggle", &ObjectInteractionComponentRequests::SetRotateEnableToggle)
+                ->Event("Get Grab Key Value", &ObjectInteractionComponentRequests::GetGrabKeyValue)
+                ->Event("Set Grab Key Value", &ObjectInteractionComponentRequests::SetGrabKeyValue)
+                ->Event("Get Throw Key Value", &ObjectInteractionComponentRequests::GetThrowKeyValue)
+                ->Event("Set Throw Key Value", &ObjectInteractionComponentRequests::SetThrowKeyValue)
+                ->Event("Get Rotate Key Value", &ObjectInteractionComponentRequests::GetRotateKeyValue)
+                ->Event("Set Rotate Key Value", &ObjectInteractionComponentRequests::SetRotateKeyValue)
                 ->Event("Get Pitch Key Value", &ObjectInteractionComponentRequests::GetPitchKeyValue)
                 ->Event("Set Pitch Key Value", &ObjectInteractionComponentRequests::SetPitchKeyValue)
                 ->Event("Get Yaw Key Value", &ObjectInteractionComponentRequests::GetYawKeyValue)
@@ -253,6 +258,8 @@ namespace ObjectInteraction
                 ->Event("Set Dynamic Object Tidal Lock", &ObjectInteractionComponentRequests::SetDynamicTidalLock)
                 ->Event("Get Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::GetKinematicTidalLock)
                 ->Event("Set Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::SetKinematicTidalLock)
+                ->Event("Get Object Tidal Lock", &ObjectInteractionComponentRequests::GetTidalLock)
+                ->Event("Set Object Tidal Lock", &ObjectInteractionComponentRequests::SetTidalLock)
                 ->Event("Get Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::GetDynamicRotateScale)
                 ->Event("Set Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::SetDynamicRotateScale)
                 ->Event("Get Grabbed Kinematic Object Rotation Scale", &ObjectInteractionComponentRequests::GetKinematicRotateScale)
@@ -793,13 +800,6 @@ namespace ObjectInteraction
             ThrowObject();
         }
 
-        if (!m_thrownGrabbedObjectEntityId.IsValid())
-        {
-            AZ_Printf("", "No EntityId assigned to m_thrownGrabbedObjectEntityId! Returning to idleState.", "");
-            m_state = ObjectInteractionStates::idleState;
-            return;
-        }
-
         m_throwStateCounter -= deltaTime;
 
         // Escape from the throw state if the thrown grabbed object is more than the distance of m_sphereCastDistance away
@@ -1129,52 +1129,62 @@ namespace ObjectInteraction
         return m_stayInIdleState;
     }
     
-    void ObjectInteractionComponent::SetIdleState(const bool& enterIdleState)
-    {   
-        if (enterIdleState)
-        {
-            m_state = ObjectInteractionStates::idleState;
-        }
-    }
-
-    void ObjectInteractionComponent::SetCheckState(const bool& enterCheckState)
-    {
-        if (enterCheckState)
-        {
-            m_state = ObjectInteractionStates::checkState;
-        }
-    }
-
-    void ObjectInteractionComponent::SetHoldState(const bool& enterHoldState)
-    {
-        if (enterHoldState)
-        {
-            m_state = ObjectInteractionStates::holdState;
-        }
-    }
-
-    void ObjectInteractionComponent::SetRotateState(const bool& enterRotateState)
-    {
-        if (enterRotateState)
-        {
-            m_state = ObjectInteractionStates::rotateState;
-        }
-    }
-
-    void ObjectInteractionComponent::SetThrowState(const bool& enterThrowState)
-    {
-        if (enterThrowState)
-        {
-            m_state = ObjectInteractionStates::throwState;
-        }
-    }
-    
     void ObjectInteractionComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
     }
 
-     float ObjectInteractionComponent::GetPitchKeyValue() const
+    bool ObjectInteractionComponent::GetGrabEnableToggle() const
+    {
+        return m_grabEnableToggle;
+    }
+
+    void ObjectInteractionComponent::SetGrabEnableToggle(const bool& new_grabEnableToggle)
+    {
+        m_grabEnableToggle = new_grabEnableToggle;
+    }
+
+    bool ObjectInteractionComponent::GetRotateEnableToggle() const
+    {
+        return m_rotateEnableToggle;
+    }
+
+    void ObjectInteractionComponent::SetRotateEnableToggle(const bool& new_rotateEnableToggle)
+    {
+        m_rotateEnableToggle = new_rotateEnableToggle;
+    }
+
+    float ObjectInteractionComponent::GetGrabKeyValue() const
+    {
+        return m_grabKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetGrabKeyValue(const float& new_grabKeyValue)
+    {
+        m_grabKeyValue = new_grabKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetThrowKeyValue() const
+    {
+        return m_throwKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetThrowKeyValue(const float& new_throwKeyValue)
+    {
+        m_throwKeyValue = new_throwKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetRotateKeyValue() const
+    {
+        return m_rotateKeyValue;
+    }
+
+    void ObjectInteractionComponent::SetRotateKeyValue(const float& new_rotateKeyValue)
+    {
+        m_rotateKeyValue = new_rotateKeyValue;
+    }
+
+    float ObjectInteractionComponent::GetPitchKeyValue() const
     {
          return m_pitchKeyValue;
     }
@@ -1332,6 +1342,16 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
     {
         m_kinematicTidalLock = new_kinematicTidalLock;
+    }
+
+    bool ObjectInteractionComponent::GetTidalLock() const
+    {
+        return m_tidalLock;
+    }
+
+    void ObjectInteractionComponent::SetTidalLock(const bool& new_tidalLock)
+    {
+        m_tidalLock = new_tidalLock;
     }
 
     float ObjectInteractionComponent::GetDynamicRotateScale() const

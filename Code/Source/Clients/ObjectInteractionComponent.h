@@ -92,12 +92,17 @@ namespace ObjectInteraction
         bool GetIsInThrowState() const override;
         bool GetObjectSphereCastHit() const override;
         bool GetStayInIdleState() const override;
-        void SetIdleState(const bool& enterIdleState) override;
-        void SetCheckState(const bool& enterCheckState) override;
-        void SetHoldState(const bool& enterHoldState) override;
-        void SetRotateState(const bool& enterRotateState) override;
-        void SetThrowState(const bool& enterThrowState) override;
         void SetStayInIdleState(const bool& new_stayInIdleState) override;
+        bool GetGrabEnableToggle() const override;
+        void SetGrabEnableToggle(const bool& new_grabEnableToggle) override;
+        bool GetRotateEnableToggle() const override;
+        void SetRotateEnableToggle(const bool& new_rotateEnableToggle) override;
+        float GetGrabKeyValue() const override;
+        void SetGrabKeyValue(const float& new_grabKeyValue) override;
+        float GetThrowKeyValue() const override;
+        void SetThrowKeyValue(const float& new_throwKeyValue) override;
+        float GetRotateKeyValue() const override;
+        void SetRotateKeyValue(const float& new_rotateKeyValue) override;
         float GetPitchKeyValue() const override;
         void SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue) override;
         float GetYawKeyValue() const override;
@@ -122,6 +127,8 @@ namespace ObjectInteraction
         void SetDynamicTidalLock(const bool& new_dynamicTidalLock) override;
         bool GetKinematicTidalLock() const override;
         void SetKinematicTidalLock(const bool& new_kinematicTidalLock) override;
+        bool GetTidalLock() const override;
+        void SetTidalLock(const bool& new_tidalLock) override;
         float GetDynamicRotateScale() const override;
         void SetDynamicRotateScale(const float& new_dynamicRotateScale) override;
         float GetKinematicRotateScale() const override;
@@ -232,13 +239,13 @@ namespace ObjectInteraction
         float m_grabKeyValue = 0.f;
         float m_throwKeyValue = 0.f;
         float m_rotateKeyValue = 0.f;
+        float m_prevGrabKeyValue = 0.f;
         float m_prevRotateKeyValue = 0.f;
         float m_grabDistanceKeyValue = 0.f;
         float m_pitchKeyValue = 0.f;
         float m_yawKeyValue = 0.f;
         float m_rollKeyValue = 0.f;
 
-        float m_prevGrabKeyValue = 0.f;
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 3.f;
         float m_initialGrabDistance = 1.75f;

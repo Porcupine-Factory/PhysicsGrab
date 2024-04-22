@@ -33,6 +33,16 @@ namespace ObjectInteraction
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
         virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
+        virtual bool GetGrabEnableToggle() const = 0;
+        virtual void SetGrabEnableToggle(const bool&) = 0;
+        virtual bool GetRotateEnableToggle() const = 0;
+        virtual void SetRotateEnableToggle(const bool&) = 0;
+        virtual float GetGrabKeyValue() const = 0;
+        virtual void SetGrabKeyValue(const float&) = 0;
+        virtual float GetThrowKeyValue() const = 0;
+        virtual void SetThrowKeyValue(const float&) = 0;
+        virtual float GetRotateKeyValue() const = 0;
+        virtual void SetRotateKeyValue(const float&) = 0;
         virtual float GetPitchKeyValue() const = 0;
         virtual void SetPitchKeyValue(const float&, const bool&) = 0;
         virtual float GetYawKeyValue() const = 0;
@@ -59,6 +69,8 @@ namespace ObjectInteraction
         virtual void SetDynamicTidalLock(const bool&) = 0;
         virtual bool GetKinematicTidalLock() const = 0;
         virtual void SetKinematicTidalLock(const bool&) = 0;
+        virtual bool GetTidalLock() const = 0;
+        virtual void SetTidalLock(const bool&) = 0;
         virtual float GetDynamicRotateScale() const = 0;
         virtual void SetDynamicRotateScale(const float&) = 0;
         virtual float GetKinematicRotateScale() const = 0;
@@ -92,11 +104,6 @@ namespace ObjectInteraction
         virtual bool GetIsInHeldState() const = 0;
         virtual bool GetIsInRotateState() const = 0;
         virtual bool GetIsInThrowState() const = 0;
-        virtual void SetIdleState(const bool&) = 0;
-        virtual void SetCheckState(const bool&) = 0;
-        virtual void SetHoldState(const bool&) = 0;
-        virtual void SetRotateState(const bool&) = 0;
-        virtual void SetThrowState(const bool&) = 0;
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
