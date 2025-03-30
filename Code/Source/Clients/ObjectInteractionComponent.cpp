@@ -190,6 +190,13 @@ namespace ObjectInteraction
             bc->EBus<ObjectInteractionNotificationBus>("GrabNotificationBus", "GrabComponentNotificationBus", "Notifications for Grab Component")
                 ->Handler<ObjectInteractionNotificationHandler>();
 
+            // Reflect the enum
+            bc->Enum<static_cast<int>(ObjectInteractionStates::idleState)>("ObjectInteractionStates_IdleState")
+                ->Enum<static_cast<int>(ObjectInteractionStates::checkState)>("ObjectInteractionStates_CheckState")
+                ->Enum<static_cast<int>(ObjectInteractionStates::holdState)>("ObjectInteractionStates_HoldState")
+                ->Enum<static_cast<int>(ObjectInteractionStates::rotateState)>("ObjectInteractionStates_RotateState")
+                ->Enum<static_cast<int>(ObjectInteractionStates::throwState)>("ObjectInteractionStates_ThrowState");
+
             bc->EBus<ObjectInteractionComponentRequestBus>("ObjectInteractionComponentRequestBus")
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
@@ -283,7 +290,24 @@ namespace ObjectInteraction
                 ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
                 ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping)
                 ->Event("Get Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::GetInitialAngularVelocityZero)
-                ->Event("Set Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::SetInitialAngularVelocityZero);
+                ->Event("Set Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::SetInitialAngularVelocityZero)
+                ->Event("Force State Transition", &ObjectInteractionComponentRequests::ForceTransition)
+                ->Event("Set Locked State Transition", &ObjectInteractionComponentRequests::SetStateLocked)
+                ->Event("Get Locked State Transition", &ObjectInteractionComponentRequests::GetStateLocked)
+                ->Event("GetGrabInputKey", &ObjectInteractionComponentRequests::GetGrabInputKey)
+                ->Event("SetGrabInputKey", &ObjectInteractionComponentRequests::SetGrabInputKey)
+                ->Event("GetThrowInputKey", &ObjectInteractionComponentRequests::GetThrowInputKey)
+                ->Event("SetThrowInputKey", &ObjectInteractionComponentRequests::SetThrowInputKey)
+                ->Event("GetRotateInputKey", &ObjectInteractionComponentRequests::GetRotateInputKey)
+                ->Event("SetRotateInputKey", &ObjectInteractionComponentRequests::SetRotateInputKey)
+                ->Event("GetRotatePitchInputKey", &ObjectInteractionComponentRequests::GetRotatePitchInputKey)
+                ->Event("SetRotatePitchInputKey", &ObjectInteractionComponentRequests::SetRotatePitchInputKey)
+                ->Event("GetRotateYawInputKey", &ObjectInteractionComponentRequests::GetRotateYawInputKey)
+                ->Event("SetRotateYawInputKey", &ObjectInteractionComponentRequests::SetRotateYawInputKey)
+                ->Event("GetRotateRollInputKey", &ObjectInteractionComponentRequests::GetRotateRollInputKey)
+                ->Event("SetRotateRollInputKey", &ObjectInteractionComponentRequests::SetRotateRollInputKey)
+                ->Event("GetGrabDistanceInputKey", &ObjectInteractionComponentRequests::GetGrabDistanceInputKey)
+                ->Event("SetGrabDistanceInputKey", &ObjectInteractionComponentRequests::SetGrabDistanceInputKey);
 
             bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
@@ -550,17 +574,21 @@ namespace ObjectInteraction
 
     void ObjectInteractionComponent::IdleState()
     {
-        if ((m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) && !m_stayInIdleState)
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::checkState) ||
+            (!m_isStateLocked && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f && !m_stayInIdleState))
         {
             m_state = ObjectInteractionStates::checkState;
+            m_forceTransition = false;
         }
     }
 
     void ObjectInteractionComponent::CheckForObjectsState()
     {
         CheckForObjects();
-
-        if (m_objectSphereCastHit)
+        // Check if sphere cast hits a valid object before transitioning to holdState.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState && m_objectSphereCastHit) ||
+            (!m_isStateLocked && m_objectSphereCastHit))
         {
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
             m_lastEntityRotation = GetEntity()->GetTransform()->GetWorldRotation();
@@ -599,11 +627,16 @@ namespace ObjectInteraction
             {
                 SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             }
-
+            m_forceTransition = false;
         }
-        else if (!(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f))
+        // Go back to idleState if grab key is not pressed
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if (
+            (m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+            (!m_isStateLocked && !(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)))
         {
             m_state = ObjectInteractionStates::idleState;
+            m_forceTransition = false;
         }
         else
         {
@@ -617,19 +650,26 @@ namespace ObjectInteraction
         {
             CheckForObjects();
         }
-
-        if (!m_objectSphereCastHit)
+        // Drop the object and go back to idle state if sphere cast doesn't hit
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+            (!m_isStateLocked && !m_objectSphereCastHit))
         {
+          
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            m_forceTransition = false;
             return;
         }
 
         HoldObject();
 
-        // Set object's Grab state if m_grabEnableToggle is true
-        if ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
-            (!m_grabEnableToggle && m_grabKeyValue == 0.f))
+        // Go back to idle state if grab key is pressed again because we want to stop holding the object on the second key press.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+            (!m_isStateLocked &&
+             ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
+              (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
             // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
@@ -657,9 +697,14 @@ namespace ObjectInteraction
 
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            m_forceTransition = false;
         }
-        else if ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
-                 (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))
+        // Enter Rotate State if rotate key is pressed.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if ((m_forceTransition && m_targetState == ObjectInteractionStates::rotateState) ||
+                (!m_isStateLocked &&
+                 ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
+                  (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
             // Store object's original Angular Damping value before rotating
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
@@ -668,9 +713,14 @@ namespace ObjectInteraction
 
             m_state = ObjectInteractionStates::rotateState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
+            m_forceTransition = false;
         }
-        else if (m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
+        // Enter throw state if throw key is pressed.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if ((m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
+                (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
+            // Start throw counter
             m_throwStateCounter = m_throwStateMaxTime;
 
             // Set Kinematic Rigid Body to dynamic if it was held as kinematic
@@ -685,9 +735,11 @@ namespace ObjectInteraction
             m_state = ObjectInteractionStates::throwState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
+            m_forceTransition = false;
         }
         else
         {
+
             m_state = ObjectInteractionStates::holdState;
         }
     }
@@ -698,12 +750,15 @@ namespace ObjectInteraction
         {
             CheckForObjects();
         }
-
-        if (!m_objectSphereCastHit)
+        // Drop the object and go back to idle state if sphere cast doesn't hit
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+            (!m_isStateLocked && !m_objectSphereCastHit))
         {
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            m_forceTransition = false;
             return;
         }
 
@@ -714,20 +769,28 @@ namespace ObjectInteraction
         #endif
 
         RotateObject();
-
-        if ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
-            (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))
+        // Go back to hold state if rotate key is pressed again because we want to stop rotating the object on the second key press.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState) ||
+            (!m_isStateLocked &&
+             ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
+              (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
         {
-            // Set Angular Damping back to original value
+            // Set Angular Damping back to original value when no longer rotating
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
             // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_state = ObjectInteractionStates::holdState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            m_forceTransition = false;
         }
-        else if ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
-                 (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))
+        // Go back to idle state if grab key is pressed again because we want to stop holding the object on the second key press.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+                (!m_isStateLocked &&
+                 ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
+                  (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
         {
             // Set Angular Damping back to original value
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
@@ -761,8 +824,12 @@ namespace ObjectInteraction
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            m_forceTransition = false;
         }
-        else if (m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
+        // Transition to throwState if Throw key is pressed
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if ((m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
+                (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
             // Set Angular Damping back to original value
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
@@ -784,6 +851,7 @@ namespace ObjectInteraction
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
+            m_forceTransition = false;
         }
         else
         {
@@ -1641,5 +1709,101 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero)
     {
         m_initialAngularVelocityZero = new_initialAngularVelocityZero;
+    }
+    
+    void ObjectInteractionComponent::ForceTransition(const ObjectInteractionStates& targetState)
+    {
+        m_forceTransition = true;
+        m_targetState = targetState;
+    }
+
+    void ObjectInteractionComponent::SetStateLocked(const bool& isLocked)
+    {
+        m_isStateLocked = isLocked;
+    }
+
+    bool ObjectInteractionComponent::GetStateLocked() const
+    {
+        return m_isStateLocked;
+    }
+    
+    void ObjectInteractionComponent::UpdateInputBinding(
+        StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue)
+    {
+        if (binding == newValue)
+            return;
+
+        // Disconnect from the old binding
+        InputEventNotificationBus::MultiHandler::BusDisconnect(eventId);
+
+        // Update the binding string and event ID
+        binding = newValue;
+        eventId = StartingPointInput::InputEventNotificationId(binding.c_str());
+
+        // Reconnect with the new binding
+        InputEventNotificationBus::MultiHandler::BusConnect(eventId);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetGrabInputKey() const
+    {
+        return m_strGrab;
+    }
+    void ObjectInteractionComponent::SetGrabInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_grabEventId, m_strGrab, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetThrowInputKey() const
+    {
+        return m_strThrow;
+    }
+    void ObjectInteractionComponent::SetThrowInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_throwEventId, m_strThrow, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetRotateInputKey() const
+    {
+        return m_strRotate;
+    }
+    void ObjectInteractionComponent::SetRotateInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_rotateEventId, m_strRotate, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetRotatePitchInputKey() const
+    {
+        return m_strRotatePitch;
+    }
+    void ObjectInteractionComponent::SetRotatePitchInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_rotatePitchEventId, m_strRotatePitch, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetRotateYawInputKey() const
+    {
+        return m_strRotateYaw;
+    }
+    void ObjectInteractionComponent::SetRotateYawInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_rotateYawEventId, m_strRotateYaw, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetRotateRollInputKey() const
+    {
+        return m_strRotateRoll;
+    }
+    void ObjectInteractionComponent::SetRotateRollInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_rotateRollEventId, m_strRotateRoll, keyName);
+    }
+
+    AZStd::string ObjectInteractionComponent::GetGrabDistanceInputKey() const
+    {
+        return m_strGrabDistance;
+    }
+    void ObjectInteractionComponent::SetGrabDistanceInputKey(const AZStd::string& keyName)
+    {
+        UpdateInputBinding(m_grabDistanceEventId, m_strGrabDistance, keyName);
     }
 } // namespace ObjectInteraction

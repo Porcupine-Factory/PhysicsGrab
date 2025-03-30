@@ -26,7 +26,7 @@
   "requirements": "This gem requires the FastNoise, PhysX, and Starting Point Input gems",
   "documentation_url": "",
   "dependencies": [
-    "PhysX",
+    "PhysX5",
     "StartingPointInput",
     "FastNoise"
   ],

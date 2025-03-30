@@ -156,6 +156,25 @@ namespace ObjectInteraction
         void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
         bool GetInitialAngularVelocityZero() const override;
         void SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero) override;
+        void ForceTransition(const ObjectInteractionStates& targetState) override;
+        void SetStateLocked(const bool& isLocked) override;
+        bool GetStateLocked() const override;
+     
+        // Input binding getters and setters
+        AZStd::string GetGrabInputKey() const override;
+        void SetGrabInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetThrowInputKey() const override;
+        void SetThrowInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetRotateInputKey() const override;
+        void SetRotateInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetRotatePitchInputKey() const override;
+        void SetRotatePitchInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetRotateYawInputKey() const override;
+        void SetRotateYawInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetRotateRollInputKey() const override;
+        void SetRotateRollInputKey(const AZStd::string& keyName) override;
+        AZStd::string GetGrabDistanceInputKey() const override;
+        void SetGrabDistanceInputKey(const AZStd::string& keyName) override;
 
     private:
         AZ::Entity* m_grabbingEntityPtr = nullptr;
@@ -190,6 +209,9 @@ namespace ObjectInteraction
         #ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
         #endif
+        // Method to update input bindings
+        void UpdateInputBinding(
+            StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue);
 
         // ObjectInteractionNotificationBus
         void OnObjectSphereCastHit();
@@ -287,8 +309,11 @@ namespace ObjectInteraction
         bool m_ignoreYawKeyInputValue = true;
         bool m_ignorePitchKeyInputValue = true;
         bool m_ignoreRollKeyInputValue = true;
+        bool m_forceTransition = false; // Flag to force a transition
+        bool m_isStateLocked = false; // Flag to lock the current state against input-driven transitions
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
+        ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState; // Target state for forced transition
 
         AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
           {ObjectInteractionStates::idleState,   "idleState"},

@@ -7,6 +7,9 @@
 
 namespace ObjectInteraction
 {
+    // Forward declaration for the enum (since it's used in the bus but defined elsewhere)
+    enum class ObjectInteractionStates;
+
     class ObjectInteractionComponentRequests : public AZ::ComponentBus
     {
     public:
@@ -99,6 +102,23 @@ namespace ObjectInteraction
         virtual bool GetInitialAngularVelocityZero() const = 0;
         virtual void SetInitialAngularVelocityZero(const bool&) = 0;
         virtual AZStd::string GetStateString() const = 0;
+        virtual void ForceTransition(const ObjectInteractionStates& targetState) = 0;
+        virtual void SetStateLocked(const bool& isLocked) = 0;
+        virtual bool GetStateLocked() const = 0;
+        virtual AZStd::string GetGrabInputKey() const = 0;
+        virtual void SetGrabInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetThrowInputKey() const = 0;
+        virtual void SetThrowInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetRotateInputKey() const = 0;
+        virtual void SetRotateInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetRotatePitchInputKey() const = 0;
+        virtual void SetRotatePitchInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetRotateYawInputKey() const = 0;
+        virtual void SetRotateYawInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetRotateRollInputKey() const = 0;
+        virtual void SetRotateRollInputKey(const AZStd::string& keyName) = 0;
+        virtual AZStd::string GetGrabDistanceInputKey() const = 0;
+        virtual void SetGrabDistanceInputKey(const AZStd::string& keyName) = 0;
         virtual bool GetIsInIdleState() const = 0;
         virtual bool GetIsInCheckState() const = 0;
         virtual bool GetIsInHeldState() const = 0;
