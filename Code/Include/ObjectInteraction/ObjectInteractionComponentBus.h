@@ -7,7 +7,7 @@
 
 namespace ObjectInteraction
 {
-    // Forward declaration for the enum (since it's used in the bus but defined elsewhere)
+    // Forward declaration for the enum defined in ObjectInteractionComponent()
     enum class ObjectInteractionStates;
 
     class ObjectInteractionComponentRequests : public AZ::ComponentBus

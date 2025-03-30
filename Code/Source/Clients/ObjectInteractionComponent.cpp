@@ -1092,6 +1092,24 @@ namespace ObjectInteraction
         return ca->FindEntity(pointer);
     }
 
+    // Handles disconnecting, updating, and reconnecting input bindings
+    void ObjectInteractionComponent::UpdateInputBinding(
+        StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue)
+    {
+        if (binding == newValue)
+            return;
+
+        // Disconnect from the old binding
+        InputEventNotificationBus::MultiHandler::BusDisconnect(eventId);
+
+        // Update the binding string and event ID
+        binding = newValue;
+        eventId = StartingPointInput::InputEventNotificationId(binding.c_str());
+
+        // Reconnect with the new binding
+        InputEventNotificationBus::MultiHandler::BusConnect(eventId);
+    }
+
     // Event Notification methods for use in scripts
     void ObjectInteractionComponent::OnObjectSphereCastHit()
     {
@@ -1725,23 +1743,6 @@ namespace ObjectInteraction
     bool ObjectInteractionComponent::GetStateLocked() const
     {
         return m_isStateLocked;
-    }
-    
-    void ObjectInteractionComponent::UpdateInputBinding(
-        StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue)
-    {
-        if (binding == newValue)
-            return;
-
-        // Disconnect from the old binding
-        InputEventNotificationBus::MultiHandler::BusDisconnect(eventId);
-
-        // Update the binding string and event ID
-        binding = newValue;
-        eventId = StartingPointInput::InputEventNotificationId(binding.c_str());
-
-        // Reconnect with the new binding
-        InputEventNotificationBus::MultiHandler::BusConnect(eventId);
     }
 
     AZStd::string ObjectInteractionComponent::GetGrabInputKey() const
