@@ -7,9 +7,9 @@
   "origin": "NanaYellen",
   "origin_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
   "sha256": "",
-  "last_updated": "2023-10-28",
+  "last_updated": "2025-03-31",
   "type": "Code",
-  "summary": "The ObjectInteraction provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
+  "summary": "The ObjectInteraction Gem enables interactions with physics objects, such as grabbing, rotating and throwing.",
   "canonical_tags": [
     "Gem"
   ],
@@ -27,8 +27,7 @@
   "documentation_url": "",
   "dependencies": [
     "PhysX5",
-    "StartingPointInput",
-    "FastNoise"
+    "StartingPointInput"
   ],
   "repo_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
   "compatible_engines": [],
