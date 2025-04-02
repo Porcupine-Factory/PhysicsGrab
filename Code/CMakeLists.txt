@@ -34,6 +34,28 @@ ly_add_target(
 
 # The ${gem_name}.Private.Object target is an internal target
 # It should not be used outside of this Gems CMakeLists.txt
+if(TARGET Gem::FirstPersonController)
+ly_add_target(
+    NAME ${gem_name}.Private.Object STATIC
+    NAMESPACE Gem
+    FILES_CMAKE
+        objectinteraction_private_files.cmake
+        ${pal_dir}/objectinteraction_private_files.cmake
+    TARGET_PROPERTIES
+        O3DE_PRIVATE_TARGET TRUE
+    INCLUDE_DIRECTORIES
+        PRIVATE
+            Include
+            Source
+    BUILD_DEPENDENCIES
+        PUBLIC
+            AZ::AzCore
+            AZ::AzFramework
+	    Gem::StartingPointInput.Static
+	    Gem::PhysX.Static
+	    Gem::FirstPersonController
+)
+else()
 ly_add_target(
     NAME ${gem_name}.Private.Object STATIC
     NAMESPACE Gem
@@ -53,6 +75,7 @@ ly_add_target(
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
 )
+endif()
 
 # Here add ${gem_name} target, it depends on the Private Object library and Public API interface
 ly_add_target(
@@ -105,6 +128,26 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
     # The ${gem_name}.Editor.Private.Object target is an internal target
     # which is only to be used by this gems CMakeLists.txt and any subdirectories
     # Other gems should not use this target
+    if(TARGET Gem::FirstPersonController)
+    ly_add_target(
+        NAME ${gem_name}.Editor.Private.Object STATIC
+        NAMESPACE Gem
+        FILES_CMAKE
+            objectinteraction_editor_private_files.cmake
+        TARGET_PROPERTIES
+            O3DE_PRIVATE_TARGET TRUE
+        INCLUDE_DIRECTORIES
+            PRIVATE
+                Include
+                Source
+        BUILD_DEPENDENCIES
+            PUBLIC
+                AZ::AzToolsFramework
+                $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
+		Gem::StartingPointInput.Static
+		Gem::FirstPersonController
+    )
+    else()
     ly_add_target(
         NAME ${gem_name}.Editor.Private.Object STATIC
         NAMESPACE Gem
@@ -122,6 +165,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
 		Gem::StartingPointInput.Static
     )
+    endif()
 
     ly_add_target(
         NAME ${gem_name}.Editor GEM_MODULE
