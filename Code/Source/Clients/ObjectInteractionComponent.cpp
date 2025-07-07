@@ -365,6 +365,8 @@ namespace ObjectInteraction
             return;
         }
 
+        // Register m_sceneSimulationStartHandler to listen for the OnSceneSimulationStart event, which 
+        // is triggered at the start of each physics simulation step
         m_sceneSimulationStartHandler = AzPhysics::SceneEvents::OnSceneSimulationStartHandler(
             [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
             {
@@ -385,6 +387,7 @@ namespace ObjectInteraction
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
     }
 
+    // Called at the beginning of each physics tick
     void ObjectInteractionComponent::OnSceneSimulationStart(float physicsTimestep)
     {
         // Update physics timestep
@@ -417,6 +420,7 @@ namespace ObjectInteraction
         InputEventNotificationBus::MultiHandler::BusDisconnect();
         ObjectInteractionComponentRequestBus::Handler::BusDisconnect();
         Camera::CameraNotificationBus::Handler::BusDisconnect();
+
         m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         m_sceneSimulationStartHandler.Disconnect();
         m_meshEntityPtr = nullptr;
@@ -620,7 +624,7 @@ namespace ObjectInteraction
         m_prevRotateKeyValue = m_rotateKeyValue;
     }
 
-void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
+    void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         ProcessStates(deltaTime);
         if (m_enableMeshSmoothing)
@@ -628,7 +632,8 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
             InterpolateMeshTransform(deltaTime);
         }
     }
-
+    
+    // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void ObjectInteractionComponent::InterpolateMeshTransform(float deltaTime)
     {
         if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
@@ -668,27 +673,38 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     void ObjectInteractionComponent::CheckForObjectsState()
     {
         CheckForObjects();
+        // Check if sphere cast hits a valid object before transitioning to holdState.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState && m_objectSphereCastHit) ||
             (!m_isStateLocked && m_objectSphereCastHit))
         {
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
             m_lastEntityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
+            // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
             m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
+            
+            // Store initial collision layer
             m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
+            
+            // Set Object Current Layer variable to Temp Layer
             SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
 
+            // Set Grabbed Object as Kinematic Rigid Body if set to be kinematic while held
             if (m_kinematicWhileHeld)
             {
                 SetGrabbedObjectKinematicElseDynamic(true);
                 m_isObjectKinematic = true;
             }
+            // Set Grabbed Object as Dynamic Rigid Body if set to be dynamic while held
             else
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
                 m_isObjectKinematic = false;
             }
-
+           
+            // Store object's original Angular Damping value
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
 
             // Initialize physics transforms for dynamic objects
@@ -727,14 +743,19 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
             }
 
             m_state = ObjectInteractionStates::holdState;
+            // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
 
+            // Set angular velocity to 0 when first picking up a dynamic rigid body object
             if (!m_kinematicWhileHeld && m_initialAngularVelocityZero)
             {
                 SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             }
             m_forceTransition = false;
         }
+        // Go back to idleState if grab key is not pressed
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
             (!m_isStateLocked && !(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)))
@@ -754,7 +775,11 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
         {
             CheckForObjects();
         }
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
+        // Drop the object and go back to idle state if sphere cast doesn't hit
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+            (!m_isStateLocked && !m_objectSphereCastHit))
         {
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
@@ -765,20 +790,30 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
 
         HoldObject();
 
+        // Go back to idle state if grab key is pressed again because we want to stop holding the 
+        // object on the second key press. Other conditionals allow forced state transition to bypass 
+        // inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
             (!m_isStateLocked &&
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
+            // Reset current grabbed distance to m_initialGrabDistance if Grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
+
+            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+            
+            // Set Angular Damping back to original value if Grab Key is not pressed
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
+            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
                 m_isObjectKinematic = false;
             }
+            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
             else if (m_isInitialObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(true);
@@ -792,25 +827,35 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
+        // Enter Rotate State if rotate key is pressed.
+        // Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::rotateState) ||
             (!m_isStateLocked &&
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
+            // Store object's original Angular Damping value before rotating
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
+            // Set new Angular Damping before rotating object
             SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
 
             m_state = ObjectInteractionStates::rotateState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
+        // Enter throw state if throw key is pressed.
+        // Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
             (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
+            // Start throw counter
             m_throwStateCounter = m_throwStateMaxTime;
 
+            // Set Kinematic Rigid Body to dynamic if it was held as kinematic
             if (m_isObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
@@ -854,37 +899,53 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
 #endif
 
         RotateObject();
-
+        // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
+        // object on the second key press. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState) ||
             (!m_isStateLocked &&
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
         {
+            // Set Angular Damping back to original value when no longer rotating
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_state = ObjectInteractionStates::holdState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
         }
+        // Go back to idle state if grab key is pressed again because we want to stop holding the 
+        // object on the second key press. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
             (!m_isStateLocked &&
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
         {
+            // Set Angular Damping back to original value
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
+            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
+            
+            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+            
+            // Set Angular Damping back to original value if Grab Key is not pressed
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
+            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
                 m_isObjectKinematic = false;
             }
+            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
             else if (m_isInitialObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(true);
@@ -899,15 +960,21 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
+        // Transition to throwState if Throw key is pressed
+        // Other conditionals allow forced state transition to bypass inputs with 
+        // m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
             (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
+            // Set Angular Damping back to original value
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_throwStateCounter = m_throwStateMaxTime;
 
+            // Set Kinematic Rigid Body to dynamic if it was held as kinematic
             if (m_isObjectKinematic)
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
@@ -931,8 +998,8 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
 
     void ObjectInteractionComponent::ThrowObjectState(const float &deltaTime)
     {
-        // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it is recommended to assign a 
-        // value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
+        // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it 
+        // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
         if (m_throwStateCounter == m_throwStateMaxTime)
         {
             ThrowObject();
@@ -998,25 +1065,37 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
         }
     }
 
-    // Hold and move object using physics or translation, based on object's starting Rigid Body type, or if KinematicWhileHeld is
-    // enabled
+    // Hold and move object using physics or translation, based on object's 
+    // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void ObjectInteractionComponent::HoldObject()
     {
+        // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
+        
+        // Changes distance between Grabbing Entity and Grabbed object. Minimum and
+        // maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively
         m_grabDistance =
             AZ::GetClamp(m_grabDistance + ((grabDistanceValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
 
+        // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+        
+        // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
         m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
         m_grabReference.SetTranslation(
             m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
 
         m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
+        // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
+            // Move object by setting its Translation
             AZ::TransformBus::Event(
                 m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTranslation, m_grabReference.GetTranslation());
+            
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to 
+            // the controlling entity's local z rotation (causing object to face controlling entity)
             if (m_tidalLock && m_kinematicTidalLock)
             {
                 TidalLock();
@@ -1030,13 +1109,17 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
                     GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
+        // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
+            // Subtract object's translation from our reference position, which gives you a vector pointing from 
+            // the object to the reference. Then apply a linear velocity to move the object toward the reference
             Physics::RigidBodyRequestBus::Event(
                 m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
                 (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
 
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
             {
                 Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::DisablePhysics);
@@ -1060,18 +1143,28 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
         }
     }
 
+    // Rotate object using physics or transforms, based on object's starting 
+    // Rigid Body type, or if KinematicWhileHeld is enabled.
     void ObjectInteractionComponent::RotateObject()
     {
+        // Get right vector relative to the grabbing entity's transform
         m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
+        
+        // Get up vector relative to the grabbing entity's transform
         m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
 
+        // Pitch value depends on whether pitch input key is ignored via SetPitchKeyValue()
         const float pitchValue = m_ignorePitchKeyInputValue ? m_pitchKeyValue : m_pitch;
+        // Yaw value depends on whether yaw input key is ignored via SetYawKeyValue()
         const float yawValue = m_ignoreYawKeyInputValue ? m_yawKeyValue : m_yaw;
+        // Roll value depends on whether roll input key is ignored via SetRollKeyValue()
         const float rollValue = m_ignoreRollKeyInputValue ? m_rollKeyValue : m_roll;
 
+        // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
-            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicRotateScale * 0.01f)) +
+            AZ::Quaternion rotation = 
+                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicRotateScale * 0.01f)) +
                 AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * (m_kinematicRotateScale * 0.01f)) +
                 AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * (m_kinematicRotateScale * 0.01f));
 
@@ -1088,6 +1181,7 @@ void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
                 AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, transform);
             }
         }
+        // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
             SetGrabbedObjectAngularVelocity(
