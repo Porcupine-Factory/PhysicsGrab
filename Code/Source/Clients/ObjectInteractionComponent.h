@@ -84,6 +84,8 @@ namespace ObjectInteraction
         AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
         void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
+        AZ::EntityId GetMeshEntityId() const override;
+        void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) override;
         AZStd::string GetStateString() const override;
         bool GetIsInIdleState() const override;
         bool GetIsInCheckState() const override;
@@ -178,6 +180,14 @@ namespace ObjectInteraction
 
     private:
         AZ::Entity* m_grabbingEntityPtr = nullptr;
+        AZ::EntityId m_meshEntityId; // Mesh Entity ID for visual interpolation
+        AZ::Entity* m_meshEntityPtr = nullptr; // Pointer to the mesh entity
+        AZ::Transform m_prevPhysicsTransform = AZ::Transform::CreateIdentity(); // Previous physics transform
+        AZ::Transform m_currentPhysicsTransform = AZ::Transform::CreateIdentity(); // Current physics transform
+        float m_physicsTimeAccumulator = 0.0f; // Accumulates time since last physics update
+        float m_physicsTimestep = 1.0f / 60.0f; // Default physics timestep (1/60s)
+        AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle; // Physics scene handle
+        AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler; // Physics simulation start handler
 
         StartingPointInput::InputEventNotificationId m_grabEventId;
         AZStd::string m_strGrab = "Grab Key";
@@ -206,6 +216,8 @@ namespace ObjectInteraction
         void RotateObject();
         void ThrowObject();
         void TidalLock();
+        void InterpolateMeshTransform(float deltaTime);
+        void OnSceneSimulationStart(float physicsTimestep);
         #ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
         #endif

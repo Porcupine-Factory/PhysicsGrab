@@ -52,6 +52,8 @@ namespace ObjectInteraction
         virtual void SetYawKeyValue(const float&, const bool&) = 0;
         virtual float GetRollKeyValue() const = 0;
         virtual void SetRollKeyValue(const float&, const bool&) = 0;
+        virtual AZ::EntityId GetMeshEntityId() const = 0;
+        virtual void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) = 0;
         virtual float GetGrabbedDistanceKeyValue() const = 0;
         virtual void SetGrabbedDistanceKeyValue(const float&, const bool&) = 0;
         virtual float GetGrabbedObjectDistance() const = 0;
