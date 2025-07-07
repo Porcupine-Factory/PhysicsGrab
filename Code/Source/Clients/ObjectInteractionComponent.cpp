@@ -29,7 +29,8 @@ namespace ObjectInteraction
                 ->Field("Rotate Roll Key", &ObjectInteractionComponent::m_strRotateRoll)
 
                 ->Field("GrabbingEntityId", &ObjectInteractionComponent::m_grabbingEntityId)
-                ->Field("MeshEntityId", &ObjectInteractionComponent::m_meshEntityId)
+                ->Field("Enable Mesh Smoothing", &ObjectInteractionComponent::m_enableMeshSmoothing)
+                ->Field("Grab Mesh Entity Name", &ObjectInteractionComponent::m_meshEntityName)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
                 #endif
@@ -80,9 +81,14 @@ namespace ObjectInteraction
                         "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_meshEntityId,
-                        "Mesh Entity",
-                        "Entity containing the mesh for visual interpolation. If not set, the grabbed object's entity is used.")
+                        &ObjectInteractionComponent::m_enableMeshSmoothing,
+                        "Enable Mesh Smoothing",
+                        "Enables smooth interpolation of the mesh transform for dynamic objects to reduce stuttering.")
+                    ->DataElement(
+                        0,
+                        &ObjectInteractionComponent::m_meshEntityName,
+                        "Mesh Mesh Entity Name",
+                        "Name (or partial name) of the child entity to use for mesh interpolation (e.g., 'Grab Mesh').")
 
                     // Input Binding Keys
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
@@ -314,8 +320,10 @@ namespace ObjectInteraction
                 ->Event("SetRotateRollInputKey", &ObjectInteractionComponentRequests::SetRotateRollInputKey)
                 ->Event("GetGrabDistanceInputKey", &ObjectInteractionComponentRequests::GetGrabDistanceInputKey)
                 ->Event("SetGrabDistanceInputKey", &ObjectInteractionComponentRequests::SetGrabDistanceInputKey)
-                ->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
-                ->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId);
+                //->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
+                //->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId)
+                ->Event("GetMeshEntityName", &ObjectInteractionComponentRequests::GetMeshEntityName)
+                ->Event("SetMeshEntityName", &ObjectInteractionComponentRequests::SetMeshEntityName);
 
             bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
@@ -373,12 +381,6 @@ namespace ObjectInteraction
         // Connect the handler to the request bus
         ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
 
-        // Initialize mesh entity pointer
-        if (m_meshEntityId.IsValid())
-        {
-            m_meshEntityPtr = GetEntityPtr(m_meshEntityId);
-        }
-
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
     }
@@ -389,7 +391,7 @@ namespace ObjectInteraction
         m_physicsTimestep = physicsTimestep;
 
         // Store previous physics transform
-        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic)
+        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing)
         {
             m_prevPhysicsTransform = m_currentPhysicsTransform;
             AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -618,10 +620,13 @@ namespace ObjectInteraction
         m_prevRotateKeyValue = m_rotateKeyValue;
     }
 
-    void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
+void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         ProcessStates(deltaTime);
-        InterpolateMeshTransform(deltaTime);
+        if (m_enableMeshSmoothing)
+        {
+            InterpolateMeshTransform(deltaTime);
+        }
     }
 
     void ObjectInteractionComponent::InterpolateMeshTransform(float deltaTime)
@@ -647,7 +652,7 @@ namespace ObjectInteraction
         AZ::Transform interpolatedTransform = AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
 
         // Update mesh entity transform
-        AZ::TransformBus::Event(m_meshEntityId, &AZ::TransformInterface::SetWorldTM, interpolatedTransform);
+        AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedTransform);
     }
 
     void ObjectInteractionComponent::IdleState()
@@ -687,19 +692,36 @@ namespace ObjectInteraction
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
 
             // Initialize physics transforms for dynamic objects
-            if (!m_isObjectKinematic)
+            if (!m_isObjectKinematic && m_enableMeshSmoothing)
             {
                 AZ::TransformBus::EventResult(m_prevPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
                 m_currentPhysicsTransform = m_prevPhysicsTransform;
                 m_physicsTimeAccumulator = 0.0f;
             }
 
-            // Update mesh entity pointer
-            if (m_meshEntityId.IsValid())
+            // Find child entity with name containing m_meshEntityName
+            m_meshEntityPtr = nullptr;
+            if (m_enableMeshSmoothing && !m_isObjectKinematic && !m_meshEntityName.empty())
             {
-                m_meshEntityPtr = GetEntityPtr(m_meshEntityId);
+                AZ::Entity* grabbedEntity = GetEntityPtr(m_lastGrabbedObjectEntityId);
+                if (grabbedEntity)
+                {
+                    AZStd::vector<AZ::EntityId> children;
+                    AZ::TransformBus::EventResult(children, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
+                    for (const AZ::EntityId& childId : children)
+                    {
+                        AZ::Entity* childEntity = GetEntityPtr(childId);
+                        if (childEntity && childEntity->GetName().find(m_meshEntityName) != AZStd::string::npos)
+                        {
+                            m_meshEntityPtr = childEntity;
+                            break;
+                        }
+                    }
+                }
             }
-            else
+
+            // Fallback to grabbed object if no matching child found or smoothing disabled
+            if (!m_meshEntityPtr)
             {
                 m_meshEntityPtr = GetEntityPtr(m_lastGrabbedObjectEntityId);
             }
@@ -993,10 +1015,19 @@ namespace ObjectInteraction
 
         if (m_isObjectKinematic)
         {
-            GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->SetWorldTranslation(m_grabReference.GetTranslation());
+            AZ::TransformBus::Event(
+                m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTranslation, m_grabReference.GetTranslation());
             if (m_tidalLock && m_kinematicTidalLock)
             {
                 TidalLock();
+            }
+            // Update mesh entity transform if smoothing is disabled
+            if (!m_enableMeshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            {
+                AZ::TransformBus::Event(
+                    m_meshEntityPtr->GetId(),
+                    &AZ::TransformInterface::SetWorldTM,
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
         else
@@ -1013,8 +1044,19 @@ namespace ObjectInteraction
                 Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::EnablePhysics);
             }
 
-            // Update current physics transform
-            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            // Update current physics transform for interpolation
+            if (m_enableMeshSmoothing)
+            {
+                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            }
+            // Update mesh entity transform if smoothing is disabled
+            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            {
+                AZ::TransformBus::Event(
+                    m_meshEntityPtr->GetId(),
+                    &AZ::TransformInterface::SetWorldTM,
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
+            }
         }
     }
 
@@ -1039,6 +1081,12 @@ namespace ObjectInteraction
             transform.SetRotation((rotation * transform.GetRotation()).GetNormalized());
 
             AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
+
+            // Update mesh entity transform if smoothing is disabled
+            if (!m_enableMeshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            {
+                AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, transform);
+            }
         }
         else
         {
@@ -1046,8 +1094,19 @@ namespace ObjectInteraction
                 GetGrabbedObjectAngularVelocity() + (m_rightVector * pitchValue * m_dynamicRotateScale) +
                 (m_forwardVector * rollValue * m_dynamicRotateScale) + (m_upVector * yawValue * m_dynamicRotateScale));
 
-            // Update current physics transform
-            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            // Update current physics transform for interpolation
+            if (m_enableMeshSmoothing)
+            {
+                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            }
+            // Update mesh entity transform if smoothing is disabled
+            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            {
+                AZ::TransformBus::Event(
+                    m_meshEntityPtr->GetId(),
+                    &AZ::TransformInterface::SetWorldTM,
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
+            }
         }
     }
 
@@ -1356,7 +1415,7 @@ namespace ObjectInteraction
             m_ignoreRollKeyInputValue = false;
         }
     }
-
+    /*
     AZ::EntityId ObjectInteractionComponent::GetMeshEntityId() const
     {
         return m_meshEntityId;
@@ -1366,6 +1425,16 @@ namespace ObjectInteraction
     {
         m_meshEntityId = new_meshEntityId;
         m_meshEntityPtr = m_meshEntityId.IsValid() ? GetEntityPtr(m_meshEntityId) : nullptr;
+    }
+    */
+    AZStd::string ObjectInteractionComponent::GetMeshEntityName() const
+    {
+        return m_meshEntityName;
+    }
+
+    void ObjectInteractionComponent::SetMeshEntityName(const AZStd::string& new_meshEntityName)
+    {
+        m_meshEntityName = new_meshEntityName;
     }
 
     float ObjectInteractionComponent::GetGrabbedDistanceKeyValue() const
