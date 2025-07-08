@@ -784,29 +784,55 @@ namespace ObjectInteraction
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
+            // Reset current grabbed distance to m_initialGrabDistance if sphere cast doesn't hit
+            m_grabDistance = m_initialGrabDistance;
+
+            // Set Object Current Layer variable back to initial layer if sphere cast doesn't hit
+            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
+            // Set Angular Damping back to original value if sphere cast doesn't hit
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
+            if (!m_isInitialObjectKinematic)
+            {
+                SetGrabbedObjectKinematicElseDynamic(false);
+                m_isObjectKinematic = false;
+            }
+            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
+            else if (m_isInitialObjectKinematic)
+            {
+                SetGrabbedObjectKinematicElseDynamic(true);
+                m_isObjectKinematic = true;
+            }
+
+            m_objectSphereCastHit = false;
+            m_grabbedObjectEntityId = AZ::EntityId();
+            m_lastGrabbedObjectEntityId = AZ::EntityId();
+            m_meshEntityPtr = nullptr;
+
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
-            m_meshEntityPtr = nullptr;
             return;
         }
 
         HoldObject();
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the 
-        // object on the second key press. Other conditionals allow forced state transition to bypass 
-        // inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        // object on the second key press. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
             (!m_isStateLocked &&
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
-            // Reset current grabbed distance to m_initialGrabDistance if Grab key is not pressed
+            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
 
             // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-            
+
             // Set Angular Damping back to original value if Grab Key is not pressed
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
@@ -824,15 +850,16 @@ namespace ObjectInteraction
             }
 
             m_objectSphereCastHit = false;
+            m_grabbedObjectEntityId = AZ::EntityId();
+            m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
 
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
-        // Enter Rotate State if rotate key is pressed.
-        // Other conditionals allow forced state transition to 
-        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        // Enter Rotate State if rotate key is pressed. Other conditionals allow forced state transition 
+        // to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::rotateState) ||
             (!m_isStateLocked &&
@@ -848,8 +875,7 @@ namespace ObjectInteraction
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
-        // Enter throw state if throw key is pressed.
-        // Other conditionals allow forced state transition to 
+        // Enter throw state if throw key is pressed. Other conditionals allow forced state transition to 
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
@@ -885,62 +911,19 @@ namespace ObjectInteraction
         {
             CheckForObjects();
         }
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
+        // Drop the object and go back to idle state if sphere cast doesn't hit. Other 
+        // conditionals allow forced state transition to bypass inputs with 
+        // m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+            (!m_isStateLocked && !m_objectSphereCastHit))
         {
-            m_state = ObjectInteractionStates::idleState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
-            m_forceTransition = false;
-            m_meshEntityPtr = nullptr;
-            return;
-        }
-
-        HoldObject();
-
-#ifdef FIRST_PERSON_CONTROLLER
-        FreezeCharacterRotation();
-#endif
-
-        RotateObject();
-        // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
-        // object on the second key press. Other conditionals allow forced state transition to 
-        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState) ||
-            (!m_isStateLocked &&
-             ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
-              (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
-        {
-            // Set Angular Damping back to original value when no longer rotating
+            // Set Angular Damping back to original value if sphere cast doesn't hit
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-            // Set Angular Velocity to zero when no longer rotating
+            // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
-            m_state = ObjectInteractionStates::holdState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
-            m_forceTransition = false;
-        }
-        // Go back to idle state if grab key is pressed again because we want to stop holding the 
-        // object on the second key press. Other conditionals allow forced state transition to 
-        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
-            (!m_isStateLocked &&
-             ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
-              (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
-        {
-            // Set Angular Damping back to original value
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-            // Set Angular Velocity to zero when no longer rotating
-            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
-            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
             m_grabDistance = m_initialGrabDistance;
-            
-            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-            
-            // Set Angular Damping back to original value if Grab Key is not pressed
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
             // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
@@ -956,6 +939,61 @@ namespace ObjectInteraction
             }
 
             m_objectSphereCastHit = false;
+            m_grabbedObjectEntityId = AZ::EntityId();
+            m_lastGrabbedObjectEntityId = AZ::EntityId();
+            m_meshEntityPtr = nullptr;
+
+            m_state = ObjectInteractionStates::idleState;
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            m_forceTransition = false;
+            return;
+        }
+
+        HoldObject();
+
+#ifdef FIRST_PERSON_CONTROLLER
+        FreezeCharacterRotation();
+#endif
+
+        RotateObject();
+
+        // Go back to idle state if grab key is pressed again because we want to stop holding the
+        // object on the second key press. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+            (!m_isStateLocked &&
+             ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
+              (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
+        {
+            // Set Angular Damping back to original value if Grab Key is not pressed
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+            // Set Angular Velocity back to zero if Grab Key is not pressed
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+
+            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
+            m_grabDistance = m_initialGrabDistance;
+
+            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
+            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
+            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
+            if (!m_isInitialObjectKinematic)
+            {
+                SetGrabbedObjectKinematicElseDynamic(false);
+                m_isObjectKinematic = false;
+            }
+            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
+            else if (m_isInitialObjectKinematic)
+            {
+                SetGrabbedObjectKinematicElseDynamic(true);
+                m_isObjectKinematic = true;
+            }
+
+            m_objectSphereCastHit = false;
+            m_grabbedObjectEntityId = AZ::EntityId();
+            m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
 
             m_state = ObjectInteractionStates::idleState;
@@ -963,14 +1001,29 @@ namespace ObjectInteraction
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
-        // Transition to throwState if Throw key is pressed
-        // Other conditionals allow forced state transition to bypass inputs with 
-        // m_forceTransition, or prevent state transition with m_isStateLocked
+        // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
+        // object on the second key press. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
+        else if (
+            (m_forceTransition && m_targetState == ObjectInteractionStates::holdState) ||
+            (!m_isStateLocked &&
+             ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
+              (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
+        {
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+
+            m_state = ObjectInteractionStates::holdState;
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            m_forceTransition = false;
+        }
+        // Transition to throwState if Throw key is pressed. Other conditionals allow forced state transition to 
+        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
             (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
-            // Set Angular Damping back to original value
+            // Set Angular Damping back to original valu
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
             // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
@@ -1006,6 +1059,9 @@ namespace ObjectInteraction
         if (m_throwStateCounter == m_throwStateMaxTime)
         {
             ThrowObject();
+            // Reset entity IDs after throwing to allow grabbing new objects
+            m_grabbedObjectEntityId = AZ::EntityId();
+            m_lastGrabbedObjectEntityId = AZ::EntityId();
         }
 
         m_throwStateCounter -= deltaTime;
@@ -1052,20 +1108,53 @@ namespace ObjectInteraction
             AzPhysics::SceneQuery::QueryType::StaticAndDynamic,
             m_grabbedCollisionGroup,
             nullptr);
+        request.m_reportMultipleHits = true;
 
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
 
-        const bool prevObjectSphereCastHit = m_objectSphereCastHit;
-        m_objectSphereCastHit = hits ? true : false;
+        // Filter out hits from the grabbing entity and its children
+        AZStd::vector<AZ::EntityId> children;
+        AZ::TransformBus::EventResult(children, m_grabbingEntityPtr->GetId(), &AZ::TransformInterface::GetChildren);
 
-        // Prevents Grabbing new object if currently grabbing
-        if (!prevObjectSphereCastHit && m_objectSphereCastHit)
+        auto filterSelfAndChildren = [this, &children](AzPhysics::SceneQueryHit& hit)
         {
-            // Takes first hit from spherecast query vector, and assigns this EntityID to m_grabbedObjectEntityId
+            if (hit.m_entityId == m_grabbingEntityPtr->GetId())
+                return true;
+            for (const AZ::EntityId& childId : children)
+            {
+                if (hit.m_entityId == childId)
+                    return true;
+            }
+            return false;
+        };
+        AZStd::erase_if(hits.m_hits, filterSelfAndChildren);
+
+        m_objectSphereCastHit = false;
+
+        // Prioritize hit matching m_lastGrabbedObjectEntityId if grabbing
+
+        if (m_lastGrabbedObjectEntityId.IsValid())
+        {
+            for (const AzPhysics::SceneQueryHit& hit : hits.m_hits)
+            {
+                if (hit.m_entityId == m_lastGrabbedObjectEntityId)
+                {
+                    m_objectSphereCastHit = true;
+                    m_grabbedObjectEntityId = hit.m_entityId;
+                    break;
+                }
+            }
+        }
+        else if (hits)
+        {
+            // Take the first hit for initial grab
+            m_objectSphereCastHit = true;
             m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
             m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
         }
+
+        AZ_Printf("Inside CheckForObjects()", "m_objectSphereCastHit=%s", m_objectSphereCastHit ? "true" : "false");
     }
 
     // Hold and move object using physics or translation, based on object's 
