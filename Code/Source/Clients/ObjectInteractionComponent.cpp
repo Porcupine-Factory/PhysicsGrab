@@ -385,6 +385,9 @@ namespace ObjectInteraction
 
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
+
+        // Initialize m_grabDistance to the editor-specified m_initialGrabDistance
+        m_grabDistance = m_initialGrabDistance;
     }
 
     // Called at the beginning of each physics tick
