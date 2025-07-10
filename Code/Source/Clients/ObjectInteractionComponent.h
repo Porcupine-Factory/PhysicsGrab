@@ -84,8 +84,8 @@ namespace ObjectInteraction
         AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
         void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
-        //AZ::EntityId GetMeshEntityId() const override;
-        //void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) override;
+        AZ::EntityId GetMeshEntityId() const override;
+        void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) override;
         AZStd::string GetMeshEntityName() const override;
         void SetMeshEntityName(const AZStd::string& new_meshEntityName) override;
         AZStd::string GetStateString() const override;
@@ -133,10 +133,14 @@ namespace ObjectInteraction
         void SetKinematicTidalLock(const bool& new_kinematicTidalLock) override;
         bool GetTidalLock() const override;
         void SetTidalLock(const bool& new_tidalLock) override;
-        float GetDynamicRotateScale() const override;
-        void SetDynamicRotateScale(const float& new_dynamicRotateScale) override;
-        float GetKinematicRotateScale() const override;
-        void SetKinematicRotateScale(const float& new_kinematicRotateScale) override;
+        float GetDynamicYawRotateScale() const;
+        void SetDynamicYawRotateScale(const float& new_dynamicHorizontalYawcale);
+        float GetDynamicPitchRotateScale() const;
+        void SetDynamicPitchRotateScale(const float& new_dynamicPitchRotateScale);
+        float GetKinematicYawRotateScale() const;
+        void SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale);
+        float GetKinematicPitchRotateScale() const;
+        void SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale);
         float GetThrowImpulse() const override;
         void SetThrowImpulse(const float& new_throwImpulse) override;
         float GetGrabbedObjectThrowStateCounter() const override;
@@ -182,36 +186,33 @@ namespace ObjectInteraction
 
     private:
         AZ::Entity* m_grabbingEntityPtr = nullptr;
-        AZ::Entity* m_meshEntityPtr = nullptr; // Pointer to the mesh entity (child with matching name)
-        AZStd::string m_meshEntityName = "Grab Mesh"; // User-specified mesh entity name
-        AZ::Transform m_prevPhysicsTransform = AZ::Transform::CreateIdentity(); // Previous physics transform
-        AZ::Transform m_currentPhysicsTransform = AZ::Transform::CreateIdentity(); // Current physics transform
-        float m_physicsTimeAccumulator = 0.0f; // Accumulates time since last physics update
-        float m_physicsTimestep = 1.0f / 60.0f; // Default physics timestep (1/60s)
-        AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle; // Physics scene handle
-        AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler; // Physics simulation start handler
-        bool m_enableMeshSmoothing = true; // Toggle for mesh interpolation
+        AZ::Entity* m_meshEntityPtr = nullptr;
+  
+        AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
+        AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler;
 
         StartingPointInput::InputEventNotificationId m_grabEventId;
-        AZStd::string m_strGrab = "Grab Key";
+        AZStd::string m_strGrab = "Grab";
 
         StartingPointInput::InputEventNotificationId m_throwEventId;
-        AZStd::string m_strThrow = "Throw Key";
+        AZStd::string m_strThrow = "Throw";
 
         StartingPointInput::InputEventNotificationId m_rotateEventId;
-        AZStd::string m_strRotate = "Rotate Enable Key";
+        AZStd::string m_strRotate = "Rotate Enable";
 
         StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
-        AZStd::string m_strRotatePitch = "Rotate Pitch Key";
+        AZStd::string m_strRotatePitch = "Rotate Pitch";
 
         StartingPointInput::InputEventNotificationId m_rotateYawEventId;
-        AZStd::string m_strRotateYaw = "Rotate Yaw Key";
+        AZStd::string m_strRotateYaw = "Rotate Yaw";
 
         StartingPointInput::InputEventNotificationId m_rotateRollEventId;
-        AZStd::string m_strRotateRoll = "Rotate Roll Key";
+        AZStd::string m_strRotateRoll = "Rotate Roll";
 
         StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
-        AZStd::string m_strGrabDistance = "Grab Distance Key";
+        AZStd::string m_strGrabDistance = "Grab Distance";
+
+        AZStd::string m_meshEntityName = "Grab Mesh";
 
         void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
@@ -249,6 +250,8 @@ namespace ObjectInteraction
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
+        AZ::Transform m_prevPhysicsTransform = AZ::Transform::CreateIdentity();
+        AZ::Transform m_currentPhysicsTransform = AZ::Transform::CreateIdentity();
 
         AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_rightVector = AZ::Vector3::CreateZero();
@@ -256,9 +259,12 @@ namespace ObjectInteraction
         AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_lastEntityRotation = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_currentGrabEntityTranslation = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_prevGrabbingEntityTranslation = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_grabbedObjectEntityId;
-
+        AZ::EntityId m_meshEntityId;
         AZ::EntityId m_grabbingEntityId;
         AZ::EntityId m_lastGrabbedObjectEntityId;
         AZ::EntityId m_thrownGrabbedObjectEntityId;
@@ -283,19 +289,25 @@ namespace ObjectInteraction
         float m_yawKeyValue = 0.f;
         float m_rollKeyValue = 0.f;
 
+        float m_physicsTimeAccumulator = 0.f;
+        float m_physicsTimestep = 1.f / 60.f;
         float m_minGrabDistance = 1.5f;
-        float m_maxGrabDistance = 3.f;
-        float m_initialGrabDistance = 1.75f;
+        float m_maxGrabDistance = 3.5f;
+        float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
-        float m_kinematicRotateScale = 0.5f;
-        float m_dynamicRotateScale = 0.3f;
+        float m_kinematicYawRotateScale = 0.5f;
+        float m_kinematicPitchRotateScale = 0.5f;
+        float m_kinematicRollRotateScale = 0.5f;
+        float m_dynamicYawRotateScale = 0.3f;
+        float m_dynamicPitchRotateScale = 0.3f;
+        float m_dynamicRollRotateScale = 0.3f;
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
         float m_tempObjectAngularDamping = 20.f;
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 7000.f;
-        float m_sphereCastRadius = 0.2f;
+        float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
         float m_throwStateMaxTime = 0.5f;
         float m_throwStateCounter = 0.f;
@@ -304,6 +316,9 @@ namespace ObjectInteraction
         float m_yaw = 0.f;
         float m_roll = 0.f;
 
+        bool m_enableMeshSmoothing = true;
+        bool m_enableVelocityCompensation = true;
+        bool m_useFPControllerForGrab = true;
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;
         bool m_freezeCharacterRotation = true;
@@ -324,11 +339,11 @@ namespace ObjectInteraction
         bool m_ignoreYawKeyInputValue = true;
         bool m_ignorePitchKeyInputValue = true;
         bool m_ignoreRollKeyInputValue = true;
-        bool m_forceTransition = false; // Flag to force a transition
-        bool m_isStateLocked = false; // Flag to lock the current state against input-driven transitions
+        bool m_forceTransition = false;
+        bool m_isStateLocked = false;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
-        ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState; // Target state for forced transition
+        ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;
 
         AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
           {ObjectInteractionStates::idleState,   "idleState"},

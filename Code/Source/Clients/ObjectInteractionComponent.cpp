@@ -32,8 +32,10 @@ namespace ObjectInteraction
                 ->Field("Enable Mesh Smoothing", &ObjectInteractionComponent::m_enableMeshSmoothing)
                 ->Field("Grab Mesh Entity Name", &ObjectInteractionComponent::m_meshEntityName)
                 #ifdef FIRST_PERSON_CONTROLLER
+                ->Field("Use FPController For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
                 ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
                 #endif
+                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_enableVelocityCompensation)
                 ->Field("Grab Enable Toggle", &ObjectInteractionComponent::m_grabEnableToggle)
                 ->Field("Maintain Grab", &ObjectInteractionComponent::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
@@ -60,8 +62,10 @@ namespace ObjectInteraction
                         " s%s%s",
                         Physics::NameConstants::GetSuperscriptMinus().c_str(),
                         Physics::NameConstants::GetSuperscriptOne().c_str()))
-                ->Field("Kinematic Rotate Scale", &ObjectInteractionComponent::m_kinematicRotateScale)
-                ->Field("Dynamic Rotate Scale", &ObjectInteractionComponent::m_dynamicRotateScale)
+                ->Field("Kinematic Horizontal Rotate Scale", &ObjectInteractionComponent::m_kinematicYawRotateScale)
+                ->Field("Kinematic Vertical Rotate Scale", &ObjectInteractionComponent::m_kinematicPitchRotateScale)
+                ->Field("Dynamic Horizontal Rotate Scale", &ObjectInteractionComponent::m_dynamicYawRotateScale)
+                ->Field("Dynamic Vertical Rotate Scale", &ObjectInteractionComponent::m_dynamicPitchRotateScale)
                 ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
                 ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
@@ -106,10 +110,22 @@ namespace ObjectInteraction
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
+                        &ObjectInteractionComponent::m_useFPControllerForGrab,
+                        "Use FPController For Grab",
+                        "Use First Person Controller player character for grab reference. Enabling this creates tighter tracking by bypassing "
+                        "potential camera interpolation lag.")
+                    ->DataElement(
+                        nullptr,
                         &ObjectInteractionComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Enables character controller rotation while in Rotate State.")
                     #endif
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableVelocityCompensation,
+                        "Velocity Compensation",
+                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
+                        "the same whether you are walking, sprinting, or standing still.")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_grabEnableToggle,
@@ -145,14 +161,24 @@ namespace ObjectInteraction
                         nullptr, &ObjectInteractionComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_kinematicRotateScale,
-                        "Kinematic Rotate Scale",
-                        "Rotation speed scale applied when rotating kinematic object")
+                        &ObjectInteractionComponent::m_kinematicYawRotateScale,
+                        "Kinematic Horizontal Rotate Scale",
+                        "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_dynamicRotateScale,
-                        "Dynamic Rotate Scale",
-                        "Angular Velocity scale applied when rotating dynamic object")
+                        &ObjectInteractionComponent::m_kinematicPitchRotateScale,
+                        "Kinematic Vertical Rotate Scale",
+                        "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_dynamicYawRotateScale,
+                        "Dynamic Horizontal Rotate Scale",
+                        "Angular velocity scale for horizontal (yaw) rotation of dynamic objects")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_dynamicPitchRotateScale,
+                        "Dynamic Vertical Rotate Scale",
+                        "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
                         nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
 
@@ -279,10 +305,14 @@ namespace ObjectInteraction
                 ->Event("Set Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::SetKinematicTidalLock)
                 ->Event("Get Object Tidal Lock", &ObjectInteractionComponentRequests::GetTidalLock)
                 ->Event("Set Object Tidal Lock", &ObjectInteractionComponentRequests::SetTidalLock)
-                ->Event("Get Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::GetDynamicRotateScale)
-                ->Event("Set Grabbed Dynamic Object Rotation Scale", &ObjectInteractionComponentRequests::SetDynamicRotateScale)
-                ->Event("Get Grabbed Kinematic Object Rotation Scale", &ObjectInteractionComponentRequests::GetKinematicRotateScale)
-                ->Event("Set Grabbed Kinematic Object Rotation Scale", &ObjectInteractionComponentRequests::SetKinematicRotateScale)
+                ->Event("Get Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicYawRotateScale)
+                ->Event("Set Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicYawRotateScale)
+                ->Event("Get Dynamic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicPitchRotateScale)
+                ->Event("Set Dynamic Vertical Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicPitchRotateScale)
+                ->Event("Get Kinematic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicYawRotateScale)
+                ->Event("Set Kinematic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicYawRotateScale)
+                ->Event("Get Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
+                ->Event("Set Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
                 ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
                 ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
                 ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
@@ -320,8 +350,8 @@ namespace ObjectInteraction
                 ->Event("SetRotateRollInputKey", &ObjectInteractionComponentRequests::SetRotateRollInputKey)
                 ->Event("GetGrabDistanceInputKey", &ObjectInteractionComponentRequests::GetGrabDistanceInputKey)
                 ->Event("SetGrabDistanceInputKey", &ObjectInteractionComponentRequests::SetGrabDistanceInputKey)
-                //->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
-                //->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId)
+                ->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
+                ->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId)
                 ->Event("GetMeshEntityName", &ObjectInteractionComponentRequests::GetMeshEntityName)
                 ->Event("SetMeshEntityName", &ObjectInteractionComponentRequests::SetMeshEntityName);
 
@@ -396,6 +426,26 @@ namespace ObjectInteraction
         // Update physics timestep
         m_physicsTimestep = physicsTimestep;
 
+        // Compensate for potential velocity change from grab entity
+        if (m_enableVelocityCompensation)
+        {
+            // Use FPC Entity directly to capture physics timestep translations for interpolation
+            if (m_useFPControllerForGrab)
+            {
+                m_currentGrabEntityTranslation = GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
+            }
+            // Use grabbing entity to capture physics timestep translations for interpolation
+            else
+            {
+                m_currentGrabEntityTranslation = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
+            }
+            m_grabbingEntityVelocity = (m_currentGrabEntityTranslation - m_prevGrabbingEntityTranslation) / physicsTimestep;
+            m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation; // Update previous position after velocity calculation
+        }
+        else
+        {
+            m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
+        }
         // Store previous physics transform
         if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing)
         {
@@ -639,7 +689,7 @@ namespace ObjectInteraction
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void ObjectInteractionComponent::InterpolateMeshTransform(float deltaTime)
     {
-        if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
+        if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic || (deltaTime > m_physicsTimestep))
         {
             return;
         }
@@ -661,6 +711,10 @@ namespace ObjectInteraction
 
         // Update mesh entity transform
         AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedTransform);
+
+        // Reset accumulator if it exceeds physics timestep due to accumulated error
+        if (m_physicsTimeAccumulator >= m_physicsTimestep)
+            m_physicsTimeAccumulator -= m_physicsTimestep;
     }
 
     void ObjectInteractionComponent::IdleState()
@@ -720,20 +774,29 @@ namespace ObjectInteraction
 
             // Find child entity with name containing m_meshEntityName
             m_meshEntityPtr = nullptr;
-            if (m_enableMeshSmoothing && !m_isObjectKinematic && !m_meshEntityName.empty())
+            if (m_enableMeshSmoothing && !m_isObjectKinematic)
             {
-                AZ::Entity* grabbedEntity = GetEntityPtr(m_lastGrabbedObjectEntityId);
-                if (grabbedEntity)
+                // Prioritize m_meshEntityId if valid
+                if (m_meshEntityId.IsValid())
                 {
-                    AZStd::vector<AZ::EntityId> children;
-                    AZ::TransformBus::EventResult(children, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
-                    for (const AZ::EntityId& childId : children)
+                    m_meshEntityPtr = GetEntityPtr(m_meshEntityId);
+                }
+                // Fallback to name-based lookup if m_meshEntityId is invalid and m_meshEntityName is set
+                else if (!m_meshEntityName.empty())
+                {
+                    AZ::Entity* grabbedEntity = GetEntityPtr(m_lastGrabbedObjectEntityId);
+                    if (grabbedEntity)
                     {
-                        AZ::Entity* childEntity = GetEntityPtr(childId);
-                        if (childEntity && childEntity->GetName().find(m_meshEntityName) != AZStd::string::npos)
+                        AZStd::vector<AZ::EntityId> children;
+                        AZ::TransformBus::EventResult(children, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
+                        for (const AZ::EntityId& childId : children)
                         {
-                            m_meshEntityPtr = childEntity;
-                            break;
+                            AZ::Entity* childEntity = GetEntityPtr(childId);
+                            if (childEntity && childEntity->GetName().find(m_meshEntityName) != AZStd::string::npos)
+                            {
+                                m_meshEntityPtr = childEntity;
+                                break;
+                            }
                         }
                     }
                 }
@@ -952,9 +1015,9 @@ namespace ObjectInteraction
 
         HoldObject();
 
-#ifdef FIRST_PERSON_CONTROLLER
+        #ifdef FIRST_PERSON_CONTROLLER
         FreezeCharacterRotation();
-#endif
+        #endif
 
         RotateObject();
 
@@ -1133,7 +1196,6 @@ namespace ObjectInteraction
         m_objectSphereCastHit = false;
 
         // Prioritize hit matching m_lastGrabbedObjectEntityId if grabbing
-
         if (m_lastGrabbedObjectEntityId.IsValid())
         {
             for (const AzPhysics::SceneQueryHit& hit : hits.m_hits)
@@ -1153,8 +1215,6 @@ namespace ObjectInteraction
             m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
             m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
         }
-
-        AZ_Printf("Inside CheckForObjects()", "m_objectSphereCastHit=%s", m_objectSphereCastHit ? "true" : "false");
     }
 
     // Hold and move object using physics or translation, based on object's 
@@ -1173,9 +1233,35 @@ namespace ObjectInteraction
         m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
         
         // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
-        m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
-        m_grabReference.SetTranslation(
-            m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+        // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+        #ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            AZ::Vector3 characterPosition;
+            AZ::TransformBus::EventResult(characterPosition, GetEntityId(), &AZ::TransformBus::Events::GetWorldTranslation);
+            float eyeHeight = 0.f;
+            float cameraLocalZTravelDistance = 0.f;
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                eyeHeight, GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequests::GetEyeHeight);
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                cameraLocalZTravelDistance,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraLocalZTravelDistance);
+            AZ::Transform characterTM;
+            AZ::TransformBus::EventResult(characterTM, GetEntityId(), &AZ::TransformInterface::GetWorldTM);
+            m_grabReference = characterTM;
+            m_grabReference.SetTranslation(characterPosition + AZ::Vector3(0.f, 0.f, eyeHeight + cameraLocalZTravelDistance));
+            m_grabReference.SetTranslation(
+                m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+        }
+        #endif
+        // Use user-specified grab entity for Grab Reference
+        else
+        {
+            m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            m_grabReference.SetTranslation(
+                m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+        }
 
         m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
@@ -1209,7 +1295,7 @@ namespace ObjectInteraction
             Physics::RigidBodyRequestBus::Event(
                 m_lastGrabbedObjectEntityId,
                 &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse);
+                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse + m_grabbingEntityVelocity);
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
@@ -1255,10 +1341,10 @@ namespace ObjectInteraction
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
-            AZ::Quaternion rotation = 
-                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * (m_kinematicRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * (m_kinematicRotateScale * 0.01f));
+            AZ::Quaternion rotation =
+                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicYawRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * (m_kinematicPitchRotateScale * 0.01f)) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * (m_kinematicRollRotateScale * 0.01f));
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -1277,8 +1363,8 @@ namespace ObjectInteraction
         else
         {
             SetGrabbedObjectAngularVelocity(
-                GetGrabbedObjectAngularVelocity() + (m_rightVector * pitchValue * m_dynamicRotateScale) +
-                (m_forwardVector * rollValue * m_dynamicRotateScale) + (m_upVector * yawValue * m_dynamicRotateScale));
+                GetGrabbedObjectAngularVelocity() + (m_rightVector * pitchValue * m_dynamicPitchRotateScale) +
+                (m_forwardVector * rollValue * m_dynamicRollRotateScale) + (m_upVector * yawValue * m_dynamicYawRotateScale));
 
             // Update current physics transform for interpolation
             if (m_enableMeshSmoothing)
@@ -1601,7 +1687,7 @@ namespace ObjectInteraction
             m_ignoreRollKeyInputValue = false;
         }
     }
-    /*
+
     AZ::EntityId ObjectInteractionComponent::GetMeshEntityId() const
     {
         return m_meshEntityId;
@@ -1612,7 +1698,7 @@ namespace ObjectInteraction
         m_meshEntityId = new_meshEntityId;
         m_meshEntityPtr = m_meshEntityId.IsValid() ? GetEntityPtr(m_meshEntityId) : nullptr;
     }
-    */
+
     AZStd::string ObjectInteractionComponent::GetMeshEntityName() const
     {
         return m_meshEntityName;
@@ -1621,6 +1707,9 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetMeshEntityName(const AZStd::string& new_meshEntityName)
     {
         m_meshEntityName = new_meshEntityName;
+        // Reset m_meshEntityId to invalid to prioritize name-based lookup
+        m_meshEntityId = AZ::EntityId();
+        m_meshEntityPtr = nullptr;
     }
 
     float ObjectInteractionComponent::GetGrabbedDistanceKeyValue() const
@@ -1733,24 +1822,44 @@ namespace ObjectInteraction
         m_tidalLock = new_tidalLock;
     }
 
-    float ObjectInteractionComponent::GetDynamicRotateScale() const
+    float ObjectInteractionComponent::GetDynamicYawRotateScale() const
     {
-        return m_dynamicRotateScale;
+        return m_dynamicYawRotateScale;
     }
 
-    void ObjectInteractionComponent::SetDynamicRotateScale(const float& new_dynamicRotateScale)
+    void ObjectInteractionComponent::SetDynamicYawRotateScale(const float& new_dynamicYawRotateScale)
     {
-        m_dynamicRotateScale = new_dynamicRotateScale;
+        m_dynamicYawRotateScale = new_dynamicYawRotateScale;
     }
 
-    float ObjectInteractionComponent::GetKinematicRotateScale() const
+    float ObjectInteractionComponent::GetDynamicPitchRotateScale() const
     {
-        return m_kinematicRotateScale;
+        return m_dynamicPitchRotateScale;
     }
 
-    void ObjectInteractionComponent::SetKinematicRotateScale(const float& new_kinematicRotateScale)
+    void ObjectInteractionComponent::SetDynamicPitchRotateScale(const float& new_dynamicPitchRotateScale)
     {
-        m_kinematicRotateScale = new_kinematicRotateScale;
+        m_dynamicPitchRotateScale = new_dynamicPitchRotateScale;
+    }
+
+    float ObjectInteractionComponent::GetKinematicYawRotateScale() const
+    {
+        return m_kinematicYawRotateScale;
+    }
+
+    void ObjectInteractionComponent::SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale)
+    {
+        m_kinematicYawRotateScale = new_kinematicYawRotateScale;
+    }
+
+    float ObjectInteractionComponent::GetKinematicPitchRotateScale() const
+    {
+        return m_kinematicPitchRotateScale;
+    }
+
+    void ObjectInteractionComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
+    {
+        m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
     }
 
     float ObjectInteractionComponent::GetThrowImpulse() const
