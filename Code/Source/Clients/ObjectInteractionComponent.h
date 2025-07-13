@@ -190,6 +190,7 @@ namespace ObjectInteraction
   
         AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler;
+        AzPhysics::SceneEvents::OnSceneSimulationFinishHandler m_sceneSimulationFinishHandler;
 
         StartingPointInput::InputEventNotificationId m_grabEventId;
         AZStd::string m_strGrab = "Grab";
@@ -222,6 +223,7 @@ namespace ObjectInteraction
         void TidalLock();
         void InterpolateMeshTransform(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
+        void OnSceneSimulationFinish([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime);
         #ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
         #endif
@@ -241,11 +243,11 @@ namespace ObjectInteraction
         void OnThrowStateCounterZero();
         
         // State machine functions
-        void ProcessStates(const float& deltaTime);
+        void ProcessStates(const float& deltaTime, bool isPhysicsUpdate = false);
         void IdleState();
         void CheckForObjectsState();
-        void HoldObjectState();
-        void RotateObjectState();
+        void HoldObjectState(bool isPhysicsUpdate = false);
+        void RotateObjectState(bool isPhysicsUpdate = false);
         void ThrowObjectState(const float &deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();

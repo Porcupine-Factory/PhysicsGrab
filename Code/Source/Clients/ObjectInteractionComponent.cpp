@@ -410,6 +410,24 @@ namespace ObjectInteraction
             sceneInterface->RegisterSceneSimulationStartHandler(m_attachedSceneHandle, m_sceneSimulationStartHandler);
         }
 
+        m_sceneSimulationFinishHandler = AzPhysics::SceneEvents::OnSceneSimulationFinishHandler(
+            [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
+            {
+                if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing &&
+                    (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
+                {
+                    m_prevPhysicsTransform = m_currentPhysicsTransform;
+                    AZ::TransformBus::EventResult(
+                        m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+                }
+            },
+            aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
+
+        if (sceneInterface != nullptr)
+        {
+            sceneInterface->RegisterSceneSimulationFinishHandler(m_attachedSceneHandle, m_sceneSimulationFinishHandler);
+        }
+
         // Connect the handler to the request bus
         ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
 
@@ -446,15 +464,25 @@ namespace ObjectInteraction
         {
             m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
         }
-        // Store previous physics transform
-        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing)
+
+        if (!m_isObjectKinematic && (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
         {
-            m_prevPhysicsTransform = m_currentPhysicsTransform;
-            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            ProcessStates(physicsTimestep, true);
         }
 
         // Reset time accumulator
         m_physicsTimeAccumulator = 0.0f;
+    }
+
+void ObjectInteractionComponent::OnSceneSimulationFinish(
+        [[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
+    {
+        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing &&
+            (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
+        {
+            m_prevPhysicsTransform = m_currentPhysicsTransform;
+            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+        }
     }
 
     void ObjectInteractionComponent::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
@@ -476,6 +504,7 @@ namespace ObjectInteraction
 
         m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         m_sceneSimulationStartHandler.Disconnect();
+        m_sceneSimulationFinishHandler.Disconnect();
         m_meshEntityPtr = nullptr;
     }
 
@@ -649,8 +678,30 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::ProcessStates(const float& deltaTime)
+    void ObjectInteractionComponent::ProcessStates(const float& deltaTime, bool isPhysicsUpdate)
     {
+        // If physics update, skip full FSM transitions and only process hold/rotate if applicable
+        if (isPhysicsUpdate)
+        {
+            // Only handle hold and rotate for dynamic during physics
+            if (m_isObjectKinematic)
+            {
+                return; // Kinematic handled in tick
+            }
+            switch (m_state)
+            {
+            case ObjectInteractionStates::holdState:
+                HoldObjectState(isPhysicsUpdate);
+                break;
+            case ObjectInteractionStates::rotateState:
+                RotateObjectState(isPhysicsUpdate);
+                break;
+            default:
+                return;
+            }
+            return;
+        }
+
         switch(m_state)
         {
             case ObjectInteractionStates::idleState:
@@ -660,10 +711,10 @@ namespace ObjectInteraction
                 CheckForObjectsState();
                 break;
             case ObjectInteractionStates::holdState:
-                HoldObjectState();
+                HoldObjectState(isPhysicsUpdate);
                 break;
             case ObjectInteractionStates::rotateState:
-                RotateObjectState();
+                RotateObjectState(isPhysicsUpdate);
                 break;
             case ObjectInteractionStates::throwState:
                 ThrowObjectState(deltaTime);
@@ -835,12 +886,20 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::HoldObjectState()
+    void ObjectInteractionComponent::HoldObjectState(bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
             CheckForObjects();
         }
+
+        if (isPhysicsUpdate)
+        {
+            // Physics: only update for dynamic, no transitions
+            HoldObject();
+            return;
+        }
+
         // Drop the object and go back to idle state if sphere cast doesn't hit
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
         // prevent state transition with m_isStateLocked
@@ -880,7 +939,10 @@ namespace ObjectInteraction
             return;
         }
 
-        HoldObject();
+        if (m_isObjectKinematic)
+        {
+            HoldObject();
+        }
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the 
         // object on the second key press. Other conditionals allow forced state transition to 
@@ -968,12 +1030,21 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::RotateObjectState()
+    void ObjectInteractionComponent::RotateObjectState(bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
             CheckForObjects();
         }
+
+        if (isPhysicsUpdate)
+        {
+            // Physics: only update for dynamic, no transitions
+            HoldObject();
+            RotateObject();
+            return;
+        }
+
         // Drop the object and go back to idle state if sphere cast doesn't hit. Other 
         // conditionals allow forced state transition to bypass inputs with 
         // m_forceTransition, or prevent state transition with m_isStateLocked
@@ -1013,13 +1084,20 @@ namespace ObjectInteraction
             return;
         }
 
-        HoldObject();
-
-        #ifdef FIRST_PERSON_CONTROLLER
-        FreezeCharacterRotation();
-        #endif
-
-        RotateObject();
+        if (m_isObjectKinematic)
+        {
+            HoldObject();
+            #ifdef FIRST_PERSON_CONTROLLER
+            FreezeCharacterRotation();
+            #endif
+            RotateObject();
+        }
+        else
+        {
+            #ifdef FIRST_PERSON_CONTROLLER
+            FreezeCharacterRotation();
+            #endif
+        }
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the
         // object on the second key press. Other conditionals allow forced state transition to 
