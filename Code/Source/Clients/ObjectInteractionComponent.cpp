@@ -689,7 +689,7 @@ namespace ObjectInteraction
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void ObjectInteractionComponent::InterpolateMeshTransform(float deltaTime)
     {
-        if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic || (deltaTime > m_physicsTimestep))
+        if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
         {
             return;
         }
