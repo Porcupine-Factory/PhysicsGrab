@@ -1459,6 +1459,7 @@ namespace ObjectInteraction
             // Reset accumulators after applying in physics branch
             m_accumPitch = 0.0f;
             m_accumYaw = 0.0f;
+            m_accumRoll = 0.0f;
             rollSpeed = 0.0f;
 
             // Update current physics transform for interpolation
