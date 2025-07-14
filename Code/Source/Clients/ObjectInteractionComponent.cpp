@@ -381,7 +381,6 @@ namespace ObjectInteraction
         m_rotateRollEventId = StartingPointInput::InputEventNotificationId(m_strRotateRoll.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_rotateRollEventId);
 
-        Camera::CameraNotificationBus::Handler::BusConnect();
         AZ::TickBus::Handler::BusConnect();
 
         Physics::CollisionRequestBus::BroadcastResult(
@@ -463,24 +462,6 @@ namespace ObjectInteraction
         {
             m_grabbingEntityPtr = GetEntityPtr(entityId);
         }
-
-        // Initialize m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to 
-        // the grab entity's initial position during activation. This ensures the first velocity 
-        // calculation yields zero if the position hasn't changed yet.
-        // Prevents initial object flinging off screen due to large m_grabbingEntityVelocity
-        if (m_grabbingEntityPtr)
-        {
-            if (m_useFPControllerForGrab)
-            {
-                m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
-                    GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
-            }
-            else
-            {
-                m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
-                    m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
-            }
-        }
     }
 
     void ObjectInteractionComponent::Deactivate()
@@ -488,7 +469,6 @@ namespace ObjectInteraction
         AZ::TickBus::Handler::BusDisconnect();
         InputEventNotificationBus::MultiHandler::BusDisconnect();
         ObjectInteractionComponentRequestBus::Handler::BusDisconnect();
-        Camera::CameraNotificationBus::Handler::BusDisconnect();
 
         m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         m_sceneSimulationStartHandler.Disconnect();
@@ -516,15 +496,6 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
         dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
-    }
-
-    void ObjectInteractionComponent::OnCameraAdded(const AZ::EntityId& cameraId)
-    {
-        if (!m_grabbingEntityId.IsValid())
-        {
-            m_grabbingEntityId = cameraId;
-            m_grabbingEntityPtr = GetEntityPtr(cameraId);
-        }
     }
 
     AZ::Entity* ObjectInteractionComponent::GetActiveCameraEntityPtr() const

@@ -32,7 +32,6 @@ namespace ObjectInteraction
         , public AZ::TickBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public ObjectInteractionComponentRequestBus::Handler
-        , Camera::CameraNotificationBus::Handler
     {
     public:
         AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
@@ -215,7 +214,6 @@ namespace ObjectInteraction
 
         AZStd::string m_meshEntityName = "Grab Mesh";
 
-        void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
         void HoldObject(float deltaTime);
         void RotateObject(float deltaTime);
