@@ -217,11 +217,12 @@ namespace ObjectInteraction
 
         void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
-        void HoldObject();
-        void RotateObject();
+        void HoldObject(float deltaTime);
+        void RotateObject(float deltaTime);
         void ThrowObject();
         void TidalLock();
         void InterpolateMeshTransform(float deltaTime);
+        void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
         void OnSceneSimulationFinish([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime);
         #ifdef FIRST_PERSON_CONTROLLER
@@ -246,8 +247,8 @@ namespace ObjectInteraction
         void ProcessStates(const float& deltaTime, bool isPhysicsUpdate = false);
         void IdleState();
         void CheckForObjectsState();
-        void HoldObjectState(bool isPhysicsUpdate = false);
-        void RotateObjectState(bool isPhysicsUpdate = false);
+        void HoldObjectState(float deltaTime, bool isPhysicsUpdate = false);
+        void RotateObjectState(float deltaTime, bool isPhysicsUpdate = false);
         void ThrowObjectState(const float &deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
@@ -264,6 +265,8 @@ namespace ObjectInteraction
         AZ::Vector3 m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_currentGrabEntityTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_prevGrabbingEntityTranslation = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_currentCompensationVelocity = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_currentAngularVelocity = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_grabbedObjectEntityId;
         AZ::EntityId m_meshEntityId;
@@ -297,12 +300,14 @@ namespace ObjectInteraction
         float m_maxGrabDistance = 3.5f;
         float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
-        float m_kinematicYawRotateScale = 0.5f;
-        float m_kinematicPitchRotateScale = 0.5f;
-        float m_kinematicRollRotateScale = 0.5f;
-        float m_dynamicYawRotateScale = 0.3f;
-        float m_dynamicPitchRotateScale = 0.3f;
-        float m_dynamicRollRotateScale = 0.3f;
+        float m_velocityDampRate = 8.f;
+        float m_angularDampRate = 16.0f;
+        float m_kinematicYawRotateScale = 0.8f;
+        float m_kinematicPitchRotateScale = 1.422f;
+        float m_kinematicRollRotateScale = 0.8f;
+        float m_dynamicYawRotateScale = 0.8f;
+        float m_dynamicPitchRotateScale = 1.422f;
+        float m_dynamicRollRotateScale = 0.8f;
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
         float m_tempObjectAngularDamping = 20.f;

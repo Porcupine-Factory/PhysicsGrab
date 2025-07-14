@@ -401,8 +401,7 @@ namespace ObjectInteraction
             [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
             {
                 OnSceneSimulationStart(fixedDeltaTime);
-            },
-            aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
+            }, aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
 
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
         if (sceneInterface != nullptr)
@@ -411,23 +410,15 @@ namespace ObjectInteraction
         }
 
         m_sceneSimulationFinishHandler = AzPhysics::SceneEvents::OnSceneSimulationFinishHandler(
-            [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
+            [this](AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
             {
-                if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing &&
-                    (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
-                {
-                    m_prevPhysicsTransform = m_currentPhysicsTransform;
-                    AZ::TransformBus::EventResult(
-                        m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-                }
-            },
-            aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
+                OnSceneSimulationFinish(sceneHandle, fixedDeltaTime);
+            }, aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
 
         if (sceneInterface != nullptr)
         {
             sceneInterface->RegisterSceneSimulationFinishHandler(m_attachedSceneHandle, m_sceneSimulationFinishHandler);
         }
-
         // Connect the handler to the request bus
         ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
 
@@ -444,27 +435,6 @@ namespace ObjectInteraction
         // Update physics timestep
         m_physicsTimestep = physicsTimestep;
 
-        // Compensate for potential velocity change from grab entity
-        if (m_enableVelocityCompensation)
-        {
-            // Use FPC Entity directly to capture physics timestep translations for interpolation
-            if (m_useFPControllerForGrab)
-            {
-                m_currentGrabEntityTranslation = GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
-            }
-            // Use grabbing entity to capture physics timestep translations for interpolation
-            else
-            {
-                m_currentGrabEntityTranslation = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
-            }
-            m_grabbingEntityVelocity = (m_currentGrabEntityTranslation - m_prevGrabbingEntityTranslation) / physicsTimestep;
-            m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation; // Update previous position after velocity calculation
-        }
-        else
-        {
-            m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
-        }
-
         if (!m_isObjectKinematic && (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
         {
             ProcessStates(physicsTimestep, true);
@@ -474,7 +444,7 @@ namespace ObjectInteraction
         m_physicsTimeAccumulator = 0.0f;
     }
 
-void ObjectInteractionComponent::OnSceneSimulationFinish(
+    void ObjectInteractionComponent::OnSceneSimulationFinish(
         [[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
     {
         if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing &&
@@ -492,6 +462,24 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         if (m_grabbingEntityId.IsValid())
         {
             m_grabbingEntityPtr = GetEntityPtr(entityId);
+        }
+
+        // Initialize m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to 
+        // the grab entity's initial position during activation. This ensures the first velocity 
+        // calculation yields zero if the position hasn't changed yet.
+        // Prevents initial object flinging off screen due to large m_grabbingEntityVelocity
+        if (m_grabbingEntityPtr)
+        {
+            if (m_useFPControllerForGrab)
+            {
+                m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
+                    GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
+            }
+            else
+            {
+                m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
+                    m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
+            }
         }
     }
 
@@ -680,21 +668,21 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
     void ObjectInteractionComponent::ProcessStates(const float& deltaTime, bool isPhysicsUpdate)
     {
-        // If physics update, skip full FSM transitions and only process hold/rotate if applicable
+        // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
         if (isPhysicsUpdate)
         {
-            // Only handle hold and rotate for dynamic during physics
+            // Only handle hold and rotate for dynamic during physics fixed time steps
             if (m_isObjectKinematic)
             {
-                return; // Kinematic handled in tick
+                return;
             }
             switch (m_state)
             {
             case ObjectInteractionStates::holdState:
-                HoldObjectState(isPhysicsUpdate);
+                HoldObjectState(deltaTime, isPhysicsUpdate);
                 break;
             case ObjectInteractionStates::rotateState:
-                RotateObjectState(isPhysicsUpdate);
+                RotateObjectState(deltaTime, isPhysicsUpdate);
                 break;
             default:
                 return;
@@ -711,10 +699,10 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
                 CheckForObjectsState();
                 break;
             case ObjectInteractionStates::holdState:
-                HoldObjectState(isPhysicsUpdate);
+                HoldObjectState(deltaTime);
                 break;
             case ObjectInteractionStates::rotateState:
-                RotateObjectState(isPhysicsUpdate);
+                RotateObjectState(deltaTime);
                 break;
             case ObjectInteractionStates::throwState:
                 ThrowObjectState(deltaTime);
@@ -859,6 +847,27 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
                 m_meshEntityPtr = GetEntityPtr(m_lastGrabbedObjectEntityId);
             }
 
+
+            // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current 
+            // position at the exact moment of transition to holdState, ensuring the first physics velocity is ~zero.
+            // Prevents initial object flinging off screen due to large m_grabbingEntityVelocity
+            if (m_enableVelocityCompensation)
+            {
+                // Reset compensation and angular velocity for new grab (ensures gradual start from zero)
+                m_currentCompensationVelocity = AZ::Vector3::CreateZero();
+                m_currentAngularVelocity = AZ::Vector3::CreateZero();
+                if (m_useFPControllerForGrab)
+                {
+                    m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
+                        GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
+                }
+                else
+                {
+                    m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation =
+                        m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
+                }
+            }
+
             m_state = ObjectInteractionStates::holdState;
             // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
@@ -886,7 +895,7 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         }
     }
 
-    void ObjectInteractionComponent::HoldObjectState(bool isPhysicsUpdate)
+    void ObjectInteractionComponent::HoldObjectState(float deltaTime, bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
@@ -895,8 +904,11 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
         if (isPhysicsUpdate)
         {
-            // Physics: only update for dynamic, no transitions
-            HoldObject();
+            // Compensate for potential velocity change from grab entity
+            ComputeGrabbingEntityVelocity(deltaTime);
+
+            // Update dynamic objects on physics fixed time step
+            HoldObject(deltaTime);
             return;
         }
 
@@ -941,7 +953,7 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
         if (m_isObjectKinematic)
         {
-            HoldObject();
+            HoldObject(deltaTime);
         }
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the 
@@ -1030,7 +1042,7 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         }
     }
 
-    void ObjectInteractionComponent::RotateObjectState(bool isPhysicsUpdate)
+    void ObjectInteractionComponent::RotateObjectState(float deltaTime, bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
@@ -1039,9 +1051,12 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
         if (isPhysicsUpdate)
         {
-            // Physics: only update for dynamic, no transitions
-            HoldObject();
-            RotateObject();
+            // Compensate for potential velocity change from grab entity
+            ComputeGrabbingEntityVelocity(deltaTime);
+
+            // Update dynamic objects on physics fixed time step
+            HoldObject(deltaTime);
+            RotateObject(deltaTime);
             return;
         }
 
@@ -1086,11 +1101,11 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
         if (m_isObjectKinematic)
         {
-            HoldObject();
+            HoldObject(deltaTime);
             #ifdef FIRST_PERSON_CONTROLLER
             FreezeCharacterRotation();
             #endif
-            RotateObject();
+            RotateObject(deltaTime);
         }
         else
         {
@@ -1297,7 +1312,7 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
     // Hold and move object using physics or translation, based on object's 
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
-    void ObjectInteractionComponent::HoldObject()
+    void ObjectInteractionComponent::HoldObject(float deltaTime)
     {
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
@@ -1368,12 +1383,24 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            // Subtract object's translation from our reference position, which gives you a vector pointing from 
-            // the object to the reference. Then apply a linear velocity to move the object toward the reference
+            // Subtract object's translation from our reference position, which gives you a vector pointing from
+            // the object to the reference.
+            AZ::Vector3 targetVector = (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse;
+
+            if (m_enableVelocityCompensation)
+            {   // Gradually increase velocity compensation using exponential damping
+                float effective_factor = 1.0f - exp(-m_velocityDampRate * deltaTime);
+                m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
+            }
+            else
+            {
+                m_currentCompensationVelocity = AZ::Vector3::CreateZero();
+            }
+
+            // Apply a linear velocity to move the object toward the grab reference + compensated velocity
             Physics::RigidBodyRequestBus::Event(
-                m_lastGrabbedObjectEntityId,
-                &Physics::RigidBodyRequests::SetLinearVelocity,
-                (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse + m_grabbingEntityVelocity);
+                m_lastGrabbedObjectEntityId, 
+                &Physics::RigidBodyRequests::SetLinearVelocity, targetVector + m_currentCompensationVelocity);
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
@@ -1401,7 +1428,7 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
 
     // Rotate object using physics or transforms, based on object's starting 
     // Rigid Body type, or if KinematicWhileHeld is enabled.
-    void ObjectInteractionComponent::RotateObject()
+    void ObjectInteractionComponent::RotateObject(float deltaTime)
     {
         // Get right vector relative to the grabbing entity's transform
         m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
@@ -1420,9 +1447,9 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         if (m_isObjectKinematic)
         {
             AZ::Quaternion rotation =
-                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * (m_kinematicYawRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * (m_kinematicPitchRotateScale * 0.01f)) +
-                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * (m_kinematicRollRotateScale * 0.01f));
+                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * deltaTime) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * deltaTime) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * deltaTime);
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -1440,9 +1467,15 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            SetGrabbedObjectAngularVelocity(
-                GetGrabbedObjectAngularVelocity() + (m_rightVector * pitchValue * m_dynamicPitchRotateScale) +
-                (m_forwardVector * rollValue * m_dynamicRollRotateScale) + (m_upVector * yawValue * m_dynamicYawRotateScale));
+            AZ::Vector3 target_angular_vel = (m_rightVector * pitchValue * m_dynamicPitchRotateScale) +
+                (m_forwardVector * rollValue * m_dynamicRollRotateScale) + (m_upVector * yawValue * m_dynamicYawRotateScale);
+
+            // Lerp toward target rotation for gradual damping
+            float effective_factor = 1.0f - exp(-m_angularDampRate * deltaTime);
+            m_currentAngularVelocity = m_currentAngularVelocity.Lerp(target_angular_vel, effective_factor);
+
+            // Set the lerped velocity
+            SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
 
             // Update current physics transform for interpolation
             if (m_enableMeshSmoothing)
@@ -1521,6 +1554,29 @@ void ObjectInteractionComponent::OnSceneSimulationFinish(
         }
     }
     #endif
+
+    void ObjectInteractionComponent::ComputeGrabbingEntityVelocity(float deltaTime)
+    {
+        if (m_enableVelocityCompensation)
+        {
+            // Use FPC Entity directly to capture physics timestep translations for interpolation
+            if (m_useFPControllerForGrab)
+            {
+                m_currentGrabEntityTranslation = GetEntityPtr(GetEntityId())->GetTransform()->GetWorldTM().GetTranslation();
+            }
+            // Use grabbing entity to capture physics timestep translations for interpolation
+            else
+            {
+                m_currentGrabEntityTranslation = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
+            }
+            m_grabbingEntityVelocity = (m_currentGrabEntityTranslation - m_prevGrabbingEntityTranslation) / deltaTime;
+            m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation; // Update previous position after velocity calculation
+        }
+        else
+        {
+            m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
+        }
+    }
 
     AZ::Entity* ObjectInteractionComponent::GetEntityPtr(AZ::EntityId pointer) const
     {
