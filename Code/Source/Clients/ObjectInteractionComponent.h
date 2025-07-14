@@ -300,13 +300,13 @@ namespace ObjectInteraction
         float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
         float m_velocityDampRate = 8.f;
-        float m_angularDampRate = 16.f;
-        float m_kinematicYawRotateScale = 0.8f;
-        float m_kinematicPitchRotateScale = 1.422f;
-        float m_kinematicRollRotateScale = 0.8f;
-        float m_dynamicYawRotateScale = 0.8f;
-        float m_dynamicPitchRotateScale = 1.422f;
-        float m_dynamicRollRotateScale = 0.8f;
+        float m_angularDampRate = 40.f;
+        float m_kinematicYawRotateScale = 1.2f;
+        float m_kinematicPitchRotateScale = 2.133f;
+        float m_kinematicRollRotateScale = 1.2f;
+        float m_dynamicYawRotateScale = 0.6f;
+        float m_dynamicPitchRotateScale = 1.067f;
+        float m_dynamicRollRotateScale = 0.6f;
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
         float m_tempObjectAngularDamping = 20.f;
@@ -321,6 +321,9 @@ namespace ObjectInteraction
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
+        float m_accumPitch = 0.0f;
+        float m_accumYaw = 0.0f;
+        float m_accumRoll = 0.0f;
 
         bool m_enableMeshSmoothing = true;
         bool m_enableVelocityCompensation = true;

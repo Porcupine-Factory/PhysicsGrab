@@ -1076,6 +1076,11 @@ namespace ObjectInteraction
         // Update grab distance every frame (non-physics) for reliable input capture
         UpdateGrabDistance(deltaTime);
 
+        // Accumulate mouse deltas every frame for dynamic (to capture all between physics ticks)
+        m_accumPitch += m_pitchKeyValue;
+        m_accumYaw += m_yawKeyValue;
+        m_accumRoll += m_rollKeyValue;
+
         if (m_isObjectKinematic)
         {
             HoldObject(deltaTime);
@@ -1415,9 +1420,9 @@ namespace ObjectInteraction
         if (m_isObjectKinematic)
         {
             AZ::Quaternion rotation =
-                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * deltaTime) +
-                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * deltaTime) +
-                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * deltaTime);
+                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
+                AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * 0.01f) +
+                AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * 0.01f);
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -1435,8 +1440,8 @@ namespace ObjectInteraction
         // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            AZ::Vector3 target_angular_vel = (m_rightVector * pitchValue * m_dynamicPitchRotateScale) +
-                (m_forwardVector * rollValue * m_dynamicRollRotateScale) + (m_upVector * yawValue * m_dynamicYawRotateScale);
+            AZ::Vector3 target_angular_vel = (m_rightVector * m_accumPitch * m_dynamicPitchRotateScale) +
+                (m_forwardVector * m_accumRoll * m_dynamicRollRotateScale) + (m_upVector * m_accumYaw * m_dynamicYawRotateScale);
 
             // Lerp toward target rotation for gradual damping
             float effective_factor = 1.0f - exp(-m_angularDampRate * deltaTime);
@@ -1444,6 +1449,11 @@ namespace ObjectInteraction
 
             // Set the lerped velocity
             SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
+
+            // Reset accumulators after applying in physics branch
+            m_accumPitch = 0.0f;
+            m_accumYaw = 0.0f;
+            m_accumRoll = 0.0f;
 
             // Update current physics transform for interpolation
             if (m_enableMeshSmoothing)
