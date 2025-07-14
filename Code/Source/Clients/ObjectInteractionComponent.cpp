@@ -951,6 +951,9 @@ namespace ObjectInteraction
             return;
         }
 
+        // Update grab distance every frame (non-physics) for reliable input capture
+        UpdateGrabDistance(deltaTime);
+
         if (m_isObjectKinematic)
         {
             HoldObject(deltaTime);
@@ -1099,6 +1102,9 @@ namespace ObjectInteraction
             return;
         }
 
+        // Update grab distance every frame (non-physics) for reliable input capture
+        UpdateGrabDistance(deltaTime);
+
         if (m_isObjectKinematic)
         {
             HoldObject(deltaTime);
@@ -1243,8 +1249,8 @@ namespace ObjectInteraction
         }
     }
 
-    // Perform a spherecast query to check if colliding with a grabbable object, then assign the first returned hit to
-    // m_grabbedObjectEntityId
+    // Perform a spherecast query to check if colliding with a grabbable object, then assign the 
+    // first returned hit to m_grabbedObjectEntityId
     void ObjectInteractionComponent::CheckForObjects()
     {
         // Get forward vector relative to the grabbing entity's transform
@@ -1314,14 +1320,6 @@ namespace ObjectInteraction
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void ObjectInteractionComponent::HoldObject(float deltaTime)
     {
-        // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
-        const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
-        
-        // Changes distance between Grabbing Entity and Grabbed object. Minimum and
-        // maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively
-        m_grabDistance =
-            AZ::GetClamp(m_grabDistance + ((grabDistanceValue * 0.01f) * m_grabDistanceSpeed), m_minGrabDistance, m_maxGrabDistance);
-
         // Get forward vector relative to the grabbing entity's transform
         m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
         
@@ -1383,8 +1381,8 @@ namespace ObjectInteraction
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            // Subtract object's translation from our reference position, which gives you a vector pointing from
-            // the object to the reference.
+            // Subtract object's translation from our reference position, which gives you 
+            // a vector pointing from the object to the reference.
             AZ::Vector3 targetVector = (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse;
 
             if (m_enableVelocityCompensation)
@@ -1402,7 +1400,8 @@ namespace ObjectInteraction
                 m_lastGrabbedObjectEntityId, 
                 &Physics::RigidBodyRequests::SetLinearVelocity, targetVector + m_currentCompensationVelocity);
 
-            // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to 
+            // the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
             {
                 TidalLock(deltaTime);
@@ -1537,7 +1536,7 @@ namespace ObjectInteraction
         }
         else
         {
-            // Physics-based tidal lock for dynamic objects Set angular velocity to apply delta over next frame
+            // Physics-based tidal lock for dynamic objects. Set angular velocity to apply delta over next frame
             AZ::Vector3 target_angular_vel = entityUpVector * (deltaAngle / deltaTime);
 
             SetGrabbedObjectAngularVelocity(target_angular_vel);
@@ -1565,6 +1564,17 @@ namespace ObjectInteraction
         }
     }
     #endif
+
+    void ObjectInteractionComponent::UpdateGrabDistance(float deltaTime)
+    {
+        // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
+        const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
+
+        // Changes distance between Grabbing Entity and Grabbed object. Minimum and
+        // maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively
+        m_grabDistance =
+            AZ::GetClamp(m_grabDistance + (grabDistanceValue * m_grabDistanceSpeed * deltaTime), m_minGrabDistance, m_maxGrabDistance);
+    }
 
     void ObjectInteractionComponent::ComputeGrabbingEntityVelocity(float deltaTime)
     {

@@ -221,6 +221,7 @@ namespace ObjectInteraction
         void RotateObject(float deltaTime);
         void ThrowObject();
         void TidalLock(float deltaTime);
+        void UpdateGrabDistance(float deltaTime);
         void InterpolateMeshTransform(float deltaTime);
         void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
