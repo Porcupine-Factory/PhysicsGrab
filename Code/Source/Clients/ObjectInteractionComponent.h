@@ -220,7 +220,7 @@ namespace ObjectInteraction
         void HoldObject(float deltaTime);
         void RotateObject(float deltaTime);
         void ThrowObject();
-        void TidalLock();
+        void TidalLock(float deltaTime);
         void InterpolateMeshTransform(float deltaTime);
         void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
@@ -301,7 +301,7 @@ namespace ObjectInteraction
         float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
         float m_velocityDampRate = 8.f;
-        float m_angularDampRate = 16.0f;
+        float m_angularDampRate = 16.f;
         float m_kinematicYawRotateScale = 0.8f;
         float m_kinematicPitchRotateScale = 1.422f;
         float m_kinematicRollRotateScale = 0.8f;

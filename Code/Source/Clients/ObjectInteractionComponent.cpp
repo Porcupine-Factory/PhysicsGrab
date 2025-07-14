@@ -1369,7 +1369,7 @@ namespace ObjectInteraction
             // the controlling entity's local z rotation (causing object to face controlling entity)
             if (m_tidalLock && m_kinematicTidalLock)
             {
-                TidalLock();
+                TidalLock(deltaTime);
             }
             // Update mesh entity transform if smoothing is disabled
             if (!m_enableMeshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
@@ -1405,9 +1405,7 @@ namespace ObjectInteraction
             // If object is NOT in rotate state, couple the grabbed entity's rotation to the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
             {
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::DisablePhysics);
-                TidalLock();
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::EnablePhysics);
+                TidalLock(deltaTime);
             }
 
             // Update current physics transform for interpolation
@@ -1516,21 +1514,34 @@ namespace ObjectInteraction
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
-    void ObjectInteractionComponent::TidalLock()
+    void ObjectInteractionComponent::TidalLock(float deltaTime)
     {
         AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
         const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
 
-        const AZ::Quaternion Rotation =
-            AZ::Quaternion::CreateFromAxisAngle(entityUpVector, (entityRotation.GetZ() - m_lastEntityRotation.GetZ()));
+        // Compute wrapped delta angle to avoid jumps at pi/-pi
+        float deltaAngle = entityRotation.GetZ() - m_lastEntityRotation.GetZ();
+        deltaAngle = AZ::Wrap(deltaAngle, -AZ::Constants::Pi, AZ::Constants::Pi);
 
-        AZ::Transform Transform = AZ::Transform::CreateIdentity();
-        AZ::TransformBus::EventResult(Transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+        const AZ::Quaternion deltaRotation = AZ::Quaternion::CreateFromAxisAngle(entityUpVector, deltaAngle);
 
-        Transform.SetRotation((Rotation * Transform.GetRotation()).GetNormalized());
+        if (m_isObjectKinematic)
+        {
+            AZ::Transform transform = AZ::Transform::CreateIdentity();
+            AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
 
-        AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, Transform);
+            transform.SetRotation((deltaRotation * transform.GetRotation()).GetNormalized());
+
+            AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
+        }
+        else
+        {
+            // Physics-based tidal lock for dynamic objects Set angular velocity to apply delta over next frame
+            AZ::Vector3 target_angular_vel = entityUpVector * (deltaAngle / deltaTime);
+
+            SetGrabbedObjectAngularVelocity(target_angular_vel);
+        }
 
         m_lastEntityRotation = entityRotation;
     }
