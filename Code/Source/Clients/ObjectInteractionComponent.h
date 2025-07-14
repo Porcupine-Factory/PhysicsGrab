@@ -32,7 +32,6 @@ namespace ObjectInteraction
         , public AZ::TickBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public ObjectInteractionComponentRequestBus::Handler
-        , Camera::CameraNotificationBus::Handler
     {
     public:
         AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
@@ -190,6 +189,7 @@ namespace ObjectInteraction
   
         AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler;
+        AzPhysics::SceneEvents::OnSceneSimulationFinishHandler m_sceneSimulationFinishHandler;
 
         StartingPointInput::InputEventNotificationId m_grabEventId;
         AZStd::string m_strGrab = "Grab";
@@ -214,14 +214,16 @@ namespace ObjectInteraction
 
         AZStd::string m_meshEntityName = "Grab Mesh";
 
-        void OnCameraAdded(const AZ::EntityId& cameraId);
         void CheckForObjects();
-        void HoldObject();
-        void RotateObject();
+        void HoldObject(float deltaTime);
+        void RotateObject(float deltaTime);
         void ThrowObject();
-        void TidalLock();
+        void TidalLock(float deltaTime);
+        void UpdateGrabDistance(float deltaTime);
         void InterpolateMeshTransform(float deltaTime);
+        void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
+        void OnSceneSimulationFinish([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime);
         #ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
         #endif
@@ -241,11 +243,11 @@ namespace ObjectInteraction
         void OnThrowStateCounterZero();
         
         // State machine functions
-        void ProcessStates(const float& deltaTime);
+        void ProcessStates(const float& deltaTime, bool isPhysicsUpdate = false);
         void IdleState();
         void CheckForObjectsState();
-        void HoldObjectState();
-        void RotateObjectState();
+        void HoldObjectState(float deltaTime, bool isPhysicsUpdate = false);
+        void RotateObjectState(float deltaTime, bool isPhysicsUpdate = false);
         void ThrowObjectState(const float &deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
@@ -262,6 +264,8 @@ namespace ObjectInteraction
         AZ::Vector3 m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_currentGrabEntityTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_prevGrabbingEntityTranslation = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_currentCompensationVelocity = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_currentAngularVelocity = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_grabbedObjectEntityId;
         AZ::EntityId m_meshEntityId;
@@ -295,12 +299,14 @@ namespace ObjectInteraction
         float m_maxGrabDistance = 3.5f;
         float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
-        float m_kinematicYawRotateScale = 0.5f;
-        float m_kinematicPitchRotateScale = 0.5f;
-        float m_kinematicRollRotateScale = 0.5f;
-        float m_dynamicYawRotateScale = 0.3f;
-        float m_dynamicPitchRotateScale = 0.3f;
-        float m_dynamicRollRotateScale = 0.3f;
+        float m_velocityDampRate = 8.f;
+        float m_angularDampRate = 16.f;
+        float m_kinematicYawRotateScale = 0.8f;
+        float m_kinematicPitchRotateScale = 1.422f;
+        float m_kinematicRollRotateScale = 0.8f;
+        float m_dynamicYawRotateScale = 0.8f;
+        float m_dynamicPitchRotateScale = 1.422f;
+        float m_dynamicRollRotateScale = 0.8f;
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
         float m_tempObjectAngularDamping = 20.f;
