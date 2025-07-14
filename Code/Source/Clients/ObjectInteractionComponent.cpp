@@ -1440,8 +1440,14 @@ namespace ObjectInteraction
         // Rotate the object using SetAngularVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            AZ::Vector3 target_angular_vel = (m_rightVector * m_accumPitch * m_dynamicPitchRotateScale) +
-                (m_forwardVector * m_accumRoll * m_dynamicRollRotateScale) + (m_upVector * m_accumYaw * m_dynamicYawRotateScale);
+            // Normalize accumulators by deltaTime to get consistent rotation speed regardless of physics timestep
+            float pitchSpeed = (deltaTime > 0.0f) ? m_accumPitch / deltaTime : 0.0f;
+            float yawSpeed = (deltaTime > 0.0f) ? m_accumYaw / deltaTime : 0.0f;
+            float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
+
+            AZ::Vector3 target_angular_vel = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
+                (m_forwardVector * m_accumRoll * m_dynamicRollRotateScale * 0.01) +
+                (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
 
             // Lerp toward target rotation for gradual damping
             float effective_factor = 1.0f - exp(-m_angularDampRate * deltaTime);
@@ -1453,7 +1459,7 @@ namespace ObjectInteraction
             // Reset accumulators after applying in physics branch
             m_accumPitch = 0.0f;
             m_accumYaw = 0.0f;
-            m_accumRoll = 0.0f;
+            rollSpeed = 0.0f;
 
             // Update current physics transform for interpolation
             if (m_enableMeshSmoothing)
