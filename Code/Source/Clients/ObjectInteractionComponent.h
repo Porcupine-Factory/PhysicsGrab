@@ -140,6 +140,14 @@ namespace ObjectInteraction
         void SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale);
         float GetKinematicPitchRotateScale() const;
         void SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale);
+        float GetVelocityCompDampRate() const;
+        void SetVelocityCompDampRate(const float& new_velocityCompDampRate);
+        float GetAngularVelocityDampRate() const;
+        void SetAngularVelocityDampRate(const float& new_angularVelocityDampRate);
+        bool GetEnableVelocityCompensation() const;
+        void SetEnableVelocityCompensation(const float& new_enableVelocityCompensation);
+        bool GetEnableSmoothDynamicRotation() const;
+        void SetEnableSmoothDynamicRotation(const float& new_enableSmoothDynamicRotation);
         float GetThrowImpulse() const override;
         void SetThrowImpulse(const float& new_throwImpulse) override;
         float GetGrabbedObjectThrowStateCounter() const override;
@@ -299,8 +307,8 @@ namespace ObjectInteraction
         float m_maxGrabDistance = 3.5f;
         float m_initialGrabDistance = 2.f;
         float m_grabDistance = m_initialGrabDistance;
-        float m_velocityDampRate = 8.f;
-        float m_angularDampRate = 40.f;
+        float m_velocityCompDampRate = 9.f;
+        float m_angularVelocityDampRate = 30.f;
         float m_kinematicYawRotateScale = 1.2f;
         float m_kinematicPitchRotateScale = 2.133f;
         float m_kinematicRollRotateScale = 1.2f;
@@ -327,6 +335,7 @@ namespace ObjectInteraction
 
         bool m_enableMeshSmoothing = true;
         bool m_enableVelocityCompensation = true;
+        bool m_enableSmoothDynamicRotation = true;
         bool m_useFPControllerForGrab = true;
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;

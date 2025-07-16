@@ -35,7 +35,6 @@ namespace ObjectInteraction
                 ->Field("Use FPController For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
                 ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
                 #endif
-                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_enableVelocityCompensation)
                 ->Field("Grab Enable Toggle", &ObjectInteractionComponent::m_grabEnableToggle)
                 ->Field("Maintain Grab", &ObjectInteractionComponent::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
@@ -67,6 +66,10 @@ namespace ObjectInteraction
                 ->Field("Dynamic Horizontal Rotate Scale", &ObjectInteractionComponent::m_dynamicYawRotateScale)
                 ->Field("Dynamic Vertical Rotate Scale", &ObjectInteractionComponent::m_dynamicPitchRotateScale)
                 ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
+                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_enableVelocityCompensation)
+                ->Field("Velocity Compensation Damp Rate", &ObjectInteractionComponent::m_velocityCompDampRate)
+                ->Field("Smooth Dynamic Rotation", &ObjectInteractionComponent::m_enableSmoothDynamicRotation)
+                ->Field("Angular Velocity Damp Rate", &ObjectInteractionComponent::m_angularVelocityDampRate)
                 ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
                 ->Version(1);
@@ -122,12 +125,6 @@ namespace ObjectInteraction
                     #endif
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableVelocityCompensation,
-                        "Velocity Compensation",
-                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
-                        "the same whether you are walking, sprinting, or standing still.")
-                    ->DataElement(
-                        nullptr,
                         &ObjectInteractionComponent::m_grabEnableToggle,
                         "Grab Enable Toggle",
                         "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to "
@@ -149,8 +146,8 @@ namespace ObjectInteraction
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLock,
-                        "Tidal Lock Kinematic Object",
-                        "Determines whether a Kinematic Object is tidal locked when being grabbed. This means that the object will always "
+                        "Tidal Lock Grabbed Object",
+                        "Determines whether a Grabbed Object is tidal locked when being grabbed. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
@@ -181,6 +178,27 @@ namespace ObjectInteraction
                         "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
                         nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableVelocityCompensation,
+                        "Velocity Compensation",
+                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
+                        "the same whether you are walking, sprinting, or standing still.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_velocityCompDampRate,
+                        "Velocity Compensation Damp Rate",
+                        "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to take effect.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableSmoothDynamicRotation,
+                        "Smooth Dynamic Rotation",
+                        "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_angularVelocityDampRate,
+                        "Angular Velocity Damp Rate",
+                        "Gradually increase angular velocity for dynamic object. Smooth dynamic rotation must be enabled for this to take effect.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -1363,7 +1381,7 @@ namespace ObjectInteraction
 
             if (m_enableVelocityCompensation)
             {   // Gradually increase velocity compensation using exponential damping
-                float effective_factor = 1.0f - exp(-m_velocityDampRate * deltaTime);
+                float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                 m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
             }
             else
@@ -1450,10 +1468,17 @@ namespace ObjectInteraction
                 (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
 
             // Lerp toward target rotation for gradual damping
-            float effective_factor = 1.0f - exp(-m_angularDampRate * deltaTime);
-            m_currentAngularVelocity = m_currentAngularVelocity.Lerp(target_angular_vel, effective_factor);
+            if (m_enableSmoothDynamicRotation)
+            {
+                float effective_factor = 1.0f - exp(-m_angularVelocityDampRate * deltaTime);
+                m_currentAngularVelocity = m_currentAngularVelocity.Lerp(target_angular_vel, effective_factor);
+            }
+            // Set angular velocity directly with no smooth damping
+            else
+            {
+                m_currentAngularVelocity = target_angular_vel;
+            }
 
-            // Set the lerped velocity
             SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
 
             // Reset accumulators after applying in physics branch
@@ -1579,7 +1604,9 @@ namespace ObjectInteraction
                 m_currentGrabEntityTranslation = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
             }
             m_grabbingEntityVelocity = (m_currentGrabEntityTranslation - m_prevGrabbingEntityTranslation) / deltaTime;
-            m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation; // Update previous position after velocity calculation
+            
+            // Update previous position after velocity calculation
+            m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation;
         }
         else
         {
@@ -2003,6 +2030,46 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
     {
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
+    }
+
+    bool ObjectInteractionComponent::GetEnableVelocityCompensation() const
+    {
+        return m_enableVelocityCompensation;
+    }
+
+    void ObjectInteractionComponent::SetEnableVelocityCompensation(const float& new_enableVelocityCompensation)
+    {
+        m_enableVelocityCompensation = new_enableVelocityCompensation;
+    }
+
+    float ObjectInteractionComponent::GetVelocityCompDampRate() const
+    {
+        return m_velocityCompDampRate;
+    }
+
+    void ObjectInteractionComponent::SetVelocityCompDampRate(const float& new_velocityCompDampRate)
+    {
+        m_velocityCompDampRate = new_velocityCompDampRate;
+    }
+
+    bool ObjectInteractionComponent::GetEnableSmoothDynamicRotation() const
+    {
+        return m_enableSmoothDynamicRotation;
+    }
+
+    void ObjectInteractionComponent::SetEnableSmoothDynamicRotation(const float& new_enableSmoothDynamicRotation)
+    {
+        m_enableSmoothDynamicRotation = new_enableSmoothDynamicRotation;
+    }
+
+    float ObjectInteractionComponent::GetAngularVelocityDampRate() const
+    {
+        return m_angularVelocityDampRate;
+    }
+
+    void ObjectInteractionComponent::SetAngularVelocityDampRate(const float& new_angularVelocityDampRate)
+    {
+        m_angularVelocityDampRate = new_angularVelocityDampRate;
     }
 
     float ObjectInteractionComponent::GetThrowImpulse() const
