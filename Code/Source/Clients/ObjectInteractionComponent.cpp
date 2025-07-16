@@ -331,6 +331,14 @@ namespace ObjectInteraction
                 ->Event("Set Kinematic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicYawRotateScale)
                 ->Event("Get Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
                 ->Event("Set Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
+                ->Event("Get Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::GetVelocityCompDampRate)
+                ->Event("Set Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::SetVelocityCompDampRate)
+                ->Event("Get Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::GetAngularVelocityDampRate)
+                ->Event("Set Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::SetAngularVelocityDampRate)
+                ->Event("Get Enable Velocity Compensation", &ObjectInteractionComponentRequests::GetEnableVelocityCompensation)
+                ->Event("Set Enable Velocity Compensation", &ObjectInteractionComponentRequests::SetEnableVelocityCompensation)
+                ->Event("Get Enable Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::GetEnableSmoothDynamicRotation)
+                ->Event("Set Enable Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::SetEnableSmoothDynamicRotation)
                 ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
                 ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
                 ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
@@ -2037,7 +2045,7 @@ namespace ObjectInteraction
         return m_enableVelocityCompensation;
     }
 
-    void ObjectInteractionComponent::SetEnableVelocityCompensation(const float& new_enableVelocityCompensation)
+    void ObjectInteractionComponent::SetEnableVelocityCompensation(const bool& new_enableVelocityCompensation)
     {
         m_enableVelocityCompensation = new_enableVelocityCompensation;
     }
@@ -2057,7 +2065,7 @@ namespace ObjectInteraction
         return m_enableSmoothDynamicRotation;
     }
 
-    void ObjectInteractionComponent::SetEnableSmoothDynamicRotation(const float& new_enableSmoothDynamicRotation)
+    void ObjectInteractionComponent::SetEnableSmoothDynamicRotation(const bool& new_enableSmoothDynamicRotation)
     {
         m_enableSmoothDynamicRotation = new_enableSmoothDynamicRotation;
     }

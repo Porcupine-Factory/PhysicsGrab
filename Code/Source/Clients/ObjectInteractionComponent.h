@@ -145,9 +145,9 @@ namespace ObjectInteraction
         float GetAngularVelocityDampRate() const;
         void SetAngularVelocityDampRate(const float& new_angularVelocityDampRate);
         bool GetEnableVelocityCompensation() const;
-        void SetEnableVelocityCompensation(const float& new_enableVelocityCompensation);
+        void SetEnableVelocityCompensation(const bool& new_enableVelocityCompensation);
         bool GetEnableSmoothDynamicRotation() const;
-        void SetEnableSmoothDynamicRotation(const float& new_enableSmoothDynamicRotation);
+        void SetEnableSmoothDynamicRotation(const bool& new_enableSmoothDynamicRotation);
         float GetThrowImpulse() const override;
         void SetThrowImpulse(const float& new_throwImpulse) override;
         float GetGrabbedObjectThrowStateCounter() const override;
