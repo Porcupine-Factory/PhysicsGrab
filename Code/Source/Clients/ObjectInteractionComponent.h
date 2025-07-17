@@ -9,6 +9,7 @@
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
+#include "PidControllerVec3.h"
 #include <ObjectInteraction/ObjectInteractionComponentBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
@@ -35,6 +36,8 @@ namespace ObjectInteraction
     {
     public:
         AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
+
+        ObjectInteractionComponent();
 
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
@@ -326,6 +329,7 @@ namespace ObjectInteraction
         float m_throwStateMaxTime = 0.5f;
         float m_throwStateCounter = 0.f;
         float m_combinedGrabDistance = 0.f;
+        float m_prevGravityEnabled = 0.f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -336,6 +340,7 @@ namespace ObjectInteraction
         bool m_enableMeshSmoothing = true;
         bool m_enableVelocityCompensation = true;
         bool m_enableSmoothDynamicRotation = true;
+        bool m_disableGravityWhileHeld = true;
         bool m_useFPControllerForGrab = true;
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;
@@ -370,5 +375,13 @@ namespace ObjectInteraction
           {ObjectInteractionStates::rotateState, "rotateState"},
           {ObjectInteractionStates::throwState,  "throwState"}
         };
+
+        // NEW: PID members for advanced spring-like dynamics on held objects
+        bool m_enablePIDHeldDynamics = false; // Enables PID for dynamic held objects (spring-like motion)
+        float m_pidP = 10.0f; // Proportional gain (spring stiffness, defaults to match m_grabResponse)
+        float m_pidI = 0.0f; // Integral gain (steady-state correction)
+        float m_pidD = 0.1f; // Derivative gain (damping, small for slight underdamping)
+        int m_pidErrorHistory = 10; // Number of errors for integral accumulation
+        PidControllerVec3 m_pidController;
     };
 } // namespace ObjectInteraction

@@ -39,6 +39,7 @@ namespace ObjectInteraction
                 ->Field("Maintain Grab", &ObjectInteractionComponent::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
+                ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
                 ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
@@ -72,6 +73,12 @@ namespace ObjectInteraction
                 ->Field("Angular Velocity Damp Rate", &ObjectInteractionComponent::m_angularVelocityDampRate)
                 ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
+
+                ->Field("Enable PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
+                ->Field("PID P Gain", &ObjectInteractionComponent::m_pidP)
+                ->Field("PID I Gain", &ObjectInteractionComponent::m_pidI)
+                ->Field("PID D Gain", &ObjectInteractionComponent::m_pidD)
+                ->Field("PID Error History", &ObjectInteractionComponent::m_pidErrorHistory)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -142,13 +149,12 @@ namespace ObjectInteraction
                         &ObjectInteractionComponent::m_rotateEnableToggle,
                         "Rotate Enable Toggle",
                         "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
-                        "maintain Rotate mode.")
+                        "maintain Rotate mode.") 
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLock,
-                        "Tidal Lock Grabbed Object",
-                        "Determines whether a Grabbed Object is tidal locked when being grabbed. This means that the object will always "
-                        "face the Grabbing Entity in it's current relative rotation.")
+                        &ObjectInteractionComponent::m_disableGravityWhileHeld,
+                        "Disable Gravity While Held",
+                        "Disables gravity for dynamic objects while being held.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -237,7 +243,36 @@ namespace ObjectInteraction
                         nullptr,
                         &ObjectInteractionComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
-                        "The speed at which you move the grabbed object closer or away.");
+                        "The speed at which you move the grabbed object closer or away.")
+                        
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Held Dynamics")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enablePIDHeldDynamics,
+                        "Enable PID Held Dynamics",
+                        "Enables PID controller for dynamic held objects, creating spring-like (underdamped/overdamped) motion. Disabling "
+                        "uses simple linear velocity.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_pidP,
+                        "PID P Gain",
+                        "Proportional gain: Controls stiffness/pull strength (higher = stronger spring).")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_pidI,
+                        "PID I Gain",
+                        "Integral gain: Corrects persistent errors (e.g., gravity offset; usually low or 0).")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_pidD,
+                        "PID D Gain",
+                        "Derivative gain: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_pidErrorHistory,
+                        "PID Error History",
+                        "Number of past errors for integral term accumulation.");
             }
         }
 
@@ -384,6 +419,12 @@ namespace ObjectInteraction
             bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
     }
+
+    ObjectInteractionComponent::ObjectInteractionComponent()
+        : m_pidController(m_pidP, m_pidI, m_pidD, m_pidErrorHistory)
+    {
+    }
+
     void ObjectInteractionComponent::Activate()
     {
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
@@ -452,6 +493,9 @@ namespace ObjectInteraction
 
         // Initialize m_grabDistance to the editor-specified m_initialGrabDistance
         m_grabDistance = m_initialGrabDistance;
+
+        // Initialize PID controller with parameters
+        m_pidController = PidControllerVec3(m_pidP, m_pidI, m_pidD, m_pidErrorHistory);
     }
 
     // Called at the beginning of each physics tick
@@ -800,6 +844,14 @@ namespace ObjectInteraction
             // Store object's original Angular Damping value
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
 
+            // Store and disable gravity for dynamic objects if enabled
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::EventResult(
+                    m_prevGravityEnabled, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::IsGravityEnabled);
+                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, false);
+            }
+
             // Initialize physics transforms for dynamic objects
             if (!m_isObjectKinematic && m_enableMeshSmoothing)
             {
@@ -865,6 +917,12 @@ namespace ObjectInteraction
                 }
             }
 
+            // Reset PID controller on new grab to clear error history
+            if (m_enablePIDHeldDynamics)
+            {
+                m_pidController.Reset();
+            }
+
             m_state = ObjectInteractionStates::holdState;
             // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
@@ -924,6 +982,13 @@ namespace ObjectInteraction
             // Set Angular Damping back to original value if sphere cast doesn't hit
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
+            // Restore gravity if it was disabled
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+            }
+
             // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
             {
@@ -972,6 +1037,13 @@ namespace ObjectInteraction
 
             // Set Angular Damping back to original value if Grab Key is not pressed
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+            // Restore gravity if it was disabled
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+            }
 
             // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
@@ -1074,6 +1146,13 @@ namespace ObjectInteraction
             m_grabDistance = m_initialGrabDistance;
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
+            // Restore gravity if it was disabled
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+            }
+
             // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
             {
@@ -1142,6 +1221,13 @@ namespace ObjectInteraction
             // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
+            // Restore gravity if it was disabled
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+            }
+
             // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
             if (!m_isInitialObjectKinematic)
             {
@@ -1199,6 +1285,13 @@ namespace ObjectInteraction
             {
                 SetGrabbedObjectKinematicElseDynamic(false);
                 m_isObjectKinematic = false;
+            }
+
+            // Restore gravity if it was disabled (before throwing)
+            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
             }
 
             m_objectSphereCastHit = false;
@@ -1383,12 +1476,23 @@ namespace ObjectInteraction
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
-            // Subtract object's translation from our reference position, which gives you 
-            // a vector pointing from the object to the reference.
-            AZ::Vector3 targetVector = (m_grabReference.GetTranslation() - m_grabbedObjectTranslation) * m_grabResponse;
+            // Compute error once
+            AZ::Vector3 error = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
+
+            AZ::Vector3 targetVector;
+            if (m_enablePIDHeldDynamics)
+            {
+                // Use PID to compute spring-like velocity adjustment
+                targetVector = m_pidController.Output(error, deltaTime);
+            }
+            else
+            {
+                // Fallback to original simple proportional control
+                targetVector = error * m_grabResponse;
+            }
 
             if (m_enableVelocityCompensation)
-            {   // Gradually increase velocity compensation using exponential damping
+            { // Gradually increase velocity compensation using exponential damping
                 float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                 m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
             }
@@ -1397,12 +1501,31 @@ namespace ObjectInteraction
                 m_currentCompensationVelocity = AZ::Vector3::CreateZero();
             }
 
-            // Apply a linear velocity to move the object toward the grab reference + compensated velocity
-            Physics::RigidBodyRequestBus::Event(
-                m_lastGrabbedObjectEntityId, 
-                &Physics::RigidBodyRequests::SetLinearVelocity, targetVector + m_currentCompensationVelocity);
+            if (m_enablePIDHeldDynamics)
+            {
+                float mass = 1.0f;
+                Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
-            // If object is NOT in rotate state, couple the grabbed entity's rotation to 
+                AZ::Vector3 force = targetVector * mass; // Scale for consistent stiffness across masses
+
+                // Add compensation as impulse (approx: convert velocity to impulse)
+                AZ::Vector3 comp_impulse = m_currentCompensationVelocity * mass;
+
+                // Apply total impulse
+                AZ::Vector3 total_impulse = (force * deltaTime) + comp_impulse;
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, total_impulse);
+            }
+            else
+            {
+                // Original velocity-based application
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId,
+                    &Physics::RigidBodyRequests::SetLinearVelocity,
+                    targetVector + m_currentCompensationVelocity);
+            }
+
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
             if (m_tidalLock && m_dynamicTidalLock)
             {
@@ -1531,6 +1654,13 @@ namespace ObjectInteraction
 
         // Set Angular Damping back to original value
         SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+        // Restore gravity if it was disabled
+        if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+        {
+            Physics::RigidBodyRequestBus::Event(
+                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+        }
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
