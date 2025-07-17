@@ -78,7 +78,8 @@ namespace ObjectInteraction
                 ->Field("PID P Gain", &ObjectInteractionComponent::m_pidP)
                 ->Field("PID I Gain", &ObjectInteractionComponent::m_pidI)
                 ->Field("PID D Gain", &ObjectInteractionComponent::m_pidD)
-                ->Field("PID Error History", &ObjectInteractionComponent::m_pidErrorHistory)
+                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralLimit)
+                ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -270,9 +271,14 @@ namespace ObjectInteraction
                         "Derivative gain: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_pidErrorHistory,
-                        "PID Error History",
-                        "Number of past errors for integral term accumulation.");
+                        &ObjectInteractionComponent::m_integralLimit,
+                        "PID Integral Limit",
+                        "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_derivFilterAlpha,
+                        "PID Deriv Filter Alpha",
+                        "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).");
             }
         }
 
@@ -421,7 +427,7 @@ namespace ObjectInteraction
     }
 
     ObjectInteractionComponent::ObjectInteractionComponent()
-        : m_pidController(m_pidP, m_pidI, m_pidD, m_pidErrorHistory)
+        : m_pidController(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha)
     {
     }
 
@@ -495,7 +501,7 @@ namespace ObjectInteraction
         m_grabDistance = m_initialGrabDistance;
 
         // Initialize PID controller with parameters
-        m_pidController = PidControllerVec3(m_pidP, m_pidI, m_pidD, m_pidErrorHistory);
+        m_pidController = PidController<AZ::Vector3>(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha);
     }
 
     // Called at the beginning of each physics tick
@@ -1491,14 +1497,13 @@ namespace ObjectInteraction
                 targetVector = error * m_grabResponse;
             }
 
+            // Compute grabbing entity velocity compensation
+            AZ::Vector3 compensation = AZ::Vector3::CreateZero();
             if (m_enableVelocityCompensation)
-            { // Gradually increase velocity compensation using exponential damping
+            {
                 float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                 m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
-            }
-            else
-            {
-                m_currentCompensationVelocity = AZ::Vector3::CreateZero();
+                compensation = m_currentCompensationVelocity;
             }
 
             if (m_enablePIDHeldDynamics)
@@ -1506,10 +1511,14 @@ namespace ObjectInteraction
                 float mass = 1.0f;
                 Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
-                AZ::Vector3 force = targetVector * mass; // Scale for consistent stiffness across masses
+                 // Scale for consistent stiffness across masses
+                AZ::Vector3 force = targetVector * mass;
 
-                // Add compensation as impulse (approx: convert velocity to impulse)
-                AZ::Vector3 comp_impulse = m_currentCompensationVelocity * mass;
+                AZ::Vector3 comp_impulse = AZ::Vector3::CreateZero();
+                if (m_enableVelocityCompensation)
+                {
+                    comp_impulse = compensation * mass;
+                }
 
                 // Apply total impulse
                 AZ::Vector3 total_impulse = (force * deltaTime) + comp_impulse;

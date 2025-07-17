@@ -9,7 +9,7 @@
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
-#include "PidControllerVec3.h"
+#include "PidController.h"
 #include <ObjectInteraction/ObjectInteractionComponentBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
@@ -376,12 +376,13 @@ namespace ObjectInteraction
           {ObjectInteractionStates::throwState,  "throwState"}
         };
 
-        // NEW: PID members for advanced spring-like dynamics on held objects
-        bool m_enablePIDHeldDynamics = false; // Enables PID for dynamic held objects (spring-like motion)
-        float m_pidP = 10.0f; // Proportional gain (spring stiffness, defaults to match m_grabResponse)
-        float m_pidI = 0.0f; // Integral gain (steady-state correction)
-        float m_pidD = 0.1f; // Derivative gain (damping, small for slight underdamping)
-        int m_pidErrorHistory = 10; // Number of errors for integral accumulation
-        PidControllerVec3 m_pidController;
+        // PID members for advanced spring-like dynamics on held objects
+        bool m_enablePIDHeldDynamics = false;
+        float m_pidP = 25.0f;
+        float m_pidI = 0.0f;
+        float m_pidD = 9.0f;
+        float m_integralLimit = 100.0f; // Anti-windup limit for integral
+        float m_derivFilterAlpha = 0.8f; // Derivative filter alpha (higher = more smoothing)
+        PidController<AZ::Vector3> m_pidController;
     };
 } // namespace ObjectInteraction
