@@ -37,8 +37,6 @@ namespace ObjectInteraction
     public:
         AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
 
-        ObjectInteractionComponent();
-
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
 
@@ -307,11 +305,11 @@ namespace ObjectInteraction
         float m_physicsTimeAccumulator = 0.f;
         float m_physicsTimestep = 1.f / 60.f;
         float m_minGrabDistance = 1.5f;
-        float m_maxGrabDistance = 3.5f;
-        float m_initialGrabDistance = 2.f;
+        float m_maxGrabDistance = 4.f;
+        float m_initialGrabDistance = 2.5f;
         float m_grabDistance = m_initialGrabDistance;
         float m_velocityCompDampRate = 9.f;
-        float m_angularVelocityDampRate = 30.f;
+        float m_angularVelocityDampRate = 25.f;
         float m_kinematicYawRotateScale = 1.2f;
         float m_kinematicPitchRotateScale = 2.133f;
         float m_kinematicRollRotateScale = 1.2f;
@@ -323,7 +321,7 @@ namespace ObjectInteraction
         float m_tempObjectAngularDamping = 20.f;
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
-        float m_throwImpulse = 7000.f;
+        float m_throwImpulse = 8.f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
         float m_throwStateMaxTime = 0.5f;
@@ -340,7 +338,7 @@ namespace ObjectInteraction
         bool m_enableMeshSmoothing = true;
         bool m_enableVelocityCompensation = true;
         bool m_enableSmoothDynamicRotation = true;
-        bool m_disableGravityWhileHeld = true;
+        bool m_disableGravityWhileHeld = false;
         bool m_useFPControllerForGrab = true;
         bool m_grabEnableToggle = false;
         bool m_kinematicWhileHeld = false;
@@ -351,6 +349,7 @@ namespace ObjectInteraction
         bool m_kinematicTidalLock = true;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
+        bool m_enableMassIndependentThrow = true;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
@@ -377,13 +376,14 @@ namespace ObjectInteraction
         };
 
         // PID members for advanced spring-like dynamics on held objects
-        bool m_enablePIDHeldDynamics = false;
-        bool m_enableMassIndependentPID = false;
-        float m_pidP = 25.0f;
-        float m_pidI = 0.0f;
-        float m_pidD = 9.0f;
+        bool m_enablePIDHeldDynamics = true;
+        bool m_enableMassIndependentPID = true;
+        float m_pidP = 70.f;
+        float m_pidI = 0.f;
+        float m_pidD = 11.f;
         float m_integralLimit = 100.0f;
         float m_derivFilterAlpha = 0.8f;
         PidController<AZ::Vector3> m_pidController;
+        PidController<AZ::Vector3>::DerivativeMode m_pidMode = PidController<AZ::Vector3>::Velocity;
     };
 } // namespace ObjectInteraction

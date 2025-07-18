@@ -53,6 +53,7 @@ namespace ObjectInteraction
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &ObjectInteractionComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+                ->Field("Enable Mass Independent Throw", &ObjectInteractionComponent::m_enableMassIndependentThrow)
                 ->Field("Throw Impulse", &ObjectInteractionComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Grab Response", &ObjectInteractionComponent::m_grabResponse)
@@ -160,6 +161,12 @@ namespace ObjectInteraction
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableMassIndependentThrow,
+                        "Enable Mass Independent Throw",
+                        "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
+                        "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
                     ->DataElement(
                         nullptr, &ObjectInteractionComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
                     ->DataElement(
@@ -434,11 +441,6 @@ namespace ObjectInteraction
         }
     }
 
-    ObjectInteractionComponent::ObjectInteractionComponent()
-        : m_pidController(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha)
-    {
-    }
-
     void ObjectInteractionComponent::Activate()
     {
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
@@ -509,7 +511,7 @@ namespace ObjectInteraction
         m_grabDistance = m_initialGrabDistance;
 
         // Initialize PID controller with parameters
-        m_pidController = PidController<AZ::Vector3>(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha);
+        m_pidController = PidController<AZ::Vector3>(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha, m_pidMode);
     }
 
     // Called at the beginning of each physics tick
@@ -1658,9 +1660,19 @@ namespace ObjectInteraction
     // Apply linear impulse to object if it is a Dynamic Rigid Body
     void ObjectInteractionComponent::ThrowObject()
     {
+        // Query mass for potential scaling (default to 1 if fails)
+        float mass = 1.0f;
+        Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
+
+        // Compute base impulse
+        AZ::Vector3 base_impulse = m_forwardVector * m_throwImpulse;
+
+        // Optionally scale by mass for mass-independent throw velocity
+        AZ::Vector3 impulse = m_enableMassIndependentThrow ? mass * base_impulse : base_impulse;
+
         // Apply a Linear Impulse to the grabbed object
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, m_forwardVector * m_throwImpulse);
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, impulse);
 
         // Trigger an event notification when object enters Throw State
         ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);

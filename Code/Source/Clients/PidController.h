@@ -15,8 +15,14 @@ namespace ObjectInteraction
             Velocity
         };
 
+        // Default constructor delegates to the parameterized constructor with default values
+        PidController()
+            : PidController(0.0f, 0.0f, 0.0f, 100.0f, 0.8f, ErrorRate)
+        {
+        }
+
         PidController(
-            float p, float i, float d, float integralLimit = 100.0f, float derivFilterAlpha = 0.7f, DerivativeMode mode = Velocity)
+            float p, float i, float d, float integralLimit = 100.0f, float derivFilterAlpha = 0.7f, DerivativeMode mode = ErrorRate)
             : m_p(p)
             , m_i(i)
             , m_d(d)
@@ -63,7 +69,7 @@ namespace ObjectInteraction
                 raw_deriv = (error - m_prevError) / deltaTime;
             }
 
-            // With low-pass filter for stability
+            // Add low-pass filter via lerp for stability
             T derivative = m_prevDerivative.Lerp(raw_deriv * m_d, m_derivFilterAlpha);
             m_prevDerivative = derivative;
 
@@ -104,7 +110,7 @@ namespace ObjectInteraction
         // Clamp helper (vector/scalar overload via operators)
         static T Clamp(const T& val, float min, float max)
         {
-            return val.GetClamped(T(min), T(max)); // Assumes T has GetClamped or component-wise clamp
+            return val.GetClamped(T(min), T(max));
         }
     };
 
