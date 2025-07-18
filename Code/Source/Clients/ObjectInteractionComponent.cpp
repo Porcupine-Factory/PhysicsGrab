@@ -1489,7 +1489,7 @@ namespace ObjectInteraction
             if (m_enablePIDHeldDynamics)
             {
                 // Use PID to compute spring-like velocity adjustment
-                targetVector = m_pidController.Output(error, deltaTime);
+                targetVector = m_pidController.Output(error, deltaTime, m_grabbedObjectTranslation);
             }
             else
             {
@@ -1508,16 +1508,12 @@ namespace ObjectInteraction
 
             if (m_enablePIDHeldDynamics)
             {
-                float mass = 1.0f;
-                Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
-
-                 // Scale for consistent stiffness across masses
-                AZ::Vector3 force = targetVector * mass;
+                AZ::Vector3 force = targetVector;
 
                 AZ::Vector3 comp_impulse = AZ::Vector3::CreateZero();
                 if (m_enableVelocityCompensation)
                 {
-                    comp_impulse = compensation * mass;
+                    comp_impulse = compensation;
                 }
 
                 // Apply total impulse

@@ -9,18 +9,36 @@ namespace ObjectInteraction
     class PidController
     {
     public:
-        PidController(float p, float i, float d, float integralLimit = 100.0f, float derivFilterAlpha = 0.7f)
+        enum DerivativeMode
+        {
+            ErrorRate,
+            Velocity
+        };
+
+        PidController(
+            float p, float i, float d, float integralLimit = 100.0f, float derivFilterAlpha = 0.7f, DerivativeMode mode = Velocity)
             : m_p(p)
             , m_i(i)
             , m_d(d)
             , m_integralLimit(integralLimit)
             , m_derivFilterAlpha(derivFilterAlpha)
+            , m_mode(mode)
         {
             Reset();
         }
 
-        T Output(const T& error, float deltaTime)
+        T Output(const T& error, float deltaTime, const T& currentValue)
         {
+            if (!m_initialized)
+            {
+                m_initialized = true;
+                m_prevError = error;
+                m_prevValue = currentValue;
+                m_integral = Zero();
+                m_prevDerivative = Zero();
+                return error * m_p + m_integral; // Skip derivative on first call
+            }
+
             // Proportional
             T proportional = error * m_p;
 
@@ -28,14 +46,26 @@ namespace ObjectInteraction
             m_integral += error * deltaTime * m_i;
             m_integral = Clamp(m_integral, -m_integralLimit, m_integralLimit);
 
-            // Derivative (with low-pass filter for stability)
-            T raw_deriv = (error - m_prevError) / deltaTime;
+            // Derivative
+            T raw_deriv;
+            if (m_mode == Velocity)
+            {
+                T value_rate = (currentValue - m_prevValue) / deltaTime;
+                raw_deriv = -value_rate;
+            }
+            else
+            {
+                raw_deriv = (error - m_prevError) / deltaTime;
+            }
+
+            // With low-pass filter for stability
             T derivative = m_prevDerivative.Lerp(raw_deriv * m_d, m_derivFilterAlpha);
             m_prevDerivative = derivative;
 
             m_prevError = error;
+            m_prevValue = currentValue;
 
-            // Output as force (P/D/I scaled appropriately)
+            // Output as force (P/I/D scaled appropriately)
             return proportional + m_integral + derivative;
         }
 
@@ -44,16 +74,21 @@ namespace ObjectInteraction
             m_integral = Zero();
             m_prevError = Zero();
             m_prevDerivative = Zero();
+            m_prevValue = Zero();
+            m_initialized = false;
         }
 
     private:
         float m_p, m_i, m_d;
         float m_integralLimit;
         float m_derivFilterAlpha;
+        DerivativeMode m_mode;
 
         T m_integral;
         T m_prevError;
         T m_prevDerivative;
+        T m_prevValue;
+        bool m_initialized;
 
         // Helper: Zero value for T (specialized below)
         static T Zero()
