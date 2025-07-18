@@ -27,6 +27,11 @@ namespace ObjectInteraction
             Reset();
         }
 
+        DerivativeMode GetMode() const
+        {
+            return m_mode;
+        }
+
         T Output(const T& error, float deltaTime, const T& currentValue)
         {
             if (!m_initialized)

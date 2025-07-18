@@ -378,11 +378,12 @@ namespace ObjectInteraction
 
         // PID members for advanced spring-like dynamics on held objects
         bool m_enablePIDHeldDynamics = false;
+        bool m_enableMassIndependentPID = false;
         float m_pidP = 25.0f;
         float m_pidI = 0.0f;
         float m_pidD = 9.0f;
-        float m_integralLimit = 100.0f; // Anti-windup limit for integral
-        float m_derivFilterAlpha = 0.8f; // Derivative filter alpha (higher = more smoothing)
+        float m_integralLimit = 100.0f;
+        float m_derivFilterAlpha = 0.8f;
         PidController<AZ::Vector3> m_pidController;
     };
 } // namespace ObjectInteraction

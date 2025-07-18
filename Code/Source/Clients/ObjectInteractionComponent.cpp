@@ -75,6 +75,7 @@ namespace ObjectInteraction
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
 
                 ->Field("Enable PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
+                ->Field("Enable Mass Independent PID", &ObjectInteractionComponent::m_enableMassIndependentPID)
                 ->Field("PID P Gain", &ObjectInteractionComponent::m_pidP)
                 ->Field("PID I Gain", &ObjectInteractionComponent::m_pidI)
                 ->Field("PID D Gain", &ObjectInteractionComponent::m_pidD)
@@ -254,6 +255,13 @@ namespace ObjectInteraction
                         "Enable PID Held Dynamics",
                         "Enables PID controller for dynamic held objects, creating spring-like (underdamped/overdamped) motion. Disabling "
                         "uses simple linear velocity.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableMassIndependentPID,
+                        "Enable Mass Independent PID",
+                        "When enabled, PID controller scales forces by object mass for consistent behavior regardless of mass "
+                        "(mass-independent). "
+                        "Disable for realistic mass-dependent motion where heavier objects feel slower and harder to move.")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_pidP,
@@ -1479,6 +1487,7 @@ namespace ObjectInteraction
                     GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
+
         // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
         else
         {
@@ -1497,37 +1506,44 @@ namespace ObjectInteraction
                 targetVector = error * m_grabResponse;
             }
 
-            // Compute grabbing entity velocity compensation
-            AZ::Vector3 compensation = AZ::Vector3::CreateZero();
-            if (m_enableVelocityCompensation)
-            {
-                float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
-                m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
-                compensation = m_currentCompensationVelocity;
-            }
+            // Query mass for potential scaling (default to 1 if fails)
+            float mass = 1.0f;
+            Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
             if (m_enablePIDHeldDynamics)
             {
-                AZ::Vector3 force = targetVector;
+                AZ::Vector3 pid_out = targetVector;
 
-                AZ::Vector3 comp_impulse = AZ::Vector3::CreateZero();
-                if (m_enableVelocityCompensation)
+                // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
+                if (m_enableVelocityCompensation && m_pidController.GetMode() == PidController<AZ::Vector3>::Velocity)
                 {
-                    comp_impulse = compensation;
+                    float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
+                    pid_out += m_pidD * m_currentCompensationVelocity;
                 }
 
-                // Apply total impulse
-                AZ::Vector3 total_impulse = (force * deltaTime) + comp_impulse;
+                // Treat PID output as force; optionally scale by mass for mass-independent behavior
+                AZ::Vector3 force = m_enableMassIndependentPID ? mass * pid_out : pid_out;
+
+                // Apply as impulse
+                AZ::Vector3 total_impulse = force * deltaTime;
                 Physics::RigidBodyRequestBus::Event(
                     m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, total_impulse);
             }
             else
             {
+                // Compute grabbing entity velocity compensation
+                AZ::Vector3 compensation = AZ::Vector3::CreateZero();
+                if (m_enableVelocityCompensation)
+                {
+                    float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
+                    compensation = m_currentCompensationVelocity;
+                }
+
                 // Original velocity-based application
                 Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId,
-                    &Physics::RigidBodyRequests::SetLinearVelocity,
-                    targetVector + m_currentCompensationVelocity);
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetVector + compensation);
             }
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
