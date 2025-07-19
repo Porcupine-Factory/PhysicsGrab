@@ -5,109 +5,127 @@
 
 namespace ObjectInteraction
 {
+    // Templated PID controller for scalar or vector control
+    // Supports two derivative modes: ErrorRate (dError/dt) for standard PID, Velocity (-dValue/dt) for velocity feedback
+    // Includes anti-windup on integral and low-pass filtering on derivative for stability
     template<class T>
     class PidController
     {
     public:
-        enum DerivativeMode
+        enum DerivativeCalculationMode
         {
             ErrorRate,
             Velocity
         };
 
-        // Default constructor delegates to the parameterized constructor with default values
+        // Default constructor with zero gains and defaults
         PidController()
             : PidController(0.0f, 0.0f, 0.0f, 100.0f, 0.8f, ErrorRate)
         {
         }
 
+        // Parameterized constructor for gains and settings
         PidController(
-            float p, float i, float d, float integralLimit = 100.0f, float derivFilterAlpha = 0.7f, DerivativeMode mode = ErrorRate)
-            : m_p(p)
-            , m_i(i)
-            , m_d(d)
-            , m_integralLimit(integralLimit)
-            , m_derivFilterAlpha(derivFilterAlpha)
-            , m_mode(mode)
+            float proportionalGain,
+            float integralGain,
+            float derivativeGain,
+            float integralWindupLimit = 100.0f,
+            float derivativeFilterAlpha = 0.8f,
+            DerivativeCalculationMode mode = ErrorRate)
+            : m_proportionalGain(proportionalGain)
+            , m_integralGain(integralGain)
+            , m_derivativeGain(derivativeGain)
+            , m_integralWindupLimit(integralWindupLimit)
+            , m_derivativeFilterAlpha(derivativeFilterAlpha)
+            , m_derivativeMode(mode)
         {
             Reset();
         }
 
-        DerivativeMode GetMode() const
+        DerivativeCalculationMode GetMode() const
         {
-            return m_mode;
+            return m_derivativeMode;
         }
 
+        // Computes PID output based on current error and timestep.
         T Output(const T& error, float deltaTime, const T& currentValue)
         {
-            if (!m_initialized)
+            if (!m_isInitialized)
             {
-                m_initialized = true;
-                m_prevError = error;
-                m_prevValue = currentValue;
-                m_integral = Zero();
-                m_prevDerivative = Zero();
-                return error * m_p + m_integral; // Skip derivative on first call
+                // Initialize on first call to skip derivative jump
+                m_isInitialized = true;
+                m_previousError = error;
+                m_previousValue = currentValue;
+                m_integralAccumulator = GetZeroValue();
+                m_previousDerivative = GetZeroValue();
+                return error * m_proportionalGain + m_integralAccumulator; // Skip derivative on first call
             }
 
-            // Proportional
-            T proportional = error * m_p;
+            // Proportional term: direct response to error
+            T proportional = error * m_proportionalGain;
 
-            // Integral (cumulative, with anti-windup clamp)
-            m_integral += error * deltaTime * m_i;
-            m_integral = Clamp(m_integral, -m_integralLimit, m_integralLimit);
+            // Integral term: accumulate error over time with anti-windup clamping
+            m_integralAccumulator += error * deltaTime * m_integralGain;
+            m_integralAccumulator = Clamp(m_integralAccumulator, -m_integralWindupLimit, m_integralWindupLimit);
 
-            // Derivative
-            T raw_deriv;
-            if (m_mode == Velocity)
+            // Derivative term: rate of change
+            // Helps prevent derivative kick caused by changes in error. 
+            // Useful for velocity-based applications where target values often change.
+            T rawDerivative;
+            if (m_derivativeMode == Velocity)
             {
-                T value_rate = (currentValue - m_prevValue) / deltaTime;
-                raw_deriv = -value_rate;
+                // Use negative velocity for damping
+                T value_rate = (currentValue - m_previousValue) / deltaTime;
+                rawDerivative = -value_rate;
             }
             else
             {
-                raw_deriv = (error - m_prevError) / deltaTime;
+                // Standard error rate
+                rawDerivative = (error - m_previousError) / deltaTime;
             }
 
-            // Add low-pass filter via lerp for stability
-            T derivative = m_prevDerivative.Lerp(raw_deriv * m_d, m_derivFilterAlpha);
-            m_prevDerivative = derivative;
+            // Apply low-pass filter to derivative for noise reduction (lerp towards raw)
+            T derivative = m_previousDerivative.Lerp(rawDerivative * m_derivativeGain, m_derivativeFilterAlpha);
+            m_previousDerivative = derivative;
 
-            m_prevError = error;
-            m_prevValue = currentValue;
+            // Update previous values
+            m_previousError = error;
+            m_previousValue = currentValue;
 
-            // Output as force (P/I/D scaled appropriately)
-            return proportional + m_integral + derivative;
+            return proportional + m_integralAccumulator + derivative;
         }
 
+        // Resets internal state (integral, previous values)
         void Reset()
         {
-            m_integral = Zero();
-            m_prevError = Zero();
-            m_prevDerivative = Zero();
-            m_prevValue = Zero();
-            m_initialized = false;
+            m_integralAccumulator = GetZeroValue();
+            m_previousError = GetZeroValue();
+            m_previousDerivative = GetZeroValue();
+            m_previousValue = GetZeroValue();
+            m_isInitialized = false;
         }
 
     private:
-        float m_p, m_i, m_d;
-        float m_integralLimit;
-        float m_derivFilterAlpha;
-        DerivativeMode m_mode;
+        float m_proportionalGain;
+        float m_integralGain;
+        float m_derivativeGain;
+        float m_integralWindupLimit;
+        float m_derivativeFilterAlpha;
+        DerivativeCalculationMode m_derivativeMode;
 
-        T m_integral;
-        T m_prevError;
-        T m_prevDerivative;
-        T m_prevValue;
-        bool m_initialized;
+        T m_integralAccumulator;
+        T m_previousError;
+        T m_previousDerivative;
+        T m_previousValue;
+        bool m_isInitialized;
 
-        // Helper: Zero value for T (specialized below)
-        static T Zero()
+        // Helper: Returns zero-initialized T (specialized for types)
+        static T GetZeroValue()
         {
             return T(0.0f);
         }
 
-        // Clamp helper (vector/scalar overload via operators)
+        // Helper: Clamps value between min/max (vector/scalar via operators)
         static T Clamp(const T& val, float min, float max)
         {
             return val.GetClamped(T(min), T(max));
@@ -116,7 +134,7 @@ namespace ObjectInteraction
 
     // Specialize Zero/Clamp for Vector2
     template<>
-    inline AZ::Vector2 PidController<AZ::Vector2>::Zero()
+    inline AZ::Vector2 PidController<AZ::Vector2>::GetZeroValue()
     {
         return AZ::Vector2::CreateZero();
     }
@@ -129,7 +147,7 @@ namespace ObjectInteraction
 
     // Specialize Zero/Clamp for Vector3
     template<>
-    inline AZ::Vector3 PidController<AZ::Vector3>::Zero()
+    inline AZ::Vector3 PidController<AZ::Vector3>::GetZeroValue()
     {
         return AZ::Vector3::CreateZero();
     }
@@ -142,7 +160,7 @@ namespace ObjectInteraction
 
     // For float (scalar)
     template<>
-    inline float PidController<float>::Zero()
+    inline float PidController<float>::GetZeroValue()
     {
         return 0.0f;
     }

@@ -81,13 +81,13 @@ namespace ObjectInteraction
 
                 ->Field("PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
                 ->Field("Mass Independent PID", &ObjectInteractionComponent::m_massIndependentPID)
-                ->Field("PID P Gain", &ObjectInteractionComponent::m_pidP)
+                ->Field("PID P Gain", &ObjectInteractionComponent::m_proportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
-                ->Field("PID I Gain", &ObjectInteractionComponent::m_pidI)
+                ->Field("PID I Gain", &ObjectInteractionComponent::m_integralGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/(m*s)")
-                ->Field("PID D Gain", &ObjectInteractionComponent::m_pidD)
+                ->Field("PID D Gain", &ObjectInteractionComponent::m_derivativeGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N*s/m")
-                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralLimit)
+                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
                 ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
                 ->Version(1);
@@ -285,22 +285,22 @@ namespace ObjectInteraction
                         "Disable for realistic mass-dependent motion where heavier objects feel slower and harder to move.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_pidP,
+                        &ObjectInteractionComponent::m_proportionalGain,
                         "PID P Gain",
                         "Proportional gain: Controls stiffness/pull strength (higher = stronger spring).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_pidI,
+                        &ObjectInteractionComponent::m_integralGain,
                         "PID I Gain",
                         "Integral gain: Corrects persistent errors (e.g., gravity offset; usually low or 0).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_pidD,
+                        &ObjectInteractionComponent::m_derivativeGain,
                         "PID D Gain",
                         "Derivative gain: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_integralLimit,
+                        &ObjectInteractionComponent::m_integralWindupLimit,
                         "PID Integral Limit",
                         "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
                     ->DataElement(
@@ -525,7 +525,8 @@ namespace ObjectInteraction
         m_grabDistance = m_initialGrabDistance;
 
         // Initialize PID controller with parameters
-        m_pidController = PidController<AZ::Vector3>(m_pidP, m_pidI, m_pidD, m_integralLimit, m_derivFilterAlpha, m_pidMode);
+        m_pidController = PidController<AZ::Vector3>(
+            m_proportionalGain, m_integralGain, m_derivativeGain, m_integralWindupLimit, m_derivFilterAlpha, m_derivativeMode);
     }
 
     // Called at the beginning of each physics tick
@@ -1538,7 +1539,7 @@ namespace ObjectInteraction
                 {
                     float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
-                    pid_out += m_pidD * m_currentCompensationVelocity;
+                    pid_out += m_derivativeGain * m_currentCompensationVelocity;
                 }
 
                 // Treat PID output as force; optionally scale by mass for mass-independent behavior
@@ -1635,7 +1636,7 @@ namespace ObjectInteraction
             float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
 
             AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
-                (m_forwardVector * m_accumRoll * m_dynamicRollRotateScale * 0.01) +
+                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01) +
                 (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
 
             // Lerp toward target rotation for gradual damping
@@ -1656,7 +1657,6 @@ namespace ObjectInteraction
             m_accumPitch = 0.0f;
             m_accumYaw = 0.0f;
             m_accumRoll = 0.0f;
-            rollSpeed = 0.0f;
 
             // Update current physics transform for interpolation
             if (m_meshSmoothing)

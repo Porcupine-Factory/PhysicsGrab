@@ -328,6 +328,11 @@ namespace ObjectInteraction
         float m_throwStateCounter = 0.f;
         float m_combinedGrabDistance = 0.f;
         float m_prevGravityEnabled = 0.f;
+        float m_proportionalGain = 80.f;
+        float m_integralGain = 0.f;
+        float m_derivativeGain = 11.f;
+        float m_integralWindupLimit = 100.0f;
+        float m_derivFilterAlpha = 0.8f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -363,9 +368,14 @@ namespace ObjectInteraction
         bool m_ignoreRollKeyInputValue = true;
         bool m_forceTransition = false;
         bool m_isStateLocked = false;
+        bool m_enablePIDHeldDynamics = true;
+        bool m_massIndependentPID = true;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
         ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;
+
+        PidController<AZ::Vector3> m_pidController;
+        PidController<AZ::Vector3>::DerivativeCalculationMode m_derivativeMode = PidController<AZ::Vector3>::Velocity;
 
         AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
           {ObjectInteractionStates::idleState,   "idleState"},
@@ -374,16 +384,5 @@ namespace ObjectInteraction
           {ObjectInteractionStates::rotateState, "rotateState"},
           {ObjectInteractionStates::throwState,  "throwState"}
         };
-
-        // PID members for advanced spring-like dynamics on held objects
-        bool m_enablePIDHeldDynamics = true;
-        bool m_massIndependentPID = true;
-        float m_pidP = 80.f;
-        float m_pidI = 0.f;
-        float m_pidD = 11.f;
-        float m_integralLimit = 100.0f;
-        float m_derivFilterAlpha = 0.8f;
-        PidController<AZ::Vector3> m_pidController;
-        PidController<AZ::Vector3>::DerivativeMode m_pidMode = PidController<AZ::Vector3>::Velocity;
     };
 } // namespace ObjectInteraction
