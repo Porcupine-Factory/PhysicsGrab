@@ -29,7 +29,7 @@ namespace ObjectInteraction
                 ->Field("Rotate Roll Key", &ObjectInteractionComponent::m_strRotateRoll)
 
                 ->Field("GrabbingEntityId", &ObjectInteractionComponent::m_grabbingEntityId)
-                ->Field("Enable Mesh Smoothing", &ObjectInteractionComponent::m_enableMeshSmoothing)
+                ->Field("Mesh Smoothing", &ObjectInteractionComponent::m_meshSmoothing)
                 ->Field("Grab Mesh Entity Name", &ObjectInteractionComponent::m_meshEntityName)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Use FPController For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
@@ -53,7 +53,7 @@ namespace ObjectInteraction
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &ObjectInteractionComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
-                ->Field("Enable Mass Independent Throw", &ObjectInteractionComponent::m_enableMassIndependentThrow)
+                ->Field("Enable Mass Independent Throw", &ObjectInteractionComponent::m_massIndependentThrow)
                 ->Field("Throw Impulse", &ObjectInteractionComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Grab Response", &ObjectInteractionComponent::m_grabResponse)
@@ -64,23 +64,31 @@ namespace ObjectInteraction
                         Physics::NameConstants::GetSuperscriptMinus().c_str(),
                         Physics::NameConstants::GetSuperscriptOne().c_str()))
                 ->Field("Kinematic Horizontal Rotate Scale", &ObjectInteractionComponent::m_kinematicYawRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Kinematic Vertical Rotate Scale", &ObjectInteractionComponent::m_kinematicPitchRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Dynamic Horizontal Rotate Scale", &ObjectInteractionComponent::m_dynamicYawRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Dynamic Vertical Rotate Scale", &ObjectInteractionComponent::m_dynamicPitchRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
-                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_enableVelocityCompensation)
+                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_velocityCompensation)
                 ->Field("Velocity Compensation Damp Rate", &ObjectInteractionComponent::m_velocityCompDampRate)
-                ->Field("Smooth Dynamic Rotation", &ObjectInteractionComponent::m_enableSmoothDynamicRotation)
+                ->Field("Smooth Dynamic Rotation", &ObjectInteractionComponent::m_smoothDynamicRotation)
                 ->Field("Angular Velocity Damp Rate", &ObjectInteractionComponent::m_angularVelocityDampRate)
                 ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
 
-                ->Field("Enable PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
-                ->Field("Enable Mass Independent PID", &ObjectInteractionComponent::m_enableMassIndependentPID)
+                ->Field("PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
+                ->Field("Mass Independent PID", &ObjectInteractionComponent::m_massIndependentPID)
                 ->Field("PID P Gain", &ObjectInteractionComponent::m_pidP)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
                 ->Field("PID I Gain", &ObjectInteractionComponent::m_pidI)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " N/(m*s)")
                 ->Field("PID D Gain", &ObjectInteractionComponent::m_pidD)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " N*s/m")
                 ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralLimit)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " N")
                 ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
                 ->Version(1);
 
@@ -98,8 +106,8 @@ namespace ObjectInteraction
                         "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_enableMeshSmoothing,
-                        "Enable Mesh Smoothing",
+                        &ObjectInteractionComponent::m_meshSmoothing,
+                        "Mesh Smoothing",
                         "Enables smooth interpolation of the mesh transform for dynamic objects to reduce stuttering.")
                     ->DataElement(
                         0,
@@ -158,12 +166,18 @@ namespace ObjectInteraction
                         &ObjectInteractionComponent::m_disableGravityWhileHeld,
                         "Disable Gravity While Held",
                         "Disables gravity for dynamic objects while being held.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLock,
+                        "Tidal Lock Grabbed Object",
+                        "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
+                        "face the Grabbing Entity in it's current relative rotation.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableMassIndependentThrow,
+                        &ObjectInteractionComponent::m_massIndependentThrow,
                         "Enable Mass Independent Throw",
                         "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
                         "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
@@ -195,7 +209,7 @@ namespace ObjectInteraction
                         nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableVelocityCompensation,
+                        &ObjectInteractionComponent::m_velocityCompensation,
                         "Velocity Compensation",
                         "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
                         "the same whether you are walking, sprinting, or standing still.")
@@ -206,7 +220,7 @@ namespace ObjectInteraction
                         "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to take effect.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableSmoothDynamicRotation,
+                        &ObjectInteractionComponent::m_smoothDynamicRotation,
                         "Smooth Dynamic Rotation",
                         "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
                     ->DataElement(
@@ -264,7 +278,7 @@ namespace ObjectInteraction
                         "uses simple linear velocity.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableMassIndependentPID,
+                        &ObjectInteractionComponent::m_massIndependentPID,
                         "Enable Mass Independent PID",
                         "When enabled, PID controller scales forces by object mass for consistent behavior regardless of mass "
                         "(mass-independent). "
@@ -391,10 +405,10 @@ namespace ObjectInteraction
                 ->Event("Set Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::SetVelocityCompDampRate)
                 ->Event("Get Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::GetAngularVelocityDampRate)
                 ->Event("Set Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::SetAngularVelocityDampRate)
-                ->Event("Get Enable Velocity Compensation", &ObjectInteractionComponentRequests::GetEnableVelocityCompensation)
-                ->Event("Set Enable Velocity Compensation", &ObjectInteractionComponentRequests::SetEnableVelocityCompensation)
-                ->Event("Get Enable Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::GetEnableSmoothDynamicRotation)
-                ->Event("Set Enable Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::SetEnableSmoothDynamicRotation)
+                ->Event("Get Velocity Compensation", &ObjectInteractionComponentRequests::GetVelocityCompensation)
+                ->Event("Set Velocity Compensation", &ObjectInteractionComponentRequests::SetVelocityCompensation)
+                ->Event("Get Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::GetSmoothDynamicRotation)
+                ->Event("Set Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::SetSmoothDynamicRotation)
                 ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
                 ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
                 ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
@@ -532,7 +546,7 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::OnSceneSimulationFinish(
         [[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
     {
-        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_enableMeshSmoothing &&
+        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_meshSmoothing &&
             (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
         {
             m_prevPhysicsTransform = m_currentPhysicsTransform;
@@ -776,7 +790,7 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         ProcessStates(deltaTime);
-        if (m_enableMeshSmoothing)
+        if (m_meshSmoothing)
         {
             InterpolateMeshTransform(deltaTime);
         }
@@ -794,16 +808,19 @@ namespace ObjectInteraction
         m_physicsTimeAccumulator += deltaTime;
 
         // Calculate interpolation factor
-        float alpha = AZ::GetClamp(m_physicsTimeAccumulator / m_physicsTimestep, 0.0f, 1.0f);
+        const float alpha = AZ::GetClamp(m_physicsTimeAccumulator / m_physicsTimestep, 0.0f, 1.0f);
 
         // Interpolate position
-        AZ::Vector3 interpolatedPosition = m_prevPhysicsTransform.GetTranslation().Lerp(m_currentPhysicsTransform.GetTranslation(), alpha);
+        const AZ::Vector3 interpolatedPosition =
+            m_prevPhysicsTransform.GetTranslation().Lerp(m_currentPhysicsTransform.GetTranslation(), alpha);
 
         // Interpolate rotation
-        AZ::Quaternion interpolatedRotation = m_prevPhysicsTransform.GetRotation().Slerp(m_currentPhysicsTransform.GetRotation(), alpha);
+        const AZ::Quaternion interpolatedRotation =
+            m_prevPhysicsTransform.GetRotation().Slerp(m_currentPhysicsTransform.GetRotation(), alpha);
 
         // Create interpolated transform
-        AZ::Transform interpolatedTransform = AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
+        const AZ::Transform interpolatedTransform =
+            AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
 
         // Update mesh entity transform
         AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedTransform);
@@ -869,7 +886,7 @@ namespace ObjectInteraction
             }
 
             // Initialize physics transforms for dynamic objects
-            if (!m_isObjectKinematic && m_enableMeshSmoothing)
+            if (!m_isObjectKinematic && m_meshSmoothing)
             {
                 AZ::TransformBus::EventResult(m_prevPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
                 m_currentPhysicsTransform = m_prevPhysicsTransform;
@@ -878,7 +895,7 @@ namespace ObjectInteraction
 
             // Find child entity with name containing m_meshEntityName
             m_meshEntityPtr = nullptr;
-            if (m_enableMeshSmoothing && !m_isObjectKinematic)
+            if (m_meshSmoothing && !m_isObjectKinematic)
             {
                 // Prioritize m_meshEntityId if valid
                 if (m_meshEntityId.IsValid())
@@ -916,7 +933,7 @@ namespace ObjectInteraction
             // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current 
             // position at the exact moment of transition to holdState, ensuring the first physics velocity is ~zero.
             // Prevents initial object flinging off screen due to large m_grabbingEntityVelocity
-            if (m_enableVelocityCompensation)
+            if (m_velocityCompensation)
             {
                 // Reset compensation and angular velocity for new grab (ensures gradual start from zero)
                 m_currentCompensationVelocity = AZ::Vector3::CreateZero();
@@ -1481,7 +1498,7 @@ namespace ObjectInteraction
                 TidalLock(deltaTime);
             }
             // Update mesh entity transform if smoothing is disabled
-            if (!m_enableMeshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(
                     m_meshEntityPtr->GetId(),
@@ -1517,7 +1534,7 @@ namespace ObjectInteraction
                 AZ::Vector3 pid_out = targetVector;
 
                 // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
-                if (m_enableVelocityCompensation && m_pidController.GetMode() == PidController<AZ::Vector3>::Velocity)
+                if (m_velocityCompensation && m_pidController.GetMode() == PidController<AZ::Vector3>::Velocity)
                 {
                     float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
@@ -1525,7 +1542,7 @@ namespace ObjectInteraction
                 }
 
                 // Treat PID output as force; optionally scale by mass for mass-independent behavior
-                AZ::Vector3 force = m_enableMassIndependentPID ? mass * pid_out : pid_out;
+                AZ::Vector3 force = m_massIndependentPID ? mass * pid_out : pid_out;
 
                 // Apply as impulse
                 AZ::Vector3 total_impulse = force * deltaTime;
@@ -1536,7 +1553,7 @@ namespace ObjectInteraction
             {
                 // Compute grabbing entity velocity compensation
                 AZ::Vector3 compensation = AZ::Vector3::CreateZero();
-                if (m_enableVelocityCompensation)
+                if (m_velocityCompensation)
                 {
                     float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
@@ -1556,7 +1573,7 @@ namespace ObjectInteraction
             }
 
             // Update current physics transform for interpolation
-            if (m_enableMeshSmoothing)
+            if (m_meshSmoothing)
             {
                 AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             }
@@ -1604,7 +1621,7 @@ namespace ObjectInteraction
             AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
 
             // Update mesh entity transform if smoothing is disabled
-            if (!m_enableMeshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, transform);
             }
@@ -1617,20 +1634,20 @@ namespace ObjectInteraction
             float yawSpeed = (deltaTime > 0.0f) ? m_accumYaw / deltaTime : 0.0f;
             float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
 
-            AZ::Vector3 target_angular_vel = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
+            AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
                 (m_forwardVector * m_accumRoll * m_dynamicRollRotateScale * 0.01) +
                 (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
 
             // Lerp toward target rotation for gradual damping
-            if (m_enableSmoothDynamicRotation)
+            if (m_smoothDynamicRotation)
             {
                 float effective_factor = 1.0f - exp(-m_angularVelocityDampRate * deltaTime);
-                m_currentAngularVelocity = m_currentAngularVelocity.Lerp(target_angular_vel, effective_factor);
+                m_currentAngularVelocity = m_currentAngularVelocity.Lerp(targetAngularVelocity, effective_factor);
             }
             // Set angular velocity directly with no smooth damping
             else
             {
-                m_currentAngularVelocity = target_angular_vel;
+                m_currentAngularVelocity = targetAngularVelocity;
             }
 
             SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
@@ -1642,7 +1659,7 @@ namespace ObjectInteraction
             rollSpeed = 0.0f;
 
             // Update current physics transform for interpolation
-            if (m_enableMeshSmoothing)
+            if (m_meshSmoothing)
             {
                 AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             }
@@ -1668,7 +1685,7 @@ namespace ObjectInteraction
         AZ::Vector3 base_impulse = m_forwardVector * m_throwImpulse;
 
         // Optionally scale by mass for mass-independent throw velocity
-        AZ::Vector3 impulse = m_enableMassIndependentThrow ? mass * base_impulse : base_impulse;
+        AZ::Vector3 impulse = m_massIndependentThrow ? mass * base_impulse : base_impulse;
 
         // Apply a Linear Impulse to the grabbed object
         Physics::RigidBodyRequestBus::Event(
@@ -1699,7 +1716,7 @@ namespace ObjectInteraction
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
     void ObjectInteractionComponent::TidalLock(float deltaTime)
     {
-        AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
+        const AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
 
         const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
 
@@ -1721,9 +1738,9 @@ namespace ObjectInteraction
         else
         {
             // Physics-based tidal lock for dynamic objects. Set angular velocity to apply delta over next frame
-            AZ::Vector3 target_angular_vel = entityUpVector * (deltaAngle / deltaTime);
+            const AZ::Vector3 targetAngularTidalLockVelocity = entityUpVector * (deltaAngle / deltaTime);
 
-            SetGrabbedObjectAngularVelocity(target_angular_vel);
+            SetGrabbedObjectAngularVelocity(targetAngularTidalLockVelocity);
         }
 
         m_lastEntityRotation = entityRotation;
@@ -1762,7 +1779,7 @@ namespace ObjectInteraction
 
     void ObjectInteractionComponent::ComputeGrabbingEntityVelocity(float deltaTime)
     {
-        if (m_enableVelocityCompensation)
+        if (m_velocityCompensation)
         {
             // Use FPC Entity directly to capture physics timestep translations for interpolation
             if (m_useFPControllerForGrab)
@@ -2203,14 +2220,14 @@ namespace ObjectInteraction
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
     }
 
-    bool ObjectInteractionComponent::GetEnableVelocityCompensation() const
+    bool ObjectInteractionComponent::GetVelocityCompensation() const
     {
-        return m_enableVelocityCompensation;
+        return m_velocityCompensation;
     }
 
-    void ObjectInteractionComponent::SetEnableVelocityCompensation(const bool& new_enableVelocityCompensation)
+    void ObjectInteractionComponent::SetVelocityCompensation(const bool& new_velocityCompensation)
     {
-        m_enableVelocityCompensation = new_enableVelocityCompensation;
+        m_velocityCompensation = new_velocityCompensation;
     }
 
     float ObjectInteractionComponent::GetVelocityCompDampRate() const
@@ -2223,14 +2240,14 @@ namespace ObjectInteraction
         m_velocityCompDampRate = new_velocityCompDampRate;
     }
 
-    bool ObjectInteractionComponent::GetEnableSmoothDynamicRotation() const
+    bool ObjectInteractionComponent::GetSmoothDynamicRotation() const
     {
-        return m_enableSmoothDynamicRotation;
+        return m_smoothDynamicRotation;
     }
 
-    void ObjectInteractionComponent::SetEnableSmoothDynamicRotation(const bool& new_enableSmoothDynamicRotation)
+    void ObjectInteractionComponent::SetSmoothDynamicRotation(const bool& new_smoothDynamicRotation)
     {
-        m_enableSmoothDynamicRotation = new_enableSmoothDynamicRotation;
+        m_smoothDynamicRotation = new_smoothDynamicRotation;
     }
 
     float ObjectInteractionComponent::GetAngularVelocityDampRate() const

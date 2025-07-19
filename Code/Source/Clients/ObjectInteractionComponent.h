@@ -145,10 +145,10 @@ namespace ObjectInteraction
         void SetVelocityCompDampRate(const float& new_velocityCompDampRate);
         float GetAngularVelocityDampRate() const;
         void SetAngularVelocityDampRate(const float& new_angularVelocityDampRate);
-        bool GetEnableVelocityCompensation() const;
-        void SetEnableVelocityCompensation(const bool& new_enableVelocityCompensation);
-        bool GetEnableSmoothDynamicRotation() const;
-        void SetEnableSmoothDynamicRotation(const bool& new_enableSmoothDynamicRotation);
+        bool GetVelocityCompensation() const;
+        void SetVelocityCompensation(const bool& new_velocityCompensation);
+        bool GetSmoothDynamicRotation() const;
+        void SetSmoothDynamicRotation(const bool& new_smoothDynamicRotation);
         float GetThrowImpulse() const override;
         void SetThrowImpulse(const float& new_throwImpulse) override;
         float GetGrabbedObjectThrowStateCounter() const override;
@@ -335,9 +335,9 @@ namespace ObjectInteraction
         float m_accumYaw = 0.0f;
         float m_accumRoll = 0.0f;
 
-        bool m_enableMeshSmoothing = true;
-        bool m_enableVelocityCompensation = true;
-        bool m_enableSmoothDynamicRotation = true;
+        bool m_meshSmoothing = true;
+        bool m_velocityCompensation = true;
+        bool m_smoothDynamicRotation = true;
         bool m_disableGravityWhileHeld = false;
         bool m_useFPControllerForGrab = true;
         bool m_grabEnableToggle = false;
@@ -349,7 +349,7 @@ namespace ObjectInteraction
         bool m_kinematicTidalLock = true;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
-        bool m_enableMassIndependentThrow = true;
+        bool m_massIndependentThrow = true;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
@@ -377,8 +377,8 @@ namespace ObjectInteraction
 
         // PID members for advanced spring-like dynamics on held objects
         bool m_enablePIDHeldDynamics = true;
-        bool m_enableMassIndependentPID = true;
-        float m_pidP = 70.f;
+        bool m_massIndependentPID = true;
+        float m_pidP = 80.f;
         float m_pidI = 0.f;
         float m_pidD = 11.f;
         float m_integralLimit = 100.0f;
