@@ -113,6 +113,12 @@ namespace ObjectInteraction
         virtual void SetPrevGrabbedObjectAngularDamping(const float&) = 0;
         virtual float GetTempGrabbedObjectAngularDamping() const = 0;
         virtual void SetTempGrabbedObjectAngularDamping(const float&) = 0;
+        virtual float GetCurrentGrabbedObjectLinearDamping() const = 0;
+        virtual void SetCurrentGrabbedObjectLinearDamping(const float&) = 0;
+        virtual float GetPrevGrabbedObjectLinearDamping() const = 0;
+        virtual void SetPrevGrabbedObjectLinearDamping(const float&) = 0;
+        virtual float GetTempGrabbedObjectLinearDamping() const = 0;
+        virtual void SetTempGrabbedObjectLinearDamping(const float&) = 0;
         virtual AZ::Vector3 GetGrabbedObjectAngularVelocity() const = 0;
         virtual void SetGrabbedObjectAngularVelocity(const AZ::Vector3&) = 0;
         virtual bool GetInitialAngularVelocityZero() const = 0;

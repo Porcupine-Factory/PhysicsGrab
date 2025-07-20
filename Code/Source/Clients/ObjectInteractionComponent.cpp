@@ -32,7 +32,7 @@ namespace ObjectInteraction
                 ->Field("Mesh Smoothing", &ObjectInteractionComponent::m_meshSmoothing)
                 ->Field("Grab Mesh Entity Name", &ObjectInteractionComponent::m_meshEntityName)
                 #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Use FPController For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
+                ->Field("Use First Person Controller For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
                 ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
                 #endif
                 ->Field("Grab Enable Toggle", &ObjectInteractionComponent::m_grabEnableToggle)
@@ -72,6 +72,7 @@ namespace ObjectInteraction
                 ->Field("Dynamic Vertical Rotate Scale", &ObjectInteractionComponent::m_dynamicPitchRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
+                ->Field("Linear Damping", &ObjectInteractionComponent::m_tempObjectLinearDamping)
                 ->Field("Velocity Compensation", &ObjectInteractionComponent::m_velocityCompensation)
                 ->Field("Velocity Compensation Damp Rate", &ObjectInteractionComponent::m_velocityCompDampRate)
                 ->Field("Smooth Dynamic Rotation", &ObjectInteractionComponent::m_smoothDynamicRotation)
@@ -132,7 +133,7 @@ namespace ObjectInteraction
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_useFPControllerForGrab,
-                        "Use FPController For Grab",
+                        "Use First Person Controller For Grab",
                         "Use First Person Controller player character for grab reference. Enabling this creates tighter tracking by bypassing "
                         "potential camera interpolation lag.")
                     ->DataElement(
@@ -206,7 +207,11 @@ namespace ObjectInteraction
                         "Dynamic Vertical Rotate Scale",
                         "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Grabbing")
+                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Rotating")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tempObjectLinearDamping,
+                        "Linear Damping", "Linear Damping of Grabbed Object while Grabbing")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_velocityCompensation,
@@ -427,6 +432,12 @@ namespace ObjectInteraction
                 ->Event("Set Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectAngularDamping)
                 ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
                 ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping)
+                ->Event("Get Current Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetCurrentGrabbedObjectLinearDamping)
+                ->Event("Set Current Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetCurrentGrabbedObjectLinearDamping)
+                ->Event("Get Previous Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetPrevGrabbedObjectLinearDamping)
+                ->Event("Set Previous Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectLinearDamping)
+                ->Event("Get Temporary Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectLinearDamping)
+                ->Event("Set Temporary Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectLinearDamping)
                 ->Event("Get Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::GetInitialAngularVelocityZero)
                 ->Event("Set Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::SetInitialAngularVelocityZero)
                 ->Event("Force State Transition", &ObjectInteractionComponentRequests::ForceTransition)
@@ -878,6 +889,10 @@ namespace ObjectInteraction
             // Store object's original Angular Damping value
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
 
+            // Store object's original Linear Damping value, and set new value.
+            m_prevObjectLinearDamping = GetCurrentGrabbedObjectLinearDamping();
+            SetCurrentGrabbedObjectLinearDamping(m_tempObjectLinearDamping);
+
             // Store and disable gravity for dynamic objects if enabled
             if (m_disableGravityWhileHeld && !m_isObjectKinematic)
             {
@@ -1036,6 +1051,9 @@ namespace ObjectInteraction
                 m_isObjectKinematic = true;
             }
 
+            // Reset to object's original Linear Damping value
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
@@ -1092,6 +1110,9 @@ namespace ObjectInteraction
                 m_isObjectKinematic = true;
             }
 
+            // Reset to object's original Linear Damping value
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
@@ -1134,6 +1155,9 @@ namespace ObjectInteraction
                 m_isObjectKinematic = false;
             }
 
+            // Reset to object's original Linear Damping value
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
             m_objectSphereCastHit = false;
             m_meshEntityPtr = nullptr;
 
@@ -1174,6 +1198,10 @@ namespace ObjectInteraction
         {
             // Set Angular Damping back to original value if sphere cast doesn't hit
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            
+            // Set Linear Damping back to zero if sphere cast doesn't hit
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+            
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
@@ -1246,6 +1274,9 @@ namespace ObjectInteraction
             // Set Angular Damping back to original value if Grab Key is not pressed
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
 
+            // Set Linear Damping back to zero if sphere cast doesn't hit
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
             // Set Angular Velocity back to zero if Grab Key is not pressed
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
@@ -1307,8 +1338,12 @@ namespace ObjectInteraction
             (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
             (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
         {
-            // Set Angular Damping back to original valu
+            // Set Angular Damping back to original value
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+            // Set Linear Damping back to zero if sphere cast doesn't hit
+            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
             // Set Angular Velocity to zero when no longer rotating
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
@@ -2500,6 +2535,46 @@ namespace ObjectInteraction
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
+    }
+
+    float ObjectInteractionComponent::GetCurrentGrabbedObjectLinearDamping() const
+    {
+        float currentObjectLinearDamping = 0.f;
+
+        Physics::RigidBodyRequestBus::EventResult(
+            currentObjectLinearDamping, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetLinearDamping);
+
+        return currentObjectLinearDamping;
+    }
+
+    void ObjectInteractionComponent::SetCurrentGrabbedObjectLinearDamping(const float& new_currentObjectLinearDamping)
+    {
+        m_currentObjectLinearDamping = new_currentObjectLinearDamping;
+
+        Physics::RigidBodyRequestBus::Event(
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, new_currentObjectLinearDamping);
+    }
+
+    float ObjectInteractionComponent::GetPrevGrabbedObjectLinearDamping() const
+    {
+        return m_prevObjectLinearDamping;
+    }
+
+    void ObjectInteractionComponent::SetPrevGrabbedObjectLinearDamping(const float& new_prevObjectLinearDamping)
+    {
+        m_prevObjectLinearDamping = new_prevObjectLinearDamping;
+    }
+
+    float ObjectInteractionComponent::GetTempGrabbedObjectLinearDamping() const
+    {
+        return m_tempObjectLinearDamping;
+    }
+
+    void ObjectInteractionComponent::SetTempGrabbedObjectLinearDamping(const float& new_tempObjectLinearDamping)
+    {
+        m_tempObjectLinearDamping = new_tempObjectLinearDamping;
+        Physics::RigidBodyRequestBus::Event(
+            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, m_tempObjectLinearDamping);
     }
 
     AZ::Vector3 ObjectInteractionComponent::GetGrabbedObjectAngularVelocity() const

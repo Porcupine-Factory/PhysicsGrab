@@ -168,6 +168,12 @@ namespace ObjectInteraction
         void SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping) override;
         float GetTempGrabbedObjectAngularDamping() const override;
         void SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping) override;
+        float GetCurrentGrabbedObjectLinearDamping() const override;
+        void SetCurrentGrabbedObjectLinearDamping(const float& new_currentObjectLinearDamping) override;
+        float GetPrevGrabbedObjectLinearDamping() const override;
+        void SetPrevGrabbedObjectLinearDamping(const float& new_prevObjectLinearDamping) override;
+        float GetTempGrabbedObjectLinearDamping() const override;
+        void SetTempGrabbedObjectLinearDamping(const float& new_tempObjectLinearDamping) override;
         AZ::Vector3 GetGrabbedObjectAngularVelocity() const override;
         void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
         bool GetInitialAngularVelocityZero() const override;
@@ -319,6 +325,9 @@ namespace ObjectInteraction
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
         float m_tempObjectAngularDamping = 20.f;
+        float m_tempObjectLinearDamping = 0.05f;
+        float m_prevObjectLinearDamping = 0.f;
+        float m_currentObjectLinearDamping = 0.f;
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 8.f;
