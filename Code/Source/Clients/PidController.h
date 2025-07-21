@@ -84,8 +84,8 @@ namespace ObjectInteraction
                 rawDerivative = (error - m_previousError) / deltaTime;
             }
 
-            // Apply low-pass filter to derivative for noise reduction (lerp towards raw)
-            T derivative = m_previousDerivative.Lerp(rawDerivative * m_derivativeGain, m_derivativeFilterAlpha);
+            /// Apply low-pass filter to derivative for noise reduction (equivalent to lerp towards raw)
+            T derivative = m_previousDerivative + m_derivativeFilterAlpha * ((rawDerivative * m_derivativeGain) - m_previousDerivative);
             m_previousDerivative = derivative;
 
             // Update previous values
