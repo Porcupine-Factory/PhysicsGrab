@@ -270,6 +270,8 @@ namespace ObjectInteraction
         AZ::Transform m_prevPhysicsTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_currentPhysicsTransform = AZ::Transform::CreateIdentity();
 
+        AZ::TransformInterface* m_cameraRotationTransform = nullptr;
+
         AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_rightVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_upVector = AZ::Vector3::CreateZero();

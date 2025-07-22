@@ -1417,11 +1417,25 @@ namespace ObjectInteraction
     // first returned hit to m_grabbedObjectEntityId
     void ObjectInteractionComponent::CheckForObjects()
     {
-        // Get forward vector relative to the grabbing entity's transform
-        m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+        #ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                m_cameraRotationTransform,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+            m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+        }
+        #endif
+        else
+        {
+            // Get forward vector relative to the grabbing entity's transform
+            m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
 
-        // Get our grabbing entity's world transform
-        m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            // Get our grabbing entity's world transform
+            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+        }
 
         // Perform a spherecast query to check if colliding with object
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
@@ -1485,7 +1499,7 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::HoldObject(float deltaTime)
     {
         // Get forward vector relative to the grabbing entity's transform
-        m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+        //m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
         
         // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
         // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
@@ -1496,6 +1510,11 @@ namespace ObjectInteraction
             AZ::TransformBus::EventResult(characterPosition, GetEntityId(), &AZ::TransformBus::Events::GetWorldTranslation);
             float eyeHeight = 0.f;
             float cameraLocalZTravelDistance = 0.f;
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                m_cameraRotationTransform,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+            m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
             FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
                 eyeHeight, GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequests::GetEyeHeight);
             FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
@@ -1513,6 +1532,7 @@ namespace ObjectInteraction
         // Use user-specified grab entity for Grab Reference
         else
         {
+            m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
             m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
             m_grabReference.SetTranslation(
                 m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
