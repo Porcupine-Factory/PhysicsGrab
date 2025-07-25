@@ -272,12 +272,13 @@ namespace ObjectInteraction
 
         AZ::TransformInterface* m_cameraRotationTransform = nullptr;
 
+        AZ::Quaternion m_lastEntityRotationQuat = AZ::Quaternion::CreateIdentity();
+
         AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_rightVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_upVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbedObjectTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
-        AZ::Vector3 m_lastEntityRotation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_grabbingEntityVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_currentGrabEntityTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_prevGrabbingEntityTranslation = AZ::Vector3::CreateZero();

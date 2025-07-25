@@ -861,9 +861,6 @@ namespace ObjectInteraction
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState && m_objectSphereCastHit) ||
             (!m_isStateLocked && m_objectSphereCastHit))
         {
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
-            m_lastEntityRotation = GetEntity()->GetTransform()->GetWorldRotation();
-
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
             m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
             
@@ -975,6 +972,17 @@ namespace ObjectInteraction
             m_state = ObjectInteractionStates::holdState;
             // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
+
+            #ifdef FIRST_PERSON_CONTROLLER
+            if (m_useFPControllerForGrab)
+            {
+                m_lastEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            }
+            #endif
+            else
+            {
+                m_lastEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            }
 
             // Set angular velocity to 0 when first picking up a dynamic rigid body object
             if (!m_kinematicWhileHeld && m_initialAngularVelocityZero)
@@ -1497,11 +1505,7 @@ namespace ObjectInteraction
     // Hold and move object using physics or translation, based on object's 
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void ObjectInteractionComponent::HoldObject(float deltaTime)
-    {
-        // Get forward vector relative to the grabbing entity's transform
-        //m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
-        
-        // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
+    {        
         // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
@@ -1532,7 +1536,9 @@ namespace ObjectInteraction
         // Use user-specified grab entity for Grab Reference
         else
         {
+            // Get forward vector relative to the grabbing entity's transform
             m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+            // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
             m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
             m_grabReference.SetTranslation(
                 m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
@@ -1648,12 +1654,26 @@ namespace ObjectInteraction
     // Rigid Body type, or if KinematicWhileHeld is enabled.
     void ObjectInteractionComponent::RotateObject(float deltaTime)
     {
-        // Get right vector relative to the grabbing entity's transform
-        m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
-        
-        // Get up vector relative to the grabbing entity's transform
-        m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
+        // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+        #ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                m_cameraRotationTransform,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+            m_rightVector = m_cameraRotationTransform->GetWorldTM().GetBasisX();
+            m_upVector = m_cameraRotationTransform->GetWorldTM().GetBasisZ();
+        }
+        #endif
+        else
+        {
+            // Get right vector relative to the grabbing entity's transform
+            m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
 
+            // Get up vector relative to the grabbing entity's transform
+            m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
+        }
         // Pitch value depends on whether pitch input key is ignored via SetPitchKeyValue()
         const float pitchValue = m_ignorePitchKeyInputValue ? m_pitchKeyValue : m_pitch;
         // Yaw value depends on whether yaw input key is ignored via SetYawKeyValue()
@@ -1771,34 +1791,73 @@ namespace ObjectInteraction
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
     void ObjectInteractionComponent::TidalLock(float deltaTime)
     {
-        const AZ::Vector3 entityRotation = GetEntity()->GetTransform()->GetWorldRotation();
+        // Initialize local variables for the current entity's rotation quaternion and up vector
+        AZ::Quaternion entityRotationQuat = AZ::Quaternion::CreateIdentity();
+        AZ::Vector3 entityUpVector = AZ::Vector3::CreateZero();
 
-        const AZ::Vector3 entityUpVector = GetEntity()->GetTransform()->GetWorldTM().GetBasisZ();
+        // Determine the rotation and up vector based on whether First Person Controller is used
+        #ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            entityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            entityUpVector = entityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
+        }
+        #endif
+        else
+        {
+            entityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            entityUpVector = entityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
+        }
 
-        // Compute wrapped delta angle to avoid jumps at pi/-pi
-        float deltaAngle = entityRotation.GetZ() - m_lastEntityRotation.GetZ();
-        deltaAngle = AZ::Wrap(deltaAngle, -AZ::Constants::Pi, AZ::Constants::Pi);
+        // Compute the delta rotation quaternion between current and previous entity rotations
+        AZ::Quaternion deltaRotationQuat = AZ::Quaternion::CreateIdentity();
+        if (!m_useFPControllerForGrab)
+        {
+            // Full tidal lock mode when not using First Person Controller Component 
+            // Calculate the complete rotation difference for all axes
+            deltaRotationQuat = entityRotationQuat * m_lastEntityRotationQuat.GetInverseFull();
+            deltaRotationQuat.Normalize();
 
-        const AZ::Quaternion deltaRotation = AZ::Quaternion::CreateFromAxisAngle(entityUpVector, deltaAngle);
+            // Ensure shortest rotation arc by flipping the quaternion if necessary
+            if (deltaRotationQuat.Dot(AZ::Quaternion::CreateIdentity()) < 0.0f)
+            {
+                deltaRotationQuat = -deltaRotationQuat;
+            }
+        }
+        else
+        {
+            // Yaw-only tidal lock when using First Person Character Controller
+            AZ::Vector3 entityEuler = entityRotationQuat.GetEulerRadians();
+            AZ::Vector3 lastEuler = m_lastEntityRotationQuat.GetEulerRadians();
+
+            // Compute wrapped delta angle to avoid jumps at pi/-pi
+            float deltaAngle = entityEuler.GetZ() - lastEuler.GetZ();
+            deltaAngle = AZ::Wrap(deltaAngle, -AZ::Constants::Pi, AZ::Constants::Pi);
+            deltaRotationQuat = AZ::Quaternion::CreateFromAxisAngle(entityUpVector, deltaAngle);
+        }
 
         if (m_isObjectKinematic)
         {
+            // For kinematic objects, directly apply the delta rotation to the object's transform
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-
-            transform.SetRotation((deltaRotation * transform.GetRotation()).GetNormalized());
-
+            transform.SetRotation((deltaRotationQuat * transform.GetRotation()).GetNormalized());
             AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
         }
         else
         {
-            // Physics-based tidal lock for dynamic objects. Set angular velocity to apply delta over next frame
-            const AZ::Vector3 targetAngularTidalLockVelocity = entityUpVector * (deltaAngle / deltaTime);
+            // For dynamic objects: Convert delta rotation to axis-angle for angular velocity calculation
+            float deltaAngle = 0.0f;
+            AZ::Vector3 rotationAxis = AZ::Vector3::CreateZero();
+            deltaRotationQuat.ConvertToAxisAngle(rotationAxis, deltaAngle);
 
-            SetGrabbedObjectAngularVelocity(targetAngularTidalLockVelocity);
+            // Compute target angular velocity
+            AZ::Vector3 targetAngularVelocity = rotationAxis * (deltaAngle / deltaTime);
+            SetGrabbedObjectAngularVelocity(targetAngularVelocity);
         }
 
-        m_lastEntityRotation = entityRotation;
+        // Update the stored last rotation for the next frame's delta calculation
+        m_lastEntityRotationQuat = entityRotationQuat;
     }
 
     #ifdef FIRST_PERSON_CONTROLLER
