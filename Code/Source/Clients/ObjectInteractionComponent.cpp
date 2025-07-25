@@ -41,6 +41,8 @@ namespace ObjectInteraction
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
                 ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
+                ->Field("Tidal Lock Response", &ObjectInteractionComponent::m_tidalLockResponse)
+                ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
                 ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
@@ -173,6 +175,17 @@ namespace ObjectInteraction
                         "Tidal Lock Grabbed Object",
                         "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_massIndependentTidalLock,
+                        "Mass Independent Tidal Lock",
+                        "When enabled, tidal lock rotation ignores object mass (consistent behavior); disable for mass-dependent rotation "
+                        "where heavier objects rotate slower.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockResponse,
+                        "Tidal Lock Response",
+                        "Angular response scale for tidal lock rotation (higher = faster facing).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -1853,7 +1866,25 @@ namespace ObjectInteraction
 
             // Compute target angular velocity
             AZ::Vector3 targetAngularVelocity = rotationAxis * (deltaAngle / deltaTime);
-            SetGrabbedObjectAngularVelocity(targetAngularVelocity);
+            
+            if (m_massIndependentTidalLock)
+            {
+                // Mass-independent: Directly set angular velocity
+                SetGrabbedObjectAngularVelocity(targetAngularVelocity);
+            }
+            else
+            {
+                // Mass-dependent. Apply angular impulse for slower response on heavier objects
+                AZ::Vector3 currentAngularVelocity = GetGrabbedObjectAngularVelocity();
+
+                // Compute delta velocity and scale by response and deltaTime (acts like torque)
+                AZ::Vector3 deltaVelocity = targetAngularVelocity - currentAngularVelocity;
+                AZ::Vector3 angularImpulse = deltaVelocity * m_tidalLockResponse * deltaTime;
+
+                // Apply the impulse
+                Physics::RigidBodyRequestBus::Event(
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
+            }
         }
 
         // Update the stored last rotation for the next frame's delta calculation

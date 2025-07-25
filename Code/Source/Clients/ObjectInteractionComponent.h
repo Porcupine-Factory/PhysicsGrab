@@ -333,6 +333,7 @@ namespace ObjectInteraction
         float m_currentObjectLinearDamping = 0.f;
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
+        float m_tidalLockResponse = 10.f;
         float m_throwImpulse = 8.f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
@@ -367,6 +368,7 @@ namespace ObjectInteraction
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
         bool m_massIndependentThrow = true;
+        bool m_massIndependentTidalLock = false;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
