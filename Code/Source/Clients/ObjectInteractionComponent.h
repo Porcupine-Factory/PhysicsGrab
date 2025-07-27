@@ -335,6 +335,7 @@ namespace ObjectInteraction
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 8.f;
+        float m_grabbedObjectMass = 1.0f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
         float m_throwStateMaxTime = 0.5f;
@@ -346,9 +347,9 @@ namespace ObjectInteraction
         float m_derivativeGain = 11.f;
         float m_integralWindupLimit = 100.0f;
         float m_derivFilterAlpha = 0.8f;
-        float m_tidalLockProportionalGain = 100.f;
+        float m_tidalLockProportionalGain = 25.f;
         float m_tidalLockIntegralGain = 0.f;
-        float m_tidalLockDerivativeGain = 20.f;
+        float m_tidalLockDerivativeGain = 1.6f;
         float m_tidalLockIntegralWindupLimit = 200.f;
         float m_tidalLockDerivFilterAlpha = 0.8f;
         float m_pitch = 0.f;
@@ -373,8 +374,8 @@ namespace ObjectInteraction
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
         bool m_massIndependentThrow = true;
-        bool m_massIndependentTidalLock = false;
-        bool m_enablePIDTidalLockDynamics = false;
+        bool m_massIndependentTidalLock = true;
+        bool m_enablePIDTidalLockDynamics = true;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;

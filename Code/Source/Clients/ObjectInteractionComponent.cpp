@@ -85,9 +85,9 @@ namespace ObjectInteraction
                 ->Field("PID P Gain", &ObjectInteractionComponent::m_proportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
                 ->Field("PID I Gain", &ObjectInteractionComponent::m_integralGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " N/(m*s)")
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N/(m%ss)", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("PID D Gain", &ObjectInteractionComponent::m_derivativeGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " N*s/m")
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss/m", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
                 ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
@@ -95,9 +95,13 @@ namespace ObjectInteraction
                 ->Field("Enable PID Tidal Lock Dynamics", &ObjectInteractionComponent::m_enablePIDTidalLockDynamics)
                 ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
                 ->Field("Tidal Lock PID P Gain", &ObjectInteractionComponent::m_tidalLockProportionalGain)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/rad", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID I Gain", &ObjectInteractionComponent::m_tidalLockIntegralGain)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/(rad%ss)", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID D Gain", &ObjectInteractionComponent::m_tidalLockDerivativeGain)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm%ss/rad", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID Integral Limit", &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID Deriv Filter Alpha", &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha)
                 ->Version(1);
 
@@ -282,7 +286,7 @@ namespace ObjectInteraction
                         "The speed at which you move the grabbed object closer or away.")
                         
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Held Dynamics")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_enablePIDHeldDynamics,
@@ -299,31 +303,31 @@ namespace ObjectInteraction
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_proportionalGain,
-                        "PID P Gain",
-                        "Proportional gain: Controls stiffness/pull strength (higher = stronger spring).")
+                        "Held PID P Gain",
+                        "Proportional gain when holding objects: Controls stiffness/pull strength (higher = stronger spring).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_integralGain,
-                        "PID I Gain",
-                        "Integral gain: Corrects persistent errors (e.g., gravity offset; usually low or 0).")
+                        "Held PID I Gain",
+                        "Integral gain when holding objects: Corrects persistent errors (e.g., gravity offset; usually low or 0).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_derivativeGain,
-                        "PID D Gain",
-                        "Derivative gain: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
+                        "Held PID D Gain",
+                        "Derivative gain when holding objects: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_integralWindupLimit,
-                        "PID Integral Limit",
+                        "Held PID Integral Limit",
                         "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_derivFilterAlpha,
-                        "PID Deriv Filter Alpha",
+                        "Held PID Deriv Filter Alpha",
                         "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).")
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Tidal Lock Dynamics")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Tidal Lock Dynamics")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_enablePIDTidalLockDynamics,
@@ -341,25 +345,21 @@ namespace ObjectInteraction
                         &ObjectInteractionComponent::m_tidalLockProportionalGain,
                         "Tidal Lock PID P Gain",
                         "Proportional gain for tidal lock: Controls rotational stiffness (higher = faster facing).")
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m / rad")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockIntegralGain,
                         "Tidal Lock PID I Gain",
                         "Integral gain: Corrects persistent rotational errors (usually low or 0).")
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m / (rad s)")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockDerivativeGain,
                         "Tidal Lock PID D Gain",
                         "Derivative gain: Controls rotational damping (higher = less oscillation).")
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m s / rad")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit,
                         "Tidal Lock PID Integral Limit",
                         "Anti-windup limit for integral (higher = stronger I).")
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha,
@@ -957,6 +957,13 @@ namespace ObjectInteraction
                 Physics::RigidBodyRequestBus::EventResult(
                     m_prevGravityEnabled, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::IsGravityEnabled);
                 Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, false);
+            }
+
+            // Store mass for dynamic objects
+            if (!m_isObjectKinematic)
+            {
+                Physics::RigidBodyRequestBus::EventResult(
+                    m_grabbedObjectMass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
             }
 
             // Initialize physics transforms for dynamic objects
@@ -1665,62 +1672,59 @@ namespace ObjectInteraction
             }
         }
 
-        // Move the object using SetLinearVelocity (PhysX) if it is a Dynamic Rigid Body
+        // Move the object using PhysX if it is a Dynamic Rigid Body
         else
         {
-            // Compute error once
-            AZ::Vector3 error = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
+            // Compute position error once
+            AZ::Vector3 positionError = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
 
-            AZ::Vector3 targetVector;
+            AZ::Vector3 targetLinearVelocity;
             if (m_enablePIDHeldDynamics)
             {
                 // Use PID to compute spring-like velocity adjustment
-                targetVector = m_pidController.Output(error, deltaTime, m_grabbedObjectTranslation);
+                targetLinearVelocity = m_pidController.Output(positionError, deltaTime, m_grabbedObjectTranslation);
             }
             else
             {
                 // Fallback to original simple proportional control
-                targetVector = error * m_grabResponse;
+                targetLinearVelocity = positionError * m_grabResponse;
             }
-
-            // Query mass for potential scaling (default to 1 if fails)
-            float mass = 1.0f;
-            Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
             if (m_enablePIDHeldDynamics)
             {
-                AZ::Vector3 pid_out = targetVector;
+                AZ::Vector3 linearPidOutput = targetLinearVelocity;
 
                 // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
                 if (m_velocityCompensation && m_pidController.GetMode() == PidController<AZ::Vector3>::Velocity)
                 {
-                    float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
-                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
-                    pid_out += m_derivativeGain * m_currentCompensationVelocity;
+                    float effectiveFactor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effectiveFactor);
+                    linearPidOutput += m_derivativeGain * m_currentCompensationVelocity;
                 }
 
                 // Treat PID output as force; optionally scale by mass for mass-independent behavior
-                AZ::Vector3 force = m_massIndependentPID ? mass * pid_out : pid_out;
+                AZ::Vector3 linearForce = m_massIndependentPID ? m_grabbedObjectMass * linearPidOutput : linearPidOutput;
 
                 // Apply as impulse
-                AZ::Vector3 total_impulse = force * deltaTime;
+                AZ::Vector3 linearImpulse = linearForce * deltaTime;
                 Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, total_impulse);
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
             }
             else
             {
                 // Compute grabbing entity velocity compensation
                 AZ::Vector3 compensation = AZ::Vector3::CreateZero();
+                // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
                 if (m_velocityCompensation)
                 {
-                    float effective_factor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
-                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effective_factor);
+                    float effectiveFactor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effectiveFactor);
                     compensation = m_currentCompensationVelocity;
                 }
 
-                // Original velocity-based application
+                // Simple velocity-based application
                 Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetVector + compensation);
+                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetLinearVelocity + compensation);
             }
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
@@ -1913,11 +1917,14 @@ namespace ObjectInteraction
         AZ::TransformBus::EventResult(
             currentGrabbedObjectRotation, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
 
-        // Compute error quaternion (target * current_inv)
+        // Compute error quaternion which represents the minimal rotation needed to align the 
+        // current orientation to the target. Normalizing ensures numerical stability 
+        // and prevents drift in quaternion operations.
         AZ::Quaternion errorQuat = targetGrabbedObjectRotation * currentGrabbedObjectRotation.GetInverseFull();
         errorQuat.Normalize();
-
-        // Convert to axis-angle (ensure shortest arc)
+        
+        // Convert the error quaternion to axis-angle representation for easier use in PID calculations.
+        // The axis-angle form provides a vector (errorAxis * errorAngle) that can be scaled by time for angular velocity.
         float errorAngle = 2.0f * acosf(AZ::GetClamp(errorQuat.GetW(), -1.0f, 1.0f));
         if (errorAngle > AZ::Constants::Pi)
             errorAngle = AZ::Constants::TwoPi - errorAngle;
@@ -1940,29 +1947,26 @@ namespace ObjectInteraction
         }
         else
         {
-            // For dynamic objects
+            // Compute target angular velocity
             AZ::Vector3 targetAngularVelocity = angularError / deltaTime;
 
             if (m_enablePIDTidalLockDynamics)
             {
+                // Use PID controller to compute torque output based on the angular error.
                 AZ::Vector3 angularPidOutput =
                     m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
 
-                AZ::Vector3 angularImpulse = angularPidOutput * deltaTime;
+                // Optionally scale by mass for mass-independent behavior
+                AZ::Vector3 angularTorque = m_massIndependentTidalLock ? m_grabbedObjectMass * angularPidOutput : angularPidOutput;
 
-                if (m_massIndependentTidalLock)
-                {
-                    float mass = 1.0f;
-                    Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
-                    angularImpulse *= mass;
-                }
-
+                // Apply as impulse
+                AZ::Vector3 angularImpulse = angularTorque * deltaTime;
                 Physics::RigidBodyRequestBus::Event(
                     m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
             }
             else
             {
-                // Simple mode: Directly set angular velocity (always mass-independent)
+                // Fallback to simple angular velocity control (mass-independent)
                 SetGrabbedObjectAngularVelocity(targetAngularVelocity);
             }
         }
