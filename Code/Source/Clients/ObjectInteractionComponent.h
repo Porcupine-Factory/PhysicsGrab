@@ -273,6 +273,7 @@ namespace ObjectInteraction
         AZ::TransformInterface* m_cameraRotationTransform = nullptr;
 
         AZ::Quaternion m_lastEntityRotationQuat = AZ::Quaternion::CreateIdentity();
+        AZ::Quaternion m_grabbedObjectRelativeQuat = AZ::Quaternion::CreateIdentity();
 
         AZ::Vector3 m_forwardVector = AZ::Vector3::CreateZero();
         AZ::Vector3 m_rightVector = AZ::Vector3::CreateZero();
@@ -333,7 +334,6 @@ namespace ObjectInteraction
         float m_currentObjectLinearDamping = 0.f;
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
-        float m_tidalLockResponse = 10.f;
         float m_throwImpulse = 8.f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
@@ -346,6 +346,11 @@ namespace ObjectInteraction
         float m_derivativeGain = 11.f;
         float m_integralWindupLimit = 100.0f;
         float m_derivFilterAlpha = 0.8f;
+        float m_tidalLockProportionalGain = 100.f;
+        float m_tidalLockIntegralGain = 0.f;
+        float m_tidalLockDerivativeGain = 20.f;
+        float m_tidalLockIntegralWindupLimit = 200.f;
+        float m_tidalLockDerivFilterAlpha = 0.8f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -369,6 +374,7 @@ namespace ObjectInteraction
         bool m_grabMaintained = false;
         bool m_massIndependentThrow = true;
         bool m_massIndependentTidalLock = false;
+        bool m_enablePIDTidalLockDynamics = false;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
         bool m_isInThrowState = false;
@@ -389,6 +395,7 @@ namespace ObjectInteraction
         ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;
 
         PidController<AZ::Vector3> m_pidController;
+        PidController<AZ::Vector3> m_tidalLockPidController;
         PidController<AZ::Vector3>::DerivativeCalculationMode m_derivativeMode = PidController<AZ::Vector3>::Velocity;
 
         AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {

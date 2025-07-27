@@ -41,8 +41,6 @@ namespace ObjectInteraction
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
                 ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
-                ->Field("Tidal Lock Response", &ObjectInteractionComponent::m_tidalLockResponse)
-                ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
                 ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
@@ -93,6 +91,14 @@ namespace ObjectInteraction
                 ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
                 ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
+
+                ->Field("Enable PID Tidal Lock Dynamics", &ObjectInteractionComponent::m_enablePIDTidalLockDynamics)
+                ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
+                ->Field("Tidal Lock PID P Gain", &ObjectInteractionComponent::m_tidalLockProportionalGain)
+                ->Field("Tidal Lock PID I Gain", &ObjectInteractionComponent::m_tidalLockIntegralGain)
+                ->Field("Tidal Lock PID D Gain", &ObjectInteractionComponent::m_tidalLockDerivativeGain)
+                ->Field("Tidal Lock PID Integral Limit", &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit)
+                ->Field("Tidal Lock PID Deriv Filter Alpha", &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -175,17 +181,6 @@ namespace ObjectInteraction
                         "Tidal Lock Grabbed Object",
                         "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
-                    ->DataElement(
-                        nullptr,
-                        &ObjectInteractionComponent::m_massIndependentTidalLock,
-                        "Mass Independent Tidal Lock",
-                        "When enabled, tidal lock rotation ignores object mass (consistent behavior); disable for mass-dependent rotation "
-                        "where heavier objects rotate slower.")
-                    ->DataElement(
-                        nullptr,
-                        &ObjectInteractionComponent::m_tidalLockResponse,
-                        "Tidal Lock Response",
-                        "Angular response scale for tidal lock rotation (higher = faster facing).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -325,7 +320,51 @@ namespace ObjectInteraction
                         nullptr,
                         &ObjectInteractionComponent::m_derivFilterAlpha,
                         "PID Deriv Filter Alpha",
-                        "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).");
+                        "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Tidal Lock Dynamics")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enablePIDTidalLockDynamics,
+                        "Enable PID Tidal Lock Dynamics",
+                        "Enables PID controller for dynamic tidal lock rotation, creating spring-like motion. Disabling "
+                        "uses simple angular velocity.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_massIndependentTidalLock,
+                        "Enable Mass Independent Tidal Lock",
+                        "When enabled and PID is active, scales torque by object mass for consistent rotation regardless of mass. "
+                        "Disable for realistic mass-dependent rotation where heavier objects rotate slower.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockProportionalGain,
+                        "Tidal Lock PID P Gain",
+                        "Proportional gain for tidal lock: Controls rotational stiffness (higher = faster facing).")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m / rad")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockIntegralGain,
+                        "Tidal Lock PID I Gain",
+                        "Integral gain: Corrects persistent rotational errors (usually low or 0).")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m / (rad s)")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockDerivativeGain,
+                        "Tidal Lock PID D Gain",
+                        "Derivative gain: Controls rotational damping (higher = less oscillation).")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m s / rad")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit,
+                        "Tidal Lock PID Integral Limit",
+                        "Anti-windup limit for integral (higher = stronger I).")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " N m")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha,
+                        "Tidal Lock PID Deriv Filter Alpha",
+                        "Derivative filter (0=raw, 1=heavy smoothing).");
             }
         }
 
@@ -551,6 +590,15 @@ namespace ObjectInteraction
         // Initialize PID controller with parameters
         m_pidController = PidController<AZ::Vector3>(
             m_proportionalGain, m_integralGain, m_derivativeGain, m_integralWindupLimit, m_derivFilterAlpha, m_derivativeMode);
+
+        // Initialize angular PID controller with ErrorRate mode for better feedforward
+        m_tidalLockPidController = PidController<AZ::Vector3>(
+            m_tidalLockProportionalGain,
+            m_tidalLockIntegralGain,
+            m_tidalLockDerivativeGain,
+            m_tidalLockIntegralWindupLimit,
+            m_tidalLockDerivFilterAlpha,
+            PidController<AZ::Vector3>::ErrorRate);
     }
 
     // Called at the beginning of each physics tick
@@ -982,6 +1030,23 @@ namespace ObjectInteraction
                 m_pidController.Reset();
             }
 
+            // Reset angular PID and compute initial relative quaternion for tidal lock
+            m_tidalLockPidController.Reset();
+
+            AZ::Quaternion grabbingEntityRotationQuat;
+            if (m_useFPControllerForGrab)
+            {
+                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            }
+            else
+            {
+                grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            }
+            AZ::Quaternion grabbedObjectRotationQuat;
+            AZ::TransformBus::EventResult(
+                grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+            m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
+
             m_state = ObjectInteractionStates::holdState;
             // Broadcast a grab start notification event
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
@@ -1349,6 +1414,24 @@ namespace ObjectInteraction
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
+            // Recompute relative quaternion after rotation changes (to lock new orientation)
+            AZ::Quaternion grabbingEntityRotationQuat;
+            if (m_useFPControllerForGrab)
+            {
+                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            }
+            else
+            {
+                grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            }
+
+            AZ::Quaternion grabbedObjectRotationQuat;
+            AZ::TransformBus::EventResult(
+                grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+            m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
+
+            m_tidalLockPidController.Reset();
+
             m_state = ObjectInteractionStates::holdState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
@@ -1568,7 +1651,7 @@ namespace ObjectInteraction
             
             // If object is NOT in rotate state, couple the grabbed entity's rotation to 
             // the controlling entity's local z rotation (causing object to face controlling entity)
-            if (m_tidalLock && m_kinematicTidalLock)
+            if (m_state != ObjectInteractionStates::rotateState && m_tidalLock && m_kinematicTidalLock)
             {
                 TidalLock(deltaTime);
             }
@@ -1642,7 +1725,7 @@ namespace ObjectInteraction
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
-            if (m_tidalLock && m_dynamicTidalLock)
+            if (m_state != ObjectInteractionStates::rotateState && m_tidalLock && m_dynamicTidalLock)
             {
                 TidalLock(deltaTime);
             }
@@ -1805,90 +1888,84 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::TidalLock(float deltaTime)
     {
         // Initialize local variables for the current entity's rotation quaternion and up vector
-        AZ::Quaternion entityRotationQuat = AZ::Quaternion::CreateIdentity();
-        AZ::Vector3 entityUpVector = AZ::Vector3::CreateZero();
+        AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
+        AZ::Vector3 grabbingEntityUpVector = AZ::Vector3::CreateZero();
 
         // Determine the rotation and up vector based on whether First Person Controller is used
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
-            entityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
-            entityUpVector = entityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
+            grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            grabbingEntityUpVector = grabbingEntityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
         }
         #endif
         else
         {
-            entityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
-            entityUpVector = entityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
+            grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            grabbingEntityUpVector = grabbingEntityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
         }
 
-        // Compute the delta rotation quaternion between current and previous entity rotations
-        AZ::Quaternion deltaRotationQuat = AZ::Quaternion::CreateIdentity();
-        if (!m_useFPControllerForGrab)
-        {
-            // Full tidal lock mode when not using First Person Controller Component 
-            // Calculate the complete rotation difference for all axes
-            deltaRotationQuat = entityRotationQuat * m_lastEntityRotationQuat.GetInverseFull();
-            deltaRotationQuat.Normalize();
+        // Compute target object rotation based on stored relative
+        AZ::Quaternion targetGrabbedObjectRotation = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
 
-            // Ensure shortest rotation arc by flipping the quaternion if necessary
-            if (deltaRotationQuat.Dot(AZ::Quaternion::CreateIdentity()) < 0.0f)
-            {
-                deltaRotationQuat = -deltaRotationQuat;
-            }
-        }
-        else
-        {
-            // Yaw-only tidal lock when using First Person Character Controller
-            AZ::Vector3 entityEuler = entityRotationQuat.GetEulerRadians();
-            AZ::Vector3 lastEuler = m_lastEntityRotationQuat.GetEulerRadians();
+        // Get current object rotation
+        AZ::Quaternion currentGrabbedObjectRotation = AZ::Quaternion::CreateIdentity();
+        AZ::TransformBus::EventResult(
+            currentGrabbedObjectRotation, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
 
-            // Compute wrapped delta angle to avoid jumps at pi/-pi
-            float deltaAngle = entityEuler.GetZ() - lastEuler.GetZ();
-            deltaAngle = AZ::Wrap(deltaAngle, -AZ::Constants::Pi, AZ::Constants::Pi);
-            deltaRotationQuat = AZ::Quaternion::CreateFromAxisAngle(entityUpVector, deltaAngle);
-        }
+        // Compute error quaternion (target * current_inv)
+        AZ::Quaternion errorQuat = targetGrabbedObjectRotation * currentGrabbedObjectRotation.GetInverseFull();
+        errorQuat.Normalize();
+
+        // Convert to axis-angle (ensure shortest arc)
+        float errorAngle = 2.0f * acosf(AZ::GetClamp(errorQuat.GetW(), -1.0f, 1.0f));
+        if (errorAngle > AZ::Constants::Pi)
+            errorAngle = AZ::Constants::TwoPi - errorAngle;
+
+        AZ::Vector3 errorAxis = errorQuat.GetImaginary().GetNormalizedSafe();
+        
+        // Ensure shortest rotation arc by flipping the quaternion if necessary
+        if (errorQuat.GetW() < 0.0f)
+            errorAxis = -errorAxis;
+
+        AZ::Vector3 angularError = errorAxis * errorAngle;
 
         if (m_isObjectKinematic)
         {
             // For kinematic objects, directly apply the delta rotation to the object's transform
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-            transform.SetRotation((deltaRotationQuat * transform.GetRotation()).GetNormalized());
+            transform.SetRotation(targetGrabbedObjectRotation);
             AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
         }
         else
         {
-            // For dynamic objects: Convert delta rotation to axis-angle for angular velocity calculation
-            float deltaAngle = 0.0f;
-            AZ::Vector3 rotationAxis = AZ::Vector3::CreateZero();
-            deltaRotationQuat.ConvertToAxisAngle(rotationAxis, deltaAngle);
+            // For dynamic objects
+            AZ::Vector3 targetAngularVelocity = angularError / deltaTime;
 
-            // Compute target angular velocity
-            AZ::Vector3 targetAngularVelocity = rotationAxis * (deltaAngle / deltaTime);
-            
-            if (m_massIndependentTidalLock)
+            if (m_enablePIDTidalLockDynamics)
             {
-                // Mass-independent: Directly set angular velocity
-                SetGrabbedObjectAngularVelocity(targetAngularVelocity);
-            }
-            else
-            {
-                // Mass-dependent. Apply angular impulse for slower response on heavier objects
-                AZ::Vector3 currentAngularVelocity = GetGrabbedObjectAngularVelocity();
+                AZ::Vector3 angularPidOutput =
+                    m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
 
-                // Compute delta velocity and scale by response and deltaTime (acts like torque)
-                AZ::Vector3 deltaVelocity = targetAngularVelocity - currentAngularVelocity;
-                AZ::Vector3 angularImpulse = deltaVelocity * m_tidalLockResponse * deltaTime;
+                AZ::Vector3 angularImpulse = angularPidOutput * deltaTime;
 
-                // Apply the impulse
+                if (m_massIndependentTidalLock)
+                {
+                    float mass = 1.0f;
+                    Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
+                    angularImpulse *= mass;
+                }
+
                 Physics::RigidBodyRequestBus::Event(
                     m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
             }
+            else
+            {
+                // Simple mode: Directly set angular velocity (always mass-independent)
+                SetGrabbedObjectAngularVelocity(targetAngularVelocity);
+            }
         }
-
-        // Update the stored last rotation for the next frame's delta calculation
-        m_lastEntityRotationQuat = entityRotationQuat;
     }
 
     #ifdef FIRST_PERSON_CONTROLLER
