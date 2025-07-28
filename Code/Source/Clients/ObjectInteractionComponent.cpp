@@ -30,7 +30,7 @@ namespace ObjectInteraction
 
                 ->Field("GrabbingEntityId", &ObjectInteractionComponent::m_grabbingEntityId)
                 ->Field("Mesh Smoothing", &ObjectInteractionComponent::m_meshSmoothing)
-                ->Field("Grab Mesh Entity Name", &ObjectInteractionComponent::m_meshEntityName)
+                ->Field("Mesh Tag", &ObjectInteractionComponent::m_meshTagName)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Use First Person Controller For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
                 ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
@@ -124,9 +124,9 @@ namespace ObjectInteraction
                         "Enables smooth interpolation of the mesh transform for dynamic objects to reduce stuttering.")
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_meshEntityName,
-                        "Mesh Mesh Entity Name",
-                        "Name (or partial name) of the child entity to use for mesh interpolation (e.g., 'Grab Mesh').")
+                        &ObjectInteractionComponent::m_meshTagName,
+                        "Mesh Tag",
+                        "Tag name for the child entity to use for mesh interpolation (e.g., 'GrabMesh').")
 
                     // Input Binding Keys
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
@@ -511,8 +511,8 @@ namespace ObjectInteraction
                 ->Event("SetGrabDistanceInputKey", &ObjectInteractionComponentRequests::SetGrabDistanceInputKey)
                 ->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
                 ->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId)
-                ->Event("GetMeshEntityName", &ObjectInteractionComponentRequests::GetMeshEntityName)
-                ->Event("SetMeshEntityName", &ObjectInteractionComponentRequests::SetMeshEntityName);
+                ->Event("GetMeshTagName", &ObjectInteractionComponentRequests::GetMeshTagName)
+                ->Event("SetMeshTagName", &ObjectInteractionComponentRequests::SetMeshTagName);
 
             bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
         }
@@ -974,7 +974,6 @@ namespace ObjectInteraction
                 m_physicsTimeAccumulator = 0.0f;
             }
 
-            // Find child entity with name containing m_meshEntityName
             m_meshEntityPtr = nullptr;
             if (m_meshSmoothing && !m_isObjectKinematic)
             {
@@ -983,33 +982,38 @@ namespace ObjectInteraction
                 {
                     m_meshEntityPtr = GetEntityPtr(m_meshEntityId);
                 }
-                // Fallback to name-based lookup if m_meshEntityId is invalid and m_meshEntityName is set
-                else if (!m_meshEntityName.empty())
+                // Fallback to tag-based lookup if m_meshEntityId is invalid and m_meshTagName is set
+                else if (!m_meshTagName.empty())
                 {
                     AZ::Entity* grabbedEntity = GetEntityPtr(m_lastGrabbedObjectEntityId);
                     if (grabbedEntity)
                     {
                         AZStd::vector<AZ::EntityId> children;
                         AZ::TransformBus::EventResult(children, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
+                        AZ::Crc32 meshTag = AZ::Crc32(m_meshTagName.c_str());
                         for (const AZ::EntityId& childId : children)
                         {
-                            AZ::Entity* childEntity = GetEntityPtr(childId);
-                            if (childEntity && childEntity->GetName().find(m_meshEntityName) != AZStd::string::npos)
+                            bool hasTag = false;
+                            LmbrCentral::TagComponentRequestBus::EventResult(
+                                hasTag, childId, &LmbrCentral::TagComponentRequests::HasTag, meshTag);
+                            if (hasTag)
                             {
-                                m_meshEntityPtr = childEntity;
+                                m_meshEntityPtr = GetEntityPtr(childId);
                                 break;
                             }
                         }
                     }
                 }
             }
-
-            // Fallback to grabbed object if no matching child found or smoothing disabled
+            // Warn if no mesh found but smoothing expected
             if (!m_meshEntityPtr)
             {
-                m_meshEntityPtr = GetEntityPtr(m_lastGrabbedObjectEntityId);
+                AZ_Warning(
+                    "ObjectInteractionComponent",
+                    false,
+                    "Mesh smoothing enabled but no tagged child entity found for %s. Skipping interpolation to avoid physics desync.",
+                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetName().c_str());
             }
-
 
             // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current 
             // position at the exact moment of transition to holdState, ensuring the first physics velocity is ~zero.
@@ -2283,14 +2287,14 @@ namespace ObjectInteraction
         m_meshEntityPtr = m_meshEntityId.IsValid() ? GetEntityPtr(m_meshEntityId) : nullptr;
     }
 
-    AZStd::string ObjectInteractionComponent::GetMeshEntityName() const
+    AZStd::string ObjectInteractionComponent::GetMeshTagName() const
     {
-        return m_meshEntityName;
+        return m_meshTagName;
     }
 
-    void ObjectInteractionComponent::SetMeshEntityName(const AZStd::string& new_meshEntityName)
+    void ObjectInteractionComponent::SetMeshTagName(const AZStd::string& new_meshTagName)
     {
-        m_meshEntityName = new_meshEntityName;
+        m_meshTagName = new_meshTagName;
         // Reset m_meshEntityId to invalid to prioritize name-based lookup
         m_meshEntityId = AZ::EntityId();
         m_meshEntityPtr = nullptr;

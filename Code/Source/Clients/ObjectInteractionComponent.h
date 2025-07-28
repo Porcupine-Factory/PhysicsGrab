@@ -10,6 +10,7 @@
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 #include "PidController.h"
+#include <LmbrCentral/Scripting/TagComponentBus.h>
 #include <ObjectInteraction/ObjectInteractionComponentBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
@@ -86,8 +87,8 @@ namespace ObjectInteraction
         void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
         AZ::EntityId GetMeshEntityId() const override;
         void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) override;
-        AZStd::string GetMeshEntityName() const override;
-        void SetMeshEntityName(const AZStd::string& new_meshEntityName) override;
+        AZStd::string GetMeshTagName() const override;
+        void SetMeshTagName(const AZStd::string& new_meshTagName) override;
         AZStd::string GetStateString() const override;
         bool GetIsInIdleState() const override;
         bool GetIsInCheckState() const override;
@@ -227,7 +228,7 @@ namespace ObjectInteraction
         StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
         AZStd::string m_strGrabDistance = "Grab Distance";
 
-        AZStd::string m_meshEntityName = "Grab Mesh";
+        AZStd::string m_meshTagName = "GrabMesh";
 
         void CheckForObjects();
         void HoldObject(float deltaTime);
