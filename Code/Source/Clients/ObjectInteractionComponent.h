@@ -288,6 +288,8 @@ namespace ObjectInteraction
         AZ::Vector3 m_prevGrabbingEntityTranslation = AZ::Vector3::CreateZero();
         AZ::Vector3 m_currentCompensationVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_currentAngularVelocity = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_hitPosition = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_localPickOffset = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_grabbedObjectEntityId;
         AZ::EntityId m_meshEntityId;
@@ -394,6 +396,7 @@ namespace ObjectInteraction
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
         bool m_massIndependentPID = true;
+        bool m_enableOffsetGrab = true;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
         ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;

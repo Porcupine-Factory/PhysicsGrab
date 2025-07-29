@@ -987,6 +987,11 @@ namespace ObjectInteraction
                 m_physicsTimeAccumulator = 0.0f;
             }
 
+            // Compute local pick offset from initial hit position
+            AZ::Transform objectTM = AZ::Transform::CreateIdentity();
+            AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            m_localPickOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
+
             m_meshEntityPtr = nullptr;
             if (m_meshSmoothing && !m_isObjectKinematic)
             {
@@ -1178,6 +1183,9 @@ namespace ObjectInteraction
             // Reset to object's original Linear Damping value
             SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
 
+            // Set angular velocity to zero on drop to prevent spinning
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
@@ -1236,6 +1244,9 @@ namespace ObjectInteraction
 
             // Reset to object's original Linear Damping value
             SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
+            // Set angular velocity to zero on drop to prevent spinning
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
@@ -1628,7 +1639,7 @@ namespace ObjectInteraction
 
         m_objectSphereCastHit = false;
 
-        // Prioritize hit matching m_lastGrabbedObjectEntityId if grabbing
+        // Prioritize hit matching m_lastGrabbedObjectEntityId if grabbing (maintain initial hit position/offset)
         if (m_lastGrabbedObjectEntityId.IsValid())
         {
             for (const AzPhysics::SceneQueryHit& hit : hits.m_hits)
@@ -1643,10 +1654,11 @@ namespace ObjectInteraction
         }
         else if (hits)
         {
-            // Take the first hit for initial grab
+            // Take the first hit for initial grab and store hit position
             m_objectSphereCastHit = true;
             m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
             m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
+            m_hitPosition = hits.m_hits.at(0).m_position;
         }
     }
 
@@ -1695,6 +1707,23 @@ namespace ObjectInteraction
 
         m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
 
+        // Get object transform once (center of mass transform)
+        AZ::Transform objectTM = AZ::Transform::CreateIdentity();
+        AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+        
+        // Center of mass translation
+        m_grabbedObjectTranslation = objectTM.GetTranslation();
+
+        // Determine effective point and error based on toggle
+        AZ::Vector3 effectivePoint = m_grabbedObjectTranslation;
+        AZ::Vector3 positionError = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
+        if (m_enableOffsetGrab)
+        {
+            effectivePoint = objectTM.TransformPoint(m_localPickOffset);
+            positionError = m_grabReference.GetTranslation() - effectivePoint;
+        }
+
+
         // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
@@ -1721,9 +1750,6 @@ namespace ObjectInteraction
         // Move the object using PhysX if it is a Dynamic Rigid Body
         else
         {
-            // Compute position error once
-            AZ::Vector3 positionError = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
-
             AZ::Vector3 targetLinearVelocity;
             if (m_enablePIDHeldDynamics)
             {
@@ -1753,8 +1779,19 @@ namespace ObjectInteraction
 
                 // Apply as impulse
                 AZ::Vector3 linearImpulse = linearForce * deltaTime;
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
+                if (m_enableOffsetGrab)
+                {
+                    Physics::RigidBodyRequestBus::Event(
+                        m_lastGrabbedObjectEntityId,
+                        &Physics::RigidBodyRequests::ApplyLinearImpulseAtWorldPoint,
+                        linearImpulse,
+                        effectivePoint);
+                }
+                else
+                {
+                    Physics::RigidBodyRequestBus::Event(
+                        m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
+                }
             }
             else
             {
