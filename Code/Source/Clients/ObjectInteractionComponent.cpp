@@ -2700,7 +2700,12 @@ namespace ObjectInteraction
 
     AZStd::string ObjectInteractionComponent::GetTempGrabbedCollisionLayerName() const
     {
-        return m_tempGrabbedCollisionLayerName;
+        AZStd::string tempGrabbedCollisionLayerName;
+        Physics::CollisionFilteringRequestBus::EventResult(
+            tempGrabbedCollisionLayerName,
+            m_lastGrabbedObjectEntityId,
+            &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        return tempGrabbedCollisionLayerName;
     }
 
     void ObjectInteractionComponent::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
@@ -2711,7 +2716,6 @@ namespace ObjectInteraction
             success, &Physics::CollisionRequests::TryGetCollisionLayerByName, new_tempGrabbedCollisionLayerName, tempGrabbedCollisionLayer);
         if (success)
         {
-            m_tempGrabbedCollisionLayerName = new_tempGrabbedCollisionLayerName;
             m_tempGrabbedCollisionLayer = tempGrabbedCollisionLayer;
         }
     }
@@ -2726,7 +2730,12 @@ namespace ObjectInteraction
         m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration =
             AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
-        m_tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
+        AZStd::string tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
+        Physics::CollisionFilteringRequestBus::Event(
+            m_lastGrabbedObjectEntityId,
+            &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
+            tempGrabbedCollisionLayerName,
+            AZ::Crc32());
     }
 
     bool ObjectInteractionComponent::GetGrabbedObjectKinematicElseDynamic() const

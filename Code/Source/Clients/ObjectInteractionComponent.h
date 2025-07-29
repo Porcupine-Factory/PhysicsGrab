@@ -302,7 +302,6 @@ namespace ObjectInteraction
         AzPhysics::CollisionLayer m_currentGrabbedCollisionLayer;
         AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
         AZStd::string m_currentGrabbedCollisionLayerName;
-        AZStd::string m_tempGrabbedCollisionLayerName;
 
         // Event value multipliers
         float m_grabKeyValue = 0.f;
