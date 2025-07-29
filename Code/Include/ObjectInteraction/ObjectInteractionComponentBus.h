@@ -53,9 +53,9 @@ namespace ObjectInteraction
         virtual float GetRollKeyValue() const = 0;
         virtual void SetRollKeyValue(const float&, const bool&) = 0;
         virtual AZ::EntityId GetMeshEntityId() const = 0;
-        virtual void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) = 0;
-        virtual AZStd::string GetMeshEntityName() const = 0;
-        virtual void SetMeshEntityName(const AZStd::string& new_meshEntityName) = 0;
+        virtual void SetMeshEntityId(const AZ::EntityId& new_meshTagId) = 0;
+        virtual AZStd::string GetMeshTagName() const = 0;
+        virtual void SetMeshTagName(const AZStd::string& new_meshTagName) = 0;
         virtual float GetGrabbedDistanceKeyValue() const = 0;
         virtual void SetGrabbedDistanceKeyValue(const float&, const bool&) = 0;
         virtual float GetGrabbedObjectDistance() const = 0;
@@ -78,6 +78,8 @@ namespace ObjectInteraction
         virtual void SetKinematicTidalLock(const bool&) = 0;
         virtual bool GetTidalLock() const = 0;
         virtual void SetTidalLock(const bool&) = 0;
+        virtual bool GetFullTidalLockForFPC() const = 0;
+        virtual void SetFullTidalLockForFPC(const bool&) = 0;
         virtual float GetDynamicYawRotateScale() const = 0;
         virtual void SetDynamicYawRotateScale(const float&) = 0;
         virtual float GetDynamicPitchRotateScale() const = 0;

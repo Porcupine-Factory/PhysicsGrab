@@ -134,6 +134,8 @@ namespace ObjectInteraction
         void SetKinematicTidalLock(const bool& new_kinematicTidalLock) override;
         bool GetTidalLock() const override;
         void SetTidalLock(const bool& new_tidalLock) override;
+        bool GetFullTidalLockForFPC() const override;
+        void SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC) override;
         float GetDynamicYawRotateScale() const;
         void SetDynamicYawRotateScale(const float& new_dynamicHorizontalYawcale);
         float GetDynamicPitchRotateScale() const;
@@ -372,6 +374,7 @@ namespace ObjectInteraction
         bool m_tidalLock = true;
         bool m_dynamicTidalLock = true;
         bool m_kinematicTidalLock = true;
+        bool m_fullTidalLockForFPC = false;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
         bool m_massIndependentThrow = true;

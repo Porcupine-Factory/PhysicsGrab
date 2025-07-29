@@ -54,6 +54,7 @@ ly_add_target(
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
 	    Gem::FirstPersonController
+	    Gem::LmbrCentral.Static
 )
 else()
 ly_add_target(
@@ -74,6 +75,7 @@ ly_add_target(
             AZ::AzFramework
 	    Gem::StartingPointInput.Static
 	    Gem::PhysX.Static
+	    Gem::LmbrCentral.Static
 )
 endif()
 
@@ -146,6 +148,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
 		Gem::StartingPointInput.Static
 		Gem::FirstPersonController
+		Gem::LmbrCentral.Static
     )
     else()
     ly_add_target(
@@ -164,6 +167,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                 AZ::AzToolsFramework
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
 		Gem::StartingPointInput.Static
+		Gem::LmbrCentral.Static
     )
     endif()
 

@@ -41,6 +41,9 @@ namespace ObjectInteraction
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
                 ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
+                #ifdef FIRST_PERSON_CONTROLLER
+                ->Field("Full Tidal Lock For First Person Controller", &ObjectInteractionComponent::m_fullTidalLockForFPC)
+                #endif
                 ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
@@ -185,6 +188,14 @@ namespace ObjectInteraction
                         "Tidal Lock Grabbed Object",
                         "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
+                    #ifdef FIRST_PERSON_CONTROLLER
+                    ->DataElement(
+                          nullptr,
+                          &ObjectInteractionComponent::m_fullTidalLockForFPC,
+                          "Full Tidal Lock For First Person Controller",
+                          "When enabled with First Person Controller, uses full camera rotation for tidal lock instead of character yaw "
+                          "only.")
+                    #endif
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
@@ -450,6 +461,8 @@ namespace ObjectInteraction
                 ->Event("Set Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::SetKinematicTidalLock)
                 ->Event("Get Object Tidal Lock", &ObjectInteractionComponentRequests::GetTidalLock)
                 ->Event("Set Object Tidal Lock", &ObjectInteractionComponentRequests::SetTidalLock)
+                ->Event("Get Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::GetFullTidalLockForFPC)
+                ->Event("Set Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::SetFullTidalLockForFPC)
                 ->Event("Get Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicYawRotateScale)
                 ->Event("Set Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicYawRotateScale)
                 ->Event("Get Dynamic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicPitchRotateScale)
@@ -1045,10 +1058,24 @@ namespace ObjectInteraction
             m_tidalLockPidController.Reset();
 
             AZ::Quaternion grabbingEntityRotationQuat;
+            #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
             {
-                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+                if (m_fullTidalLockForFPC)
+                {
+                    // Use camera rotation for full lock
+                    FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                        m_cameraRotationTransform,
+                        GetEntityId(),
+                        &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                    grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
+                }
+                else
+                {
+                    grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+                }
             }
+            #endif
             else
             {
                 grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
@@ -1427,10 +1454,24 @@ namespace ObjectInteraction
 
             // Recompute relative quaternion after rotation changes (to lock new orientation)
             AZ::Quaternion grabbingEntityRotationQuat;
+            #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
             {
-                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+                if (m_fullTidalLockForFPC)
+                {
+                    // Use camera rotation for full lock
+                    FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                        m_cameraRotationTransform,
+                        GetEntityId(),
+                        &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                    grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
+                }
+                else
+                {
+                    grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+                }
             }
+            #endif
             else
             {
                 grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
@@ -1632,12 +1673,13 @@ namespace ObjectInteraction
                 cameraLocalZTravelDistance,
                 GetEntityId(),
                 &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraLocalZTravelDistance);
+
             AZ::Transform characterTM;
             AZ::TransformBus::EventResult(characterTM, GetEntityId(), &AZ::TransformInterface::GetWorldTM);
             m_grabReference = characterTM;
             m_grabReference.SetTranslation(characterPosition + AZ::Vector3(0.f, 0.f, eyeHeight + cameraLocalZTravelDistance));
-            m_grabReference.SetTranslation(
-                m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
+            // Add forward offset to the height-adjusted position
+            m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
         }
         #endif
         // Use user-specified grab entity for Grab Reference
@@ -1897,20 +1939,24 @@ namespace ObjectInteraction
     {
         // Initialize local variables for the current entity's rotation quaternion and up vector
         AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
-        AZ::Vector3 grabbingEntityUpVector = AZ::Vector3::CreateZero();
 
         // Determine the rotation and up vector based on whether First Person Controller is used
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
-            grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
-            grabbingEntityUpVector = grabbingEntityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
+            if (m_fullTidalLockForFPC)
+            {
+                grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
+            }
+            else
+            {
+                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            }
         }
         #endif
         else
         {
             grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
-            grabbingEntityUpVector = grabbingEntityRotationQuat.TransformVector(AZ::Vector3::CreateAxisZ());
         }
 
         // Compute target object rotation based on stored relative
@@ -2408,6 +2454,16 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetTidalLock(const bool& new_tidalLock)
     {
         m_tidalLock = new_tidalLock;
+    }
+
+    bool ObjectInteractionComponent::GetFullTidalLockForFPC() const
+    {
+        return m_fullTidalLockForFPC;
+    }
+
+    void ObjectInteractionComponent::SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC)
+    {
+        m_fullTidalLockForFPC = new_fullTidalLockForFPC;
     }
 
     float ObjectInteractionComponent::GetDynamicYawRotateScale() const
