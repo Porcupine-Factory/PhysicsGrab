@@ -411,18 +411,18 @@ namespace ObjectInteraction
                 ->Event("Set Grabbing Entity", &ObjectInteractionComponentRequests::SetGrabbingEntity)
                 ->Event("Get Grabbed Collision Group", &ObjectInteractionComponentRequests::GetGrabbedCollisionGroup)
                 ->Event("Set Grabbed Collision Group", &ObjectInteractionComponentRequests::SetGrabbedCollisionGroup)
-                ->Event("Get Current Grabbed Layer Name", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayerName)
-                ->Event("Set Current Grabbed Layer By Name", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayerByName)
-                ->Event("Get Current Grabbed Layer", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayer)
-                ->Event("Set Current Grabbed Layer", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayer)
-                ->Event("Get Previous Grabbed Layer Name", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayerName)
-                ->Event("Set Previous Grabbed Layer Name By Name", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayerByName)
-                ->Event("Get Previous Grabbed Layer", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayer)
-                ->Event("Set Previous Grabbed Layer", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayer)
-                ->Event("Get Temporary Grabbed Layer Name", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayerName)
-                ->Event("Set Temporary Grabbed Layer By Name", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayerByName)
-                ->Event("Get Temporary Grabbed Layer", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayer)
-                ->Event("Set Temporary Grabbed Layer", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayer)
+                ->Event("Get Current Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayerName)
+                ->Event("Set Current Grabbed Collision Layer By Name", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayerByName)
+                ->Event("Get Current Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayer)
+                ->Event("Set Current Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayer)
+                ->Event("Get Previous Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayerName)
+                ->Event("Set Previous Grabbed Collision Layer Name By Name", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayerByName)
+                ->Event("Get Previous Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayer)
+                ->Event("Set Previous Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayer)
+                ->Event("Get Temporary Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayerName)
+                ->Event("Set Temporary Grabbed Collision Layer By Name", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayerByName)
+                ->Event("Get Temporary Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayer)
+                ->Event("Set Temporary Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayer)
                 ->Event("Get State String", &ObjectInteractionComponentRequests::GetStateString)
                 ->Event("Get Is In Idle State", &ObjectInteractionComponentRequests::GetIsInIdleState)
                 ->Event("Get Is In Check State", &ObjectInteractionComponentRequests::GetIsInCheckState)
@@ -994,10 +994,10 @@ namespace ObjectInteraction
                 m_physicsTimeAccumulator = 0.0f;
             }
 
-            // Compute local pick offset from initial hit position
+            // Compute local grab offset from initial hit position
             AZ::Transform objectTM = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-            m_localPickOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
+            m_localGrabOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
 
             m_meshEntityPtr = nullptr;
             if (m_meshSmoothing && !m_isObjectKinematic)
@@ -1718,10 +1718,9 @@ namespace ObjectInteraction
         AZ::Vector3 positionError = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
         if (m_offsetGrab)
         {
-            effectivePoint = objectTM.TransformPoint(m_localPickOffset);
+            effectivePoint = objectTM.TransformPoint(m_localGrabOffset);
             positionError = m_grabReference.GetTranslation() - effectivePoint;
         }
-
 
         // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
@@ -2737,10 +2736,8 @@ namespace ObjectInteraction
     AZStd::string ObjectInteractionComponent::GetTempGrabbedCollisionLayerName() const
     {
         AZStd::string tempGrabbedCollisionLayerName;
-        Physics::CollisionFilteringRequestBus::EventResult(
-            tempGrabbedCollisionLayerName,
-            m_lastGrabbedObjectEntityId,
-            &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+        Physics::CollisionRequestBus::BroadcastResult(
+            tempGrabbedCollisionLayerName, &Physics::CollisionRequests::GetCollisionLayerName, m_tempGrabbedCollisionLayer);
         return tempGrabbedCollisionLayerName;
     }
 
