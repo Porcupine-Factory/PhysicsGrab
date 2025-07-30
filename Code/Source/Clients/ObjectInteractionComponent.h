@@ -396,7 +396,7 @@ namespace ObjectInteraction
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
         bool m_massIndependentPID = true;
-        bool m_enableOffsetGrab = true;
+        bool m_offsetGrab = true;
 
         ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
         ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;

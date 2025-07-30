@@ -40,6 +40,7 @@ namespace ObjectInteraction
                 ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
                 ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
+                ->Field("Offset Grab", &ObjectInteractionComponent::m_offsetGrab)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Full Tidal Lock For First Person Controller", &ObjectInteractionComponent::m_fullTidalLockForFPC)
@@ -182,6 +183,12 @@ namespace ObjectInteraction
                         &ObjectInteractionComponent::m_disableGravityWhileHeld,
                         "Disable Gravity While Held",
                         "Disables gravity for dynamic objects while being held.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_offsetGrab,
+                        "Offset Grab",
+                        "When enabled for dynamic objects, applies forces at an offset point causing natural tilting. "
+                        "Disable to apply at center of mass.")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLock,
@@ -1183,9 +1190,6 @@ namespace ObjectInteraction
             // Reset to object's original Linear Damping value
             SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
 
-            // Set angular velocity to zero on drop to prevent spinning
-            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
@@ -1244,9 +1248,6 @@ namespace ObjectInteraction
 
             // Reset to object's original Linear Damping value
             SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-            // Set angular velocity to zero on drop to prevent spinning
-            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
@@ -1705,8 +1706,6 @@ namespace ObjectInteraction
                 m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
         }
 
-        m_grabbedObjectTranslation = GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation();
-
         // Get object transform once (center of mass transform)
         AZ::Transform objectTM = AZ::Transform::CreateIdentity();
         AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -1717,7 +1716,7 @@ namespace ObjectInteraction
         // Determine effective point and error based on toggle
         AZ::Vector3 effectivePoint = m_grabbedObjectTranslation;
         AZ::Vector3 positionError = m_grabReference.GetTranslation() - m_grabbedObjectTranslation;
-        if (m_enableOffsetGrab)
+        if (m_offsetGrab)
         {
             effectivePoint = objectTM.TransformPoint(m_localPickOffset);
             positionError = m_grabReference.GetTranslation() - effectivePoint;
@@ -1754,7 +1753,7 @@ namespace ObjectInteraction
             if (m_enablePIDHeldDynamics)
             {
                 // Use PID to compute spring-like velocity adjustment
-                targetLinearVelocity = m_pidController.Output(positionError, deltaTime, m_grabbedObjectTranslation);
+                targetLinearVelocity = m_pidController.Output(positionError, deltaTime, effectivePoint);
             }
             else
             {
@@ -1779,7 +1778,7 @@ namespace ObjectInteraction
 
                 // Apply as impulse
                 AZ::Vector3 linearImpulse = linearForce * deltaTime;
-                if (m_enableOffsetGrab)
+                if (m_offsetGrab)
                 {
                     Physics::RigidBodyRequestBus::Event(
                         m_lastGrabbedObjectEntityId,
