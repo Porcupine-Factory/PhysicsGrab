@@ -182,6 +182,14 @@ namespace ObjectInteraction
         void ForceTransition(const ObjectInteractionStates& targetState) override;
         void SetStateLocked(const bool& isLocked) override;
         bool GetStateLocked() const override;
+        bool GetDisableGravityWhileHeld() const override;
+        void SetDisableGravityWhileHeld(const bool& new_disableGravityWhileHeld) override;
+        bool GetOffsetGrab() const override;
+        void SetOffsetGrab(const bool& new_offsetGrab) override;
+        bool GetGravityAppliesToPointRotation() const override;
+        void SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation) override;
+        bool GetMassIndependentThrow() const override;
+        void SetMassIndependentThrow(const bool& new_massIndependentThrow) override;
         bool GetEnablePIDHeldDynamics() const override;
         void SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics) override;
         bool GetMassIndependentHeldPID() const override;

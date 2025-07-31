@@ -513,6 +513,14 @@ namespace ObjectInteraction
                 ->Event("Force State Transition", &ObjectInteractionComponentRequests::ForceTransition)
                 ->Event("Set Locked State Transition", &ObjectInteractionComponentRequests::SetStateLocked)
                 ->Event("Get Locked State Transition", &ObjectInteractionComponentRequests::GetStateLocked)
+                ->Event("Get Disable Gravity While Held", &ObjectInteractionComponentRequests::GetDisableGravityWhileHeld)
+                ->Event("Set Disable Gravity While Held", &ObjectInteractionComponentRequests::SetDisableGravityWhileHeld)
+                ->Event("Get Offset Grab", &ObjectInteractionComponentRequests::GetOffsetGrab)
+                ->Event("Set Offset Grab", &ObjectInteractionComponentRequests::SetOffsetGrab)
+                ->Event("Get Gravity Applies To Point Rotation", &ObjectInteractionComponentRequests::GetGravityAppliesToPointRotation)
+                ->Event("Set Gravity Applies To Point Rotation", &ObjectInteractionComponentRequests::SetGravityAppliesToPointRotation)
+                ->Event("Get Mass Independent Throw", &ObjectInteractionComponentRequests::GetMassIndependentThrow)
+                ->Event("Set Mass Independent Throw", &ObjectInteractionComponentRequests::SetMassIndependentThrow)
                 ->Event("Get Enable PID Held Dynamics", &ObjectInteractionComponentRequests::GetEnablePIDHeldDynamics)
                 ->Event("Set Enable PID Held Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDHeldDymamics)
                 ->Event("Get Mass Independent Held PID", &ObjectInteractionComponentRequests::GetMassIndependentHeldPID)
@@ -2925,6 +2933,46 @@ namespace ObjectInteraction
     bool ObjectInteractionComponent::GetStateLocked() const
     {
         return m_isStateLocked;
+    }
+
+    bool ObjectInteractionComponent::GetDisableGravityWhileHeld() const
+    {
+        return m_disableGravityWhileHeld;
+    }
+
+    void ObjectInteractionComponent::SetDisableGravityWhileHeld(const bool& new_disableGravityWhileHeld)
+    {
+        m_disableGravityWhileHeld = new_disableGravityWhileHeld;
+    }
+
+    bool ObjectInteractionComponent::GetOffsetGrab() const
+    {
+        return m_offsetGrab;
+    }
+
+    void ObjectInteractionComponent::SetOffsetGrab(const bool& new_offsetGrab)
+    {
+        m_offsetGrab = new_offsetGrab;
+    }
+
+    bool ObjectInteractionComponent::GetGravityAppliesToPointRotation() const
+    {
+        return m_gravityAppliesToPointRotation;
+    }
+
+    void ObjectInteractionComponent::SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation)
+    {
+        m_gravityAppliesToPointRotation = new_gravityAppliesToPointRotation;
+    }
+
+    bool ObjectInteractionComponent::GetMassIndependentThrow() const
+    {
+        return m_massIndependentThrow;
+    }
+
+    void ObjectInteractionComponent::SetMassIndependentThrow(const bool& new_massIndependentThrow)
+    {
+        m_massIndependentThrow = new_massIndependentThrow;
     }
 
     bool ObjectInteractionComponent::GetEnablePIDHeldDynamics() const
