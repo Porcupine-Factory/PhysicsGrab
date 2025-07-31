@@ -50,8 +50,6 @@ namespace ObjectInteraction
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Default Grab Distance", &ObjectInteractionComponent::m_initialGrabDistance)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Min Grab Distance", &ObjectInteractionComponent::m_minGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Max Grab Distance", &ObjectInteractionComponent::m_maxGrabDistance)
@@ -291,11 +289,6 @@ namespace ObjectInteraction
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_initialGrabDistance,
-                        "Default Grab Distance",
-                        "Distance the grabbed object will default to when letting go of the object")
-                    ->DataElement(
-                        nullptr,
                         &ObjectInteractionComponent::m_minGrabDistance,
                         "Min Grab Distance",
                         "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
@@ -463,8 +456,6 @@ namespace ObjectInteraction
                 ->Event("Set Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMinGrabbedObjectDistance)
                 ->Event("Get Maximum Grabbed Objectt Distance", &ObjectInteractionComponentRequests::GetMaxGrabbedObjectDistance)
                 ->Event("Set Maximum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMaxGrabbedObjectDistance)
-                ->Event("Get Initial Grabbed Object Distance", &ObjectInteractionComponentRequests::GetInitialGrabbedObjectDistance)
-                ->Event("Set Initial Grabbed Objectt Distance", &ObjectInteractionComponentRequests::SetInitialGrabbedObjectDistance)
                 ->Event("Get Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::GetGrabbedObjectDistanceSpeed)
                 ->Event("Set Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::SetGrabbedObjectDistanceSpeed)
                 ->Event("Get Grab Response", &ObjectInteractionComponentRequests::GetGrabResponse)
@@ -610,9 +601,6 @@ namespace ObjectInteraction
 
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
-
-        // Initialize m_grabDistance to the editor-specified m_initialGrabDistance
-        m_grabDistance = m_initialGrabDistance;
 
         // Initialize PID controller with parameters
         m_pidController = PidController<AZ::Vector3>(
@@ -1006,6 +994,11 @@ namespace ObjectInteraction
             AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             m_localGrabOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
 
+            // Compute dynamic initial grab distance as projected distance along forward to effective point
+            AZ::Vector3 initialEffectivePoint = m_offsetGrab ? m_hitPosition : objectTM.GetTranslation();
+            float projectedGrabDistance = (initialEffectivePoint - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+            m_grabDistance = AZ::GetClamp(projectedGrabDistance, m_minGrabDistance, m_maxGrabDistance);
+
             m_meshEntityPtr = nullptr;
             if (m_meshSmoothing && !m_isObjectKinematic)
             {
@@ -1165,9 +1158,6 @@ namespace ObjectInteraction
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
-            // Reset current grabbed distance to m_initialGrabDistance if sphere cast doesn't hit
-            m_grabDistance = m_initialGrabDistance;
-
             // Set Object Current Layer variable back to initial layer if sphere cast doesn't hit
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
@@ -1224,9 +1214,6 @@ namespace ObjectInteraction
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
-            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
-            m_grabDistance = m_initialGrabDistance;
-
             // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
@@ -1348,7 +1335,6 @@ namespace ObjectInteraction
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
-            m_grabDistance = m_initialGrabDistance;
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
             // Restore gravity if it was disabled
@@ -1422,9 +1408,6 @@ namespace ObjectInteraction
 
             // Set Angular Velocity back to zero if Grab Key is not pressed
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
-            // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
-            m_grabDistance = m_initialGrabDistance;
 
             // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
             SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
@@ -1959,9 +1942,6 @@ namespace ObjectInteraction
 
         m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
 
-        // Reset current grabbed distance to m_initialGrabDistance if grab key is not pressed
-        m_grabDistance = m_initialGrabDistance;
-
         // Set Object Current Layer variable back to Prev Layer when thrown
         SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
@@ -2436,16 +2416,6 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
     {
         m_maxGrabDistance = new_maxGrabDistance;
-    }
-
-    float ObjectInteractionComponent::GetInitialGrabbedObjectDistance() const
-    {
-        return m_initialGrabDistance;
-    }
-
-    void ObjectInteractionComponent::SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance)
-    {
-        m_initialGrabDistance = new_initialGrabDistance;
     }
 
     float ObjectInteractionComponent::GetGrabbedObjectDistanceSpeed() const

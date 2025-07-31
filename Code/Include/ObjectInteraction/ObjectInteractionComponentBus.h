@@ -64,8 +64,6 @@ namespace ObjectInteraction
         virtual void SetMinGrabbedObjectDistance(const float&) = 0;
         virtual float GetMaxGrabbedObjectDistance() const = 0;
         virtual void SetMaxGrabbedObjectDistance(const float&) = 0;
-        virtual float GetInitialGrabbedObjectDistance() const = 0;
-        virtual void SetInitialGrabbedObjectDistance(const float&) = 0;
         virtual float GetGrabbedObjectDistanceSpeed() const = 0;
         virtual void SetGrabbedObjectDistanceSpeed(const float&) = 0;
         virtual float GetGrabResponse() const = 0;

@@ -122,8 +122,6 @@ namespace ObjectInteraction
         void SetMinGrabbedObjectDistance(const float& new_minGrabDistance) override;
         float GetMaxGrabbedObjectDistance() const override;
         void SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance) override;
-        float GetInitialGrabbedObjectDistance() const override;
-        void SetInitialGrabbedObjectDistance(const float& new_initialGrabDistance) override;
         float GetGrabbedObjectDistanceSpeed() const override;
         void SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
         float GetGrabResponse() const override;
@@ -320,8 +318,7 @@ namespace ObjectInteraction
         float m_physicsTimestep = 1.f / 60.f;
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.f;
-        float m_initialGrabDistance = 2.5f;
-        float m_grabDistance = m_initialGrabDistance;
+        float m_grabDistance = 0.f;
         float m_velocityCompDampRate = 9.f;
         float m_angularVelocityDampRate = 25.f;
         float m_kinematicYawRotateScale = 1.2f;
