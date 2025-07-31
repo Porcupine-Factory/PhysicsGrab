@@ -182,6 +182,38 @@ namespace ObjectInteraction
         void ForceTransition(const ObjectInteractionStates& targetState) override;
         void SetStateLocked(const bool& isLocked) override;
         bool GetStateLocked() const override;
+        bool GetEnablePIDHeldDynamics() const override;
+        void SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics) override;
+        bool GetMassIndependentHeldPID() const override;
+        void SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID) override;
+        float GetHeldProportionalGain() const override;
+        void SetHeldProportionalGain(const float& new_heldProportionalGain) override;
+        float GetHeldIntegralGain() const override;
+        void SetHeldIntegralGain(const float& new_heldIntegralGain) override;
+        float GetHeldDerivativeGain() const override;
+        void SetHeldDerivativeGain(const float& new_heldDerivativeGain) override;
+        float GetHeldIntegralWindupLimit() const override;
+        void SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit) override;
+        float GetHeldDerivativeFilterAlpha() const override;
+        void SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha) override;
+        PidController<AZ::Vector3>::DerivativeCalculationMode GetHeldDerivativeMode() const override;
+        void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode) override;
+        bool GetEnablePIDTidalLockDynamics() const override;
+        void SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics) override;
+        bool GetMassIndependentTidalLock() const override;
+        void SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock) override;
+        float GetTidalLockProportionalGain() const override;
+        void SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain) override;
+        float GetTidalLockIntegralGain() const override;
+        void SetTidalLockIntegralGain(const float& new_tidalLockIntegralGain) override;
+        float GetTidalLockDerivativeGain() const override;
+        void SetTidalLockDerivativeGain(const float& new_tidalLockDerivativeGain) override;
+        float GetTidalLockIntegralWindupLimit() const override;
+        void SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit) override;
+        float GetTidalLockDerivativeFilterAlpha() const override;
+        void SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha) override;
+        PidController<AZ::Vector3>::DerivativeCalculationMode GetTidalLockDerivativeMode() const override;
+        void SetTidalLockDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode) override;
      
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;
@@ -343,16 +375,16 @@ namespace ObjectInteraction
         float m_throwStateCounter = 0.f;
         float m_combinedGrabDistance = 0.f;
         float m_prevGravityEnabled = 0.f;
-        float m_proportionalGain = 80.f;
-        float m_integralGain = 0.f;
-        float m_derivativeGain = 11.f;
-        float m_integralWindupLimit = 100.0f;
-        float m_derivFilterAlpha = 0.8f;
+        float m_heldProportionalGain = 80.f;
+        float m_heldIntegralGain = 0.f;
+        float m_heldDerivativeGain = 11.f;
+        float m_heldIntegralWindupLimit = 100.0f;
+        float m_heldDerivativeFilterAlpha = 0.8f;
         float m_tidalLockProportionalGain = 25.f;
         float m_tidalLockIntegralGain = 0.f;
         float m_tidalLockDerivativeGain = 1.6f;
         float m_tidalLockIntegralWindupLimit = 200.f;
-        float m_tidalLockDerivFilterAlpha = 0.8f;
+        float m_tidalLockDerivativeFilterAlpha = 0.8f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -392,7 +424,7 @@ namespace ObjectInteraction
         bool m_forceTransition = false;
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
-        bool m_massIndependentPID = true;
+        bool m_massIndependentHeldPID = true;
         bool m_offsetGrab = false;
         bool m_gravityAppliesToPointRotation = true;
 
@@ -401,7 +433,9 @@ namespace ObjectInteraction
 
         PidController<AZ::Vector3> m_pidController;
         PidController<AZ::Vector3> m_tidalLockPidController;
-        PidController<AZ::Vector3>::DerivativeCalculationMode m_derivativeMode = PidController<AZ::Vector3>::Velocity;
+
+        PidController<AZ::Vector3>::DerivativeCalculationMode m_heldDerivativeMode = PidController<AZ::Vector3>::Velocity;
+        PidController<AZ::Vector3>::DerivativeCalculationMode m_tidalLockDerivativeMode = PidController<AZ::Vector3>::ErrorRate;
 
         AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
           {ObjectInteractionStates::idleState,   "idleState"},

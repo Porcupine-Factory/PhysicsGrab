@@ -84,16 +84,16 @@ namespace ObjectInteraction
                 ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
 
                 ->Field("PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
-                ->Field("Mass Independent PID", &ObjectInteractionComponent::m_massIndependentPID)
-                ->Field("PID P Gain", &ObjectInteractionComponent::m_proportionalGain)
+                ->Field("Mass Independent PID", &ObjectInteractionComponent::m_massIndependentHeldPID)
+                ->Field("PID P Gain", &ObjectInteractionComponent::m_heldProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
-                ->Field("PID I Gain", &ObjectInteractionComponent::m_integralGain)
+                ->Field("PID I Gain", &ObjectInteractionComponent::m_heldIntegralGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N/(m%ss)", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("PID D Gain", &ObjectInteractionComponent::m_derivativeGain)
+                ->Field("PID D Gain", &ObjectInteractionComponent::m_heldDerivativeGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss/m", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_integralWindupLimit)
+                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_heldIntegralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
-                ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_derivFilterAlpha)
+                ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_heldDerivativeFilterAlpha)
 
                 ->Field("Enable PID Tidal Lock Dynamics", &ObjectInteractionComponent::m_enablePIDTidalLockDynamics)
                 ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
@@ -105,7 +105,7 @@ namespace ObjectInteraction
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm%ss/rad", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID Integral Limit", &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Tidal Lock PID Deriv Filter Alpha", &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha)
+                ->Field("Tidal Lock PID Deriv Filter Alpha", &ObjectInteractionComponent::m_tidalLockDerivativeFilterAlpha)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
@@ -313,35 +313,35 @@ namespace ObjectInteraction
                         "uses simple linear velocity.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_massIndependentPID,
+                        &ObjectInteractionComponent::m_massIndependentHeldPID,
                         "Enable Mass Independent PID",
                         "When enabled, PID controller scales forces by object mass for consistent behavior regardless of mass "
                         "(mass-independent). "
                         "Disable for realistic mass-dependent motion where heavier objects feel slower and harder to move.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_proportionalGain,
+                        &ObjectInteractionComponent::m_heldProportionalGain,
                         "Held PID P Gain",
-                        "Proportional gain when holding objects: Controls stiffness/pull strength (higher = stronger spring).")
+                        "Proportional gain when holding objects. Controls stiffness/pull strength (higher = stronger spring).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_integralGain,
+                        &ObjectInteractionComponent::m_heldIntegralGain,
                         "Held PID I Gain",
-                        "Integral gain when holding objects: Corrects persistent errors (e.g., gravity offset; usually low or 0).")
+                        "Integral gain when holding objects. Corrects persistent errors (e.g., gravity offset; usually low or 0).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_derivativeGain,
+                        &ObjectInteractionComponent::m_heldDerivativeGain,
                         "Held PID D Gain",
-                        "Derivative gain when holding objects: Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
+                        "Derivative gain when holding objects. Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_integralWindupLimit,
+                        &ObjectInteractionComponent::m_heldIntegralWindupLimit,
                         "Held PID Integral Limit",
                         "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_derivFilterAlpha,
-                        "Held PID Deriv Filter Alpha",
+                        &ObjectInteractionComponent::m_heldDerivativeFilterAlpha,
+                        "Held PID Derivative Filter Alpha",
                         "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Tidal Lock Dynamics")
@@ -362,17 +362,17 @@ namespace ObjectInteraction
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockProportionalGain,
                         "Tidal Lock PID P Gain",
-                        "Proportional gain for tidal lock: Controls rotational stiffness (higher = faster facing).")
+                        "Proportional gain for tidal lock. Controls rotational stiffness (higher = faster facing).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockIntegralGain,
                         "Tidal Lock PID I Gain",
-                        "Integral gain: Corrects persistent rotational errors (usually low or 0).")
+                        "Integral gain for tidal lock. Corrects persistent rotational errors (usually low or 0).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockDerivativeGain,
                         "Tidal Lock PID D Gain",
-                        "Derivative gain: Controls rotational damping (higher = less oscillation).")
+                        "Derivative gain for tidal lock. Controls rotational damping (higher = less oscillation).")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit,
@@ -380,7 +380,7 @@ namespace ObjectInteraction
                         "Anti-windup limit for integral (higher = stronger I).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockDerivFilterAlpha,
+                        &ObjectInteractionComponent::m_tidalLockDerivativeFilterAlpha,
                         "Tidal Lock PID Deriv Filter Alpha",
                         "Derivative filter (0=raw, 1=heavy smoothing).");
             }
@@ -513,6 +513,38 @@ namespace ObjectInteraction
                 ->Event("Force State Transition", &ObjectInteractionComponentRequests::ForceTransition)
                 ->Event("Set Locked State Transition", &ObjectInteractionComponentRequests::SetStateLocked)
                 ->Event("Get Locked State Transition", &ObjectInteractionComponentRequests::GetStateLocked)
+                ->Event("Get Enable PID Held Dynamics", &ObjectInteractionComponentRequests::GetEnablePIDHeldDynamics)
+                ->Event("Set Enable PID Held Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDHeldDymamics)
+                ->Event("Get Mass Independent Held PID", &ObjectInteractionComponentRequests::GetMassIndependentHeldPID)
+                ->Event("Set Mass Independent Held PID", &ObjectInteractionComponentRequests::SetMassIndependentHeldPID)
+                ->Event("Get Held Proportional Gain", &ObjectInteractionComponentRequests::GetHeldProportionalGain)
+                ->Event("Set Held Proportional Gain", &ObjectInteractionComponentRequests::SetHeldProportionalGain)
+                ->Event("Get Held Integral Gain", &ObjectInteractionComponentRequests::GetHeldIntegralGain)
+                ->Event("Set Held Integral Gain", &ObjectInteractionComponentRequests::SetHeldIntegralGain)
+                ->Event("Get Held Derivative Gain", &ObjectInteractionComponentRequests::GetHeldDerivativeGain)
+                ->Event("Set Held Derivative Gain", &ObjectInteractionComponentRequests::SetHeldDerivativeGain)
+                ->Event("Get Held Integral Windup Limit", &ObjectInteractionComponentRequests::GetHeldIntegralWindupLimit)
+                ->Event("Set Held Integral Windup Limit", &ObjectInteractionComponentRequests::SetHeldIntegralWindupLimit)
+                ->Event("Get Held Derivative Filter Alpha", &ObjectInteractionComponentRequests::GetHeldDerivativeFilterAlpha)
+                ->Event("Set Held Derivative Filter Alpha", &ObjectInteractionComponentRequests::SetHeldDerivativeFilterAlpha)
+                ->Event("Get Held Derivative Mode", &ObjectInteractionComponentRequests::GetHeldDerivativeMode)
+                ->Event("Set Held Derivative Mode", &ObjectInteractionComponentRequests::SetHeldDerivativeMode)
+                ->Event("Get Enable PID Tidal Lock Dynamics", &ObjectInteractionComponentRequests::GetEnablePIDTidalLockDynamics)
+                ->Event("Set Enable PID Tidal Lock Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDTidalLockDynamics)
+                ->Event("Get Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::GetMassIndependentTidalLock)
+                ->Event("Set Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::SetMassIndependentTidalLock)
+                ->Event("Get Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::GetTidalLockProportionalGain)
+                ->Event("Set Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::SetTidalLockProportionalGain)
+                ->Event("Get Tidal Lock Integral Gain", &ObjectInteractionComponentRequests::GetTidalLockIntegralGain)
+                ->Event("Set Tidal Lock Integral Gain", &ObjectInteractionComponentRequests::SetTidalLockIntegralGain)
+                ->Event("Get Tidal Lock Derivative Gain", &ObjectInteractionComponentRequests::GetTidalLockDerivativeGain)
+                ->Event("Set Tidal Lock Derivative Gain", &ObjectInteractionComponentRequests::SetTidalLockDerivativeGain)
+                ->Event("Get Tidal Lock Integral Windup Limit", &ObjectInteractionComponentRequests::GetTidalLockIntegralWindupLimit)
+                ->Event("Set Tidal Lock Integral Windup Limit", &ObjectInteractionComponentRequests::SetTidalLockIntegralWindupLimit)
+                ->Event("Get Tidal Lock Derivative Filter Alpha", &ObjectInteractionComponentRequests::GetTidalLockDerivativeFilterAlpha)
+                ->Event("Set Tidal Lock Derivative Filter Alpha", &ObjectInteractionComponentRequests::SetTidalLockDerivativeFilterAlpha)
+                ->Event("Get Tidal Lock Derivative Mode", &ObjectInteractionComponentRequests::GetTidalLockDerivativeMode)
+                ->Event("Set Tidal Lock Derivative Mode", &ObjectInteractionComponentRequests::SetTidalLockDerivativeMode)
                 ->Event("GetGrabInputKey", &ObjectInteractionComponentRequests::GetGrabInputKey)
                 ->Event("SetGrabInputKey", &ObjectInteractionComponentRequests::SetGrabInputKey)
                 ->Event("GetThrowInputKey", &ObjectInteractionComponentRequests::GetThrowInputKey)
@@ -602,18 +634,23 @@ namespace ObjectInteraction
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
 
-        // Initialize PID controller with parameters
+        // Initialize Held Object PID controller
         m_pidController = PidController<AZ::Vector3>(
-            m_proportionalGain, m_integralGain, m_derivativeGain, m_integralWindupLimit, m_derivFilterAlpha, m_derivativeMode);
+            m_heldProportionalGain,
+            m_heldIntegralGain,
+            m_heldDerivativeGain,
+            m_heldIntegralWindupLimit,
+            m_heldDerivativeFilterAlpha,
+            m_heldDerivativeMode);
 
-        // Initialize angular PID controller with ErrorRate mode for better feedforward
+        // Initialize Tidal Lock PID controller
         m_tidalLockPidController = PidController<AZ::Vector3>(
             m_tidalLockProportionalGain,
             m_tidalLockIntegralGain,
             m_tidalLockDerivativeGain,
             m_tidalLockIntegralWindupLimit,
-            m_tidalLockDerivFilterAlpha,
-            PidController<AZ::Vector3>::ErrorRate);
+            m_tidalLockDerivativeFilterAlpha,
+            m_tidalLockDerivativeMode);
     }
 
     // Called at the beginning of each physics tick
@@ -1759,11 +1796,11 @@ namespace ObjectInteraction
                 {
                     float effectiveFactor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effectiveFactor);
-                    linearPidOutput += m_derivativeGain * m_currentCompensationVelocity;
+                    linearPidOutput += m_heldDerivativeGain * m_currentCompensationVelocity;
                 }
 
                 // Treat PID output as force; optionally scale by mass for mass-independent behavior
-                AZ::Vector3 linearForce = m_massIndependentPID ? m_grabbedObjectMass * linearPidOutput : linearPidOutput;
+                AZ::Vector3 linearForce = m_massIndependentHeldPID ? m_grabbedObjectMass * linearPidOutput : linearPidOutput;
 
                 // Apply as impulse
                 AZ::Vector3 linearImpulse = linearForce * deltaTime;
@@ -2888,6 +2925,182 @@ namespace ObjectInteraction
     bool ObjectInteractionComponent::GetStateLocked() const
     {
         return m_isStateLocked;
+    }
+
+    bool ObjectInteractionComponent::GetEnablePIDHeldDynamics() const
+    {
+        return m_enablePIDHeldDynamics;
+    }
+
+    void ObjectInteractionComponent::SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics)
+    {
+        m_enablePIDHeldDynamics = new_enablePIDHeldDynamics;
+    }
+
+    bool ObjectInteractionComponent::GetMassIndependentHeldPID() const
+    {
+        return m_massIndependentHeldPID;
+    }
+
+    void ObjectInteractionComponent::SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID)
+    {
+        m_massIndependentHeldPID = new_massIndependentHeldPID;
+    }
+
+    float ObjectInteractionComponent::GetHeldProportionalGain() const
+    {
+        return m_heldProportionalGain;
+    }
+
+    void ObjectInteractionComponent::SetHeldProportionalGain(const float& new_heldProportionalGain)
+    {
+        m_heldProportionalGain = new_heldProportionalGain;
+        m_pidController.SetProportionalGain(new_heldProportionalGain);
+    }
+
+    float ObjectInteractionComponent::GetHeldIntegralGain() const
+    {
+        return m_heldIntegralGain;
+    }
+
+    void ObjectInteractionComponent::SetHeldIntegralGain(const float& new_heldIntegralGain)
+    {
+        m_heldIntegralGain = new_heldIntegralGain;
+        m_pidController.SetIntegralGain(new_heldIntegralGain);
+    }
+
+    float ObjectInteractionComponent::GetHeldDerivativeGain() const
+    {
+        return m_heldDerivativeGain;
+    }
+
+    void ObjectInteractionComponent::SetHeldDerivativeGain(const float& new_heldDerivativeGain)
+    {
+        m_heldDerivativeGain = new_heldDerivativeGain;
+        m_pidController.SetDerivativeGain(new_heldDerivativeGain);
+    }
+
+    float ObjectInteractionComponent::GetHeldIntegralWindupLimit() const
+    {
+        return m_heldIntegralWindupLimit;
+    }
+
+    void ObjectInteractionComponent::SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit)
+    {
+        m_heldIntegralWindupLimit = new_heldIntegralWindupLimit;
+        m_pidController.SetIntegralWindupLimit(new_heldIntegralWindupLimit);
+    }
+
+    float ObjectInteractionComponent::GetHeldDerivativeFilterAlpha() const
+    {
+        return m_heldDerivativeFilterAlpha;
+    }
+
+    void ObjectInteractionComponent::SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha)
+    {
+        m_heldDerivativeFilterAlpha = new_heldDerivativeFilterAlpha;
+        m_pidController.SetDerivativeFilterAlpha(new_heldDerivativeFilterAlpha);
+    }
+
+    PidController<AZ::Vector3>::DerivativeCalculationMode ObjectInteractionComponent::GetHeldDerivativeMode() const
+    {
+        return m_heldDerivativeMode;
+    }
+
+    void ObjectInteractionComponent::SetHeldDerivativeMode(
+        const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode)
+    {
+        m_heldDerivativeMode = new_heldDerivativeMode;
+        m_pidController.SetDerivativeMode(new_heldDerivativeMode);
+        m_pidController.Reset();
+    }
+
+    bool ObjectInteractionComponent::GetEnablePIDTidalLockDynamics() const
+    {
+        return m_enablePIDTidalLockDynamics;
+    }
+
+    void ObjectInteractionComponent::SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics)
+    {
+        m_enablePIDTidalLockDynamics = new_enablePIDTidalLockDynamics;
+    }
+
+    bool ObjectInteractionComponent::GetMassIndependentTidalLock() const
+    {
+        return m_massIndependentTidalLock;
+    }
+
+    void ObjectInteractionComponent::SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock)
+    {
+        m_massIndependentTidalLock = new_massIndependentTidalLock;
+    }
+
+    float ObjectInteractionComponent::GetTidalLockProportionalGain() const
+    {
+        return m_tidalLockProportionalGain;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain)
+    {
+        m_tidalLockProportionalGain = new_tidalLockProportionalGain;
+        m_tidalLockPidController.SetProportionalGain(new_tidalLockProportionalGain);
+    }
+
+    float ObjectInteractionComponent::GetTidalLockIntegralGain() const
+    {
+        return m_tidalLockIntegralGain;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockIntegralGain(const float& new_tidalLockIntegralGain)
+    {
+        m_tidalLockIntegralGain = new_tidalLockIntegralGain;
+        m_tidalLockPidController.SetIntegralGain(new_tidalLockIntegralGain);
+    }
+
+    float ObjectInteractionComponent::GetTidalLockDerivativeGain() const
+    {
+        return m_tidalLockDerivativeGain;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockDerivativeGain(const float& new_tidalLockDerivativeGain)
+    {
+        m_tidalLockDerivativeGain = new_tidalLockDerivativeGain;
+        m_tidalLockPidController.SetDerivativeGain(new_tidalLockDerivativeGain);
+    }
+
+    float ObjectInteractionComponent::GetTidalLockIntegralWindupLimit() const
+    {
+        return m_tidalLockIntegralWindupLimit;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit)
+    {
+        m_tidalLockIntegralWindupLimit = new_tidalLockIntegralWindupLimit;
+        m_tidalLockPidController.SetIntegralWindupLimit(new_tidalLockIntegralWindupLimit);
+    }
+
+    float ObjectInteractionComponent::GetTidalLockDerivativeFilterAlpha() const
+    {
+        return m_tidalLockDerivativeFilterAlpha;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha)
+    {
+        m_tidalLockDerivativeFilterAlpha = new_tidalLockDerivativeFilterAlpha;
+        m_tidalLockPidController.SetDerivativeFilterAlpha(new_tidalLockDerivativeFilterAlpha);
+    }
+
+    PidController<AZ::Vector3>::DerivativeCalculationMode ObjectInteractionComponent::GetTidalLockDerivativeMode() const
+    {
+        return m_tidalLockDerivativeMode;
+    }
+
+    void ObjectInteractionComponent::SetTidalLockDerivativeMode(
+        const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode)
+    {
+        m_tidalLockDerivativeMode = new_tidalLockDerivativeMode;
+        m_tidalLockPidController.SetDerivativeMode(new_tidalLockDerivativeMode);
+        m_tidalLockPidController.Reset();
     }
 
     AZStd::string ObjectInteractionComponent::GetGrabInputKey() const

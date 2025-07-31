@@ -47,6 +47,36 @@ namespace ObjectInteraction
             return m_derivativeMode;
         }
 
+        void SetDerivativeMode(DerivativeCalculationMode mode)
+        {
+            m_derivativeMode = mode;
+        }
+
+        void SetProportionalGain(float proportionalGain)
+        {
+            m_proportionalGain = proportionalGain;
+        }
+
+        void SetIntegralGain(float integralGain)
+        {
+            m_integralGain = integralGain;
+        }
+
+        void SetDerivativeGain(float derivativeGain)
+        {
+            m_derivativeGain = derivativeGain;
+        }
+
+        void SetIntegralWindupLimit(float integralWindupLimit)
+        {
+            m_integralWindupLimit = integralWindupLimit;
+        }
+
+        void SetDerivativeFilterAlpha(float derivativeFilterAlpha)
+        {
+            m_derivativeFilterAlpha = derivativeFilterAlpha;
+        }
+
         // Computes PID output based on current error and timestep.
         T Output(const T& error, float deltaTime, const T& currentValue)
         {
