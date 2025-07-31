@@ -41,6 +41,7 @@ namespace ObjectInteraction
                 ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
                 ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
                 ->Field("Offset Grab", &ObjectInteractionComponent::m_offsetGrab)
+                ->Field("Gravity Applies To Point Rotation", &ObjectInteractionComponent::m_gravityAppliesToPointRotation)
                 ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Full Tidal Lock For First Person Controller", &ObjectInteractionComponent::m_fullTidalLockForFPC)
@@ -189,6 +190,12 @@ namespace ObjectInteraction
                         "Offset Grab",
                         "When enabled for dynamic objects, applies forces at an offset point causing natural tilting. "
                         "Disable to apply at center of mass.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_gravityAppliesToPointRotation,
+                        "Gravity Applies To Point Rotation",
+                        "Enables gravity when rotating objects if Offset Grab enabled. "
+                        "Only applies to when PID Tidal Lock Dynamics is enabled.")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tidalLock,
@@ -1777,7 +1784,7 @@ namespace ObjectInteraction
 
                 // Apply as impulse
                 AZ::Vector3 linearImpulse = linearForce * deltaTime;
-                if (m_offsetGrab)
+                if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != ObjectInteractionStates::rotateState))
                 {
                     Physics::RigidBodyRequestBus::Event(
                         m_lastGrabbedObjectEntityId,
