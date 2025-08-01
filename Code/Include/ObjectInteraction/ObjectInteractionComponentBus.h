@@ -153,6 +153,8 @@ namespace ObjectInteraction
         virtual void SetEnablePIDTidalLockDynamics(const bool&) = 0;
         virtual bool GetMassIndependentTidalLock() const = 0;
         virtual void SetMassIndependentTidalLock(const bool&) = 0;
+        virtual bool GetScaleIndependentTidalLock() const = 0;
+        virtual void SetScaleIndependentTidalLock(const bool&) = 0;
         virtual float GetTidalLockProportionalGain() const = 0;
         virtual void SetTidalLockProportionalGain(const float&) = 0;
         virtual float GetTidalLockIntegralGain() const = 0;

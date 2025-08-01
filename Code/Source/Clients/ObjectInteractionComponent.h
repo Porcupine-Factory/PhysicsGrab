@@ -5,6 +5,7 @@
 #include <AzCore/Component/TickBus.h>
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Vector3.h>
+#include <AzCore/Math/Matrix3x3.h>
 #include <AzCore/std/containers/map.h>
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
@@ -221,6 +222,8 @@ namespace ObjectInteraction
         void SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics) override;
         bool GetMassIndependentTidalLock() const override;
         void SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock) override;
+        bool GetScaleIndependentTidalLock() const;
+        void SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock);
         float GetTidalLockProportionalGain() const override;
         void SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain) override;
         float GetTidalLockIntegralGain() const override;
@@ -411,11 +414,12 @@ namespace ObjectInteraction
         float m_heldDerivativeGain = 11.f;
         float m_heldIntegralWindupLimit = 100.0f;
         float m_heldDerivativeFilterAlpha = 0.8f;
-        float m_tidalLockProportionalGain = 25.f;
+        float m_tidalLockProportionalGain = 38.f;
         float m_tidalLockIntegralGain = 0.f;
-        float m_tidalLockDerivativeGain = 1.6f;
+        float m_tidalLockDerivativeGain = 2.58f;
         float m_tidalLockIntegralWindupLimit = 200.f;
         float m_tidalLockDerivativeFilterAlpha = 0.8f;
+        float m_effectiveInertiaFactor = 0.f;
         float m_pitch = 0.f;
         float m_yaw = 0.f;
         float m_roll = 0.f;
@@ -442,8 +446,6 @@ namespace ObjectInteraction
         bool m_fullTidalLockForFPC = false;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = false;
-        bool m_massIndependentThrow = true;
-        bool m_massIndependentTidalLock = true;
         bool m_enablePIDTidalLockDynamics = true;
         bool m_isInGrabState = false;
         bool m_isInRotateState = false;
@@ -459,7 +461,10 @@ namespace ObjectInteraction
         bool m_forceTransition = false;
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
+        bool m_massIndependentThrow = true;
         bool m_massIndependentHeldPID = true;
+        bool m_massIndependentTidalLock = true;
+        bool m_scaleIndependentTidalLock = true;
         bool m_offsetGrab = false;
         bool m_gravityAppliesToPointRotation = true;
 

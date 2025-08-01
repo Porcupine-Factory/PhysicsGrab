@@ -107,6 +107,7 @@ namespace ObjectInteraction
 
                 ->Field("Enable PID Tidal Lock Dynamics", &ObjectInteractionComponent::m_enablePIDTidalLockDynamics)
                 ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
+                ->Field("Scale Independent Tidal Lock", &ObjectInteractionComponent::m_scaleIndependentTidalLock)
                 ->Field("Tidal Lock PID P Gain", &ObjectInteractionComponent::m_tidalLockProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/rad", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID I Gain", &ObjectInteractionComponent::m_tidalLockIntegralGain)
@@ -404,6 +405,12 @@ namespace ObjectInteraction
                         "Disable for realistic mass-dependent rotation where heavier objects rotate slower.")
                     ->DataElement(
                         nullptr,
+                        &ObjectInteractionComponent::m_scaleIndependentTidalLock,
+                        "Enable Scale Independent Tidal Lock",
+                        "When enabled and PID is active, scales torque by approximate inertia factor (based on grab offset) for consistent "
+                        "rotation oscillations regardless of object scale/size.")
+                    ->DataElement(
+                        nullptr,
                         &ObjectInteractionComponent::m_tidalLockProportionalGain,
                         "Tidal Lock PID P Gain",
                         "Proportional gain for tidal lock. Controls rotational stiffness (higher = faster facing).")
@@ -598,6 +605,8 @@ namespace ObjectInteraction
                 ->Event("Set Enable PID Tidal Lock Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDTidalLockDynamics)
                 ->Event("Get Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::GetMassIndependentTidalLock)
                 ->Event("Set Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::SetMassIndependentTidalLock)
+                ->Event("Get Scale Independent Tidal Lock", &ObjectInteractionComponentRequests::GetScaleIndependentTidalLock)
+                ->Event("Set Scale Independent Tidal Lock", &ObjectInteractionComponentRequests::SetScaleIndependentTidalLock)
                 ->Event("Get Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::GetTidalLockProportionalGain)
                 ->Event("Set Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::SetTidalLockProportionalGain)
                 ->Event("Get Tidal Lock Integral Gain", &ObjectInteractionComponentRequests::GetTidalLockIntegralGain)
@@ -1112,6 +1121,34 @@ namespace ObjectInteraction
             // Compute local grab offset from initial hit position
             AZ::Transform objectTM = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+
+            // Get inertia tensor from rigid body (local space) for Tidal Lock scaling
+            AZ::Matrix3x3 grabbedObjectInertiaTensor = AZ::Matrix3x3::CreateIdentity();
+            Physics::RigidBodyRequestBus::EventResult(
+                grabbedObjectInertiaTensor, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
+
+            // Compute average inertia from diagonal elements as scalar approximation
+            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) + 
+                grabbedObjectInertiaTensor.GetElement(1, 1) +
+                grabbedObjectInertiaTensor.GetElement(2, 2)) / 3.0f;
+
+            // If average inertia is valid (non-zero, assuming compute inertia enabled), compute factor (~ s^2)
+            if (averageGrabbedObjectInertia > AZ::Constants::FloatEpsilon)
+            {
+                m_effectiveInertiaFactor = averageGrabbedObjectInertia / m_grabbedObjectMass;
+            }
+            else
+            {
+                // If inertia unavailable, default to no scaling
+                m_effectiveInertiaFactor = 1.0f;
+            }
+
+            // Clamp to minimum to prevent very small values
+            if (m_effectiveInertiaFactor < 0.01f)
+            {
+                m_effectiveInertiaFactor = 0.01f;
+            }
+
             m_localGrabOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
 
             // Compute dynamic initial grab distance as projected distance along forward to effective point
@@ -2252,11 +2289,25 @@ namespace ObjectInteraction
                 AZ::Vector3 angularPidOutput =
                     m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
 
-                // Optionally scale by mass for mass-independent behavior
-                AZ::Vector3 angularTorque = m_massIndependentTidalLock ? m_grabbedObjectMass * angularPidOutput : angularPidOutput;
+                // Initialize angular torque from PID output
+                AZ::Vector3 angularTorque = angularPidOutput;
 
-                // Apply as impulse
+                // Scale torque by mass for mass-independent behavior if enabled
+                if (m_massIndependentTidalLock)
+                {
+                    angularTorque *= m_grabbedObjectMass;
+                }
+
+                // Scale torque by effective inertia factor for scale-independent behavior if enabled
+                if (m_scaleIndependentTidalLock)
+                {
+                    angularTorque *= m_effectiveInertiaFactor;
+                }
+
+                // Compute angular impulse from torque and delta time
                 AZ::Vector3 angularImpulse = angularTorque * deltaTime;
+
+                // Apply angular impulse to the grabbed object
                 Physics::RigidBodyRequestBus::Event(
                     m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
             }
@@ -3328,6 +3379,16 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock)
     {
         m_massIndependentTidalLock = new_massIndependentTidalLock;
+    }
+
+    bool ObjectInteractionComponent::GetScaleIndependentTidalLock() const
+    {
+        return m_scaleIndependentTidalLock;
+    }
+
+    void ObjectInteractionComponent::SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock)
+    {
+        m_scaleIndependentTidalLock = new_scaleIndependentTidalLock;
     }
 
     float ObjectInteractionComponent::GetTidalLockProportionalGain() const
