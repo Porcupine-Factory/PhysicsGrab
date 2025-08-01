@@ -156,6 +156,19 @@ namespace ObjectInteraction
         void SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter) override;
         float GetGrabbedObjectThrowStateTime() const override;
         void SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime) override;
+        bool GetEnableChargeThrow() const override;
+        void SetEnableChargeThrow(const bool& new_enableChargeThrow) override;
+        float GetMinThrowImpulse() const override;
+        void SetMinThrowImpulse(const float& new_minThrowImpulse) override;
+        float GetMaxThrowImpulse() const override;
+        void SetMaxThrowImpulse(const float& new_maxThrowImpulse) override;
+        float GetCurrentThrowImpulse() const override;
+        float GetChargeTime() const override;
+        void SetChargeTime(const float& new_chargeTime) override;
+        float GetCurrentChargeTime() const override;
+        bool GetEnableChargeWhileRotating() const override;
+        void SetEnableChargeWhileRotating(const bool& new_enableChargeWhileRotating) override;
+        bool GetIsChargingThrow() const override;
         float GetSphereCastRadius() const override;
         void SetSphereCastRadius(const float& new_sphereCastRadius) override;
         float GetSphereCastDistance() const override;
@@ -204,8 +217,6 @@ namespace ObjectInteraction
         void SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit) override;
         float GetHeldDerivativeFilterAlpha() const override;
         void SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha) override;
-        PidController<AZ::Vector3>::DerivativeCalculationMode GetHeldDerivativeMode() const override;
-        void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode) override;
         bool GetEnablePIDTidalLockDynamics() const override;
         void SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics) override;
         bool GetMassIndependentTidalLock() const override;
@@ -220,6 +231,8 @@ namespace ObjectInteraction
         void SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit) override;
         float GetTidalLockDerivativeFilterAlpha() const override;
         void SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha) override;
+        PidController<AZ::Vector3>::DerivativeCalculationMode GetHeldDerivativeMode() const override;
+        void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode) override;
         PidController<AZ::Vector3>::DerivativeCalculationMode GetTidalLockDerivativeMode() const override;
         void SetTidalLockDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode) override;
      
@@ -276,6 +289,7 @@ namespace ObjectInteraction
         void ThrowObject();
         void TidalLock(float deltaTime);
         void UpdateGrabDistance(float deltaTime);
+        void TransitionToThrow(bool isChargeEnabled);
         void InterpolateMeshTransform(float deltaTime);
         void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
@@ -297,6 +311,7 @@ namespace ObjectInteraction
         void OnThrowStop();
         void OnMaxThrowDistance();
         void OnThrowStateCounterZero();
+        void OnChargeComplete();
         
         // State machine functions
         void ProcessStates(const float& deltaTime, bool isPhysicsUpdate = false);
@@ -376,6 +391,12 @@ namespace ObjectInteraction
         float m_grabDistanceSpeed = 0.2f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 8.f;
+        float m_minThrowImpulse = 3.0f;
+        float m_maxThrowImpulse = 20.0f;
+        float m_chargeTime = 3.0f;
+        float m_currentChargeTime = 0.0f;
+        float m_currentThrowImpulse = 0.0f;
+        float m_prevThrowKeyValue = 0.f;
         float m_grabbedObjectMass = 1.0f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 3.f;
@@ -400,6 +421,10 @@ namespace ObjectInteraction
         float m_accumYaw = 0.0f;
         float m_accumRoll = 0.0f;
 
+        bool m_enableChargeThrow = false;
+        bool m_isChargingThrow = false;
+        bool m_enableChargeWhileRotating = true;
+        bool m_hasNotifiedChargeComplete = false;
         bool m_meshSmoothing = true;
         bool m_velocityCompensation = true;
         bool m_smoothDynamicRotation = true;

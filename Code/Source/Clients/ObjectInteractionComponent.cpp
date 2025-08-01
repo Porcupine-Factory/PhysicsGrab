@@ -56,9 +56,19 @@ namespace ObjectInteraction
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &ObjectInteractionComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+                
                 ->Field("Enable Mass Independent Throw", &ObjectInteractionComponent::m_massIndependentThrow)
+                ->Field("Charge Throw", &ObjectInteractionComponent::m_enableChargeThrow)
+                ->Field("Charge While Rotating", &ObjectInteractionComponent::m_enableChargeWhileRotating)
                 ->Field("Throw Impulse", &ObjectInteractionComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Min Throw Impulse", &ObjectInteractionComponent::m_minThrowImpulse)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Max Throw Impulse", &ObjectInteractionComponent::m_maxThrowImpulse)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Charge Time", &ObjectInteractionComponent::m_chargeTime)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " s")
+
                 ->Field("Grab Response", &ObjectInteractionComponent::m_grabResponse)
                 ->Attribute(
                     AZ::Edit::Attributes::Suffix,
@@ -209,7 +219,7 @@ namespace ObjectInteraction
                           "only.")
                     #endif
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Throwing Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
@@ -218,7 +228,41 @@ namespace ObjectInteraction
                         "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
                         "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed object")
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableChargeThrow,
+                        "Enable Chargeable Throw",
+                        "If true, hold throw key to charge impulse from min to max.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_enableChargeWhileRotating,
+                        "Enable Charge While Rotating",
+                        "If true, allow charging throw in rotate state; if false, only in hold state. Relevant when Chargeable Throw is enabled.")
+                    ->DataElement(
+                        nullptr, &ObjectInteractionComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed " 
+                        "object. Used when Chargeable Throw is disabled.")
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_minThrowImpulse,
+                        "Min Throw Impulse",
+                        "Minimum throw impulse for quick release. Used when Chargeable Throw is enabled.")
+                    ->Attribute(
+                        AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_maxThrowImpulse,
+                        "Max Throw Impulse",
+                        "Maximum throw impulse after full charge. Used when Chargeable Throw is enabled.")
+                    ->Attribute(
+                        AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                    ->DataElement(
+                        nullptr,
+                        &ObjectInteractionComponent::m_chargeTime,
+                        "Charge Time",
+                        "Time (seconds) to reach max impulse while holding. Used when Chargeable Throw is enabled.")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " s")    
+                    
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr, &ObjectInteractionComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(
@@ -490,6 +534,19 @@ namespace ObjectInteraction
                 ->Event("Set Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateCounter)
                 ->Event("Get Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateTime)
                 ->Event("Set Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateTime)
+                ->Event("Get Enable Charge Throw", &ObjectInteractionComponentRequests::GetEnableChargeThrow)
+                ->Event("Set Enable Charge Throw", &ObjectInteractionComponentRequests::SetEnableChargeThrow)
+                ->Event("Get Enable Charge While Rotating", &ObjectInteractionComponentRequests::GetEnableChargeWhileRotating)
+                ->Event("Set Enable Charge While Rotating", &ObjectInteractionComponentRequests::SetEnableChargeWhileRotating)
+                ->Event("Get Min Throw Impulse", &ObjectInteractionComponentRequests::GetMinThrowImpulse)
+                ->Event("Set Min Throw Impulse", &ObjectInteractionComponentRequests::SetMinThrowImpulse)
+                ->Event("Get Max Throw Impulse", &ObjectInteractionComponentRequests::GetMaxThrowImpulse)
+                ->Event("Set Max Throw Impulse", &ObjectInteractionComponentRequests::SetMaxThrowImpulse)
+                ->Event("Get Current Throw Impulse", &ObjectInteractionComponentRequests::GetCurrentThrowImpulse)
+                ->Event("Get Charge Time", &ObjectInteractionComponentRequests::GetChargeTime)
+                ->Event("Set Charge Time", &ObjectInteractionComponentRequests::SetChargeTime)
+                ->Event("Get Current Charge Time", &ObjectInteractionComponentRequests::GetCurrentChargeTime)
+                ->Event("Get Is Charging Throw", &ObjectInteractionComponentRequests::GetIsChargingThrow)
                 ->Event("Get Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::GetSphereCastRadius)
                 ->Event("Set Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::SetSphereCastRadius)
                 ->Event("Get Grab Sphere Cast Distance", &ObjectInteractionComponentRequests::GetSphereCastDistance)
@@ -918,6 +975,7 @@ namespace ObjectInteraction
 
         m_prevGrabKeyValue = m_grabKeyValue;
         m_prevRotateKeyValue = m_rotateKeyValue;
+        m_prevThrowKeyValue = m_throwKeyValue;
     }
 
     void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
@@ -1237,6 +1295,11 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
 
+            // Reset throw charging on drop
+            m_isChargingThrow = false;
+            m_currentChargeTime = 0.f;
+            m_hasNotifiedChargeComplete = false;
+
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
@@ -1293,6 +1356,11 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
 
+            // Reset throw charging on manual drop
+            m_isChargingThrow = false;
+            m_currentChargeTime = 0.f;
+            m_hasNotifiedChargeComplete = false;
+
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
@@ -1314,32 +1382,44 @@ namespace ObjectInteraction
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
-        // Enter throw state if throw key is pressed. Other conditionals allow forced state transition to 
-        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
-            (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
+        // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release.
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
+        // prevent state transition with m_isStateLocked
+        else if (!m_isStateLocked && m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
         {
-            // Start throw counter
-            m_throwStateCounter = m_throwStateMaxTime;
-
-            // Set Kinematic Rigid Body to dynamic if it was held as kinematic
-            if (m_isObjectKinematic)
+            // If chargeable throw is disabled, perform immediate throw
+            if (!m_enableChargeThrow)
             {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
+                TransitionToThrow(false);
             }
-
-            // Reset to object's original Linear Damping value
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-            m_objectSphereCastHit = false;
-            m_meshEntityPtr = nullptr;
-
-            m_state = ObjectInteractionStates::throwState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
-            m_forceTransition = false;
+            else
+            {
+                // Start charging for throw
+                m_isChargingThrow = true;
+                m_currentChargeTime = 0.f;
+                m_hasNotifiedChargeComplete = false;
+            }
+        }
+        // Accumulate charge time only while the throw key is held (and not in physics update for input responsiveness)
+        else if (m_isChargingThrow && m_throwKeyValue != 0.f && !isPhysicsUpdate)
+        {
+            // Increment the charge timer
+            m_currentChargeTime += deltaTime;
+            // Check if full charge is reached and notify if not already done
+            if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
+            {
+                ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnChargeComplete);
+                m_hasNotifiedChargeComplete = true;
+            }
+        }
+        // Detect throw key release to trigger the charged throw
+        else if (!m_isStateLocked && m_prevThrowKeyValue != 0.f && m_throwKeyValue == 0.f && !m_isInitialObjectKinematic)
+        {
+            // If chargeable throw is enabled and charging was active, perform charged throw
+            if (m_enableChargeThrow && m_isChargingThrow)
+            {
+                TransitionToThrow(true);
+            }
         }
         else
         {
@@ -1406,6 +1486,10 @@ namespace ObjectInteraction
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
+
+            // Reset charging on drop m_isChargingThrow = false;
+            m_currentChargeTime = 0.f;
+            m_hasNotifiedChargeComplete = false;
 
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
@@ -1482,6 +1566,11 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId = AZ::EntityId();
             m_meshEntityPtr = nullptr;
 
+            // Reset charging on manual drop
+            m_isChargingThrow = false;
+            m_currentChargeTime = 0.f;
+            m_hasNotifiedChargeComplete = false;
+
             m_state = ObjectInteractionStates::idleState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
@@ -1535,45 +1624,44 @@ namespace ObjectInteraction
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
         }
-        // Transition to throwState if Throw key is pressed. Other conditionals allow forced state transition to 
-        // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::throwState && !m_isInitialObjectKinematic) ||
-            (!m_isStateLocked && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic))
+        // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release. 
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // prevent state transition with m_isStateLocked
+        else if (!m_isStateLocked && m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
         {
-            // Set Angular Damping back to original value
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-            // Set Linear Damping back to zero if sphere cast doesn't hit
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-            // Set Angular Velocity to zero when no longer rotating
-            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
-            m_throwStateCounter = m_throwStateMaxTime;
-
-            // Set Kinematic Rigid Body to dynamic if it was held as kinematic
-            if (m_isObjectKinematic)
+            // If chargeable throw is disabled or not allowed while rotating, perform immediate throw
+            if (!m_enableChargeThrow || !m_enableChargeWhileRotating)
             {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
+                TransitionToThrow(false);
             }
-
-            // Restore gravity if it was disabled (before throwing)
-            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+            else
             {
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+                // Start charging for throw
+                m_isChargingThrow = true;
+                m_currentChargeTime = 0.f;
+                m_hasNotifiedChargeComplete = false;
             }
-
-            m_objectSphereCastHit = false;
-            m_meshEntityPtr = nullptr;
-
-            m_state = ObjectInteractionStates::throwState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
-            m_forceTransition = false;
+        }
+        // Accumulate charge time only while the throw key is held (and not in physics update for input responsiveness)
+        else if (m_isChargingThrow && m_throwKeyValue != 0.f && !isPhysicsUpdate)
+        {
+            // Increment the charge timer
+            m_currentChargeTime += deltaTime;
+            // Check if full charge is reached and notify if not already done
+            if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
+            {
+                ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnChargeComplete);
+                m_hasNotifiedChargeComplete = true;
+            }
+        }
+        // Detect throw key release to trigger the charged throw
+        else if (!m_isStateLocked && m_prevThrowKeyValue != 0.f && m_throwKeyValue == 0.f && !m_isInitialObjectKinematic)
+        {
+            // If chargeable throw is enabled and charging was active, perform charged throw
+            if (m_enableChargeThrow && m_isChargingThrow)
+            {
+                TransitionToThrow(true);
+            }
         }
         else
         {
@@ -1973,7 +2061,7 @@ namespace ObjectInteraction
         Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
         // Compute base impulse
-        AZ::Vector3 base_impulse = m_forwardVector * m_throwImpulse;
+        AZ::Vector3 base_impulse = m_forwardVector * m_currentThrowImpulse;
 
         // Optionally scale by mass for mass-independent throw velocity
         AZ::Vector3 impulse = m_massIndependentThrow ? mass * base_impulse : base_impulse;
@@ -1999,6 +2087,65 @@ namespace ObjectInteraction
             Physics::RigidBodyRequestBus::Event(
                 m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
         }
+    }
+
+    // Handles throw transition from hold and rotate
+    void ObjectInteractionComponent::TransitionToThrow(bool isChargeEnabled)
+    {
+        // If transitioning from rotate state, reset rotation-specific properties
+        if (m_state == ObjectInteractionStates::rotateState)
+        {
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+        }
+
+        // Reset to object's original Linear Damping value
+        SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
+        // Start throw counter
+        m_throwStateCounter = m_throwStateMaxTime;
+
+        // Set Kinematic Rigid Body to dynamic if it was held as kinematic
+        if (m_isObjectKinematic)
+        {
+            SetGrabbedObjectKinematicElseDynamic(false);
+            m_isObjectKinematic = false;
+        }
+
+        // Restore gravity if it was disabled (before throwing)
+        if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+        {
+            Physics::RigidBodyRequestBus::Event(
+                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+        }
+
+        // Clear sphere cast hit flag and mesh pointer as object is being released
+        m_objectSphereCastHit = false;
+        m_meshEntityPtr = nullptr;
+
+        // Determine whether to charge impulse
+        if (isChargeEnabled)
+        {
+            // Calculate charged impulse as a linear interpolation between min and max based on charge fraction
+            float chargeFraction = AZ::GetClamp(m_currentChargeTime / m_chargeTime, 0.f, 1.f);
+            m_currentThrowImpulse = m_minThrowImpulse + chargeFraction * (m_maxThrowImpulse - m_minThrowImpulse);
+        }
+        else
+        {
+            // Use the fixed throw impulse for non-charged throws
+            m_currentThrowImpulse = m_throwImpulse;
+        }
+
+        // Transition to throw state
+        m_state = ObjectInteractionStates::throwState;
+        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
+
+        // Reset charging state after initiating throw
+        m_isChargingThrow = false;
+        m_currentChargeTime = 0.f;
+        m_hasNotifiedChargeComplete = false;
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
@@ -2195,6 +2342,9 @@ namespace ObjectInteraction
     {
     }
     void ObjectInteractionComponent::OnThrowStateCounterZero()
+    {
+    }
+    void ObjectInteractionComponent::OnChargeComplete()
     {
     }
 
@@ -2631,6 +2781,71 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
     {
         m_throwStateMaxTime = new_throwStateMaxTime;
+    }
+
+    bool ObjectInteractionComponent::GetEnableChargeThrow() const
+    {
+        return m_enableChargeThrow;
+    }
+
+    void ObjectInteractionComponent::SetEnableChargeThrow(const bool& new_enableChargeThrow)
+    {
+        m_enableChargeThrow = new_enableChargeThrow;
+    }
+
+    float ObjectInteractionComponent::GetMinThrowImpulse() const
+    {
+        return m_minThrowImpulse;
+    }
+
+    void ObjectInteractionComponent::SetMinThrowImpulse(const float& new_minThrowImpulse)
+    {
+        m_minThrowImpulse = new_minThrowImpulse;
+    }
+
+    float ObjectInteractionComponent::GetMaxThrowImpulse() const
+    {
+        return m_maxThrowImpulse;
+    }
+
+    void ObjectInteractionComponent::SetMaxThrowImpulse(const float& new_maxThrowImpulse)
+    {
+        m_maxThrowImpulse = new_maxThrowImpulse;
+    }
+
+    float ObjectInteractionComponent::GetCurrentThrowImpulse() const
+    {
+        return m_currentThrowImpulse;
+    }
+
+    float ObjectInteractionComponent::GetChargeTime() const
+    {
+        return m_chargeTime;
+    }
+
+    void ObjectInteractionComponent::SetChargeTime(const float& new_chargeTime)
+    {
+        m_chargeTime = new_chargeTime;
+    }
+
+    float ObjectInteractionComponent::GetCurrentChargeTime() const
+    {
+        return m_currentChargeTime;
+    }
+
+    bool ObjectInteractionComponent::GetEnableChargeWhileRotating() const
+    {
+        return m_enableChargeWhileRotating;
+    }
+
+    void ObjectInteractionComponent::SetEnableChargeWhileRotating(const bool& new_enableChargeWhileRotating)
+    {
+        m_enableChargeWhileRotating = new_enableChargeWhileRotating;
+    }
+
+    bool ObjectInteractionComponent::GetIsChargingThrow() const
+    {
+            return m_isChargingThrow;
     }
 
     float ObjectInteractionComponent::GetSphereCastRadius() const

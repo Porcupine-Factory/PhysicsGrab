@@ -163,6 +163,19 @@ namespace ObjectInteraction
         virtual void SetTidalLockIntegralWindupLimit(const float&) = 0;
         virtual float GetTidalLockDerivativeFilterAlpha() const = 0;
         virtual void SetTidalLockDerivativeFilterAlpha(const float&) = 0;
+        virtual bool GetEnableChargeThrow() const = 0;
+        virtual void SetEnableChargeThrow(const bool&) = 0;
+        virtual bool GetEnableChargeWhileRotating() const = 0;
+        virtual void SetEnableChargeWhileRotating(const bool&) = 0;
+        virtual float GetMinThrowImpulse() const = 0;
+        virtual void SetMinThrowImpulse(const float&) = 0;
+        virtual float GetMaxThrowImpulse() const = 0;
+        virtual void SetMaxThrowImpulse(const float&) = 0;
+        virtual float GetCurrentThrowImpulse() const = 0;
+        virtual float GetChargeTime() const = 0;
+        virtual void SetChargeTime(const float&) = 0;
+        virtual float GetCurrentChargeTime() const = 0;
+        virtual bool GetIsChargingThrow() const = 0;
         virtual PidController<AZ::Vector3>::DerivativeCalculationMode GetHeldDerivativeMode() const = 0;
         virtual void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode&) = 0;
         virtual PidController<AZ::Vector3>::DerivativeCalculationMode GetTidalLockDerivativeMode() const = 0;
@@ -203,6 +216,7 @@ namespace ObjectInteraction
         virtual void OnThrowStop() = 0;
         virtual void OnThrowStateCounterZero() = 0;
         virtual void OnMaxThrowDistance() = 0;
+        virtual void OnChargeComplete() = 0;
     };
 
     using ObjectInteractionNotificationBus = AZ::EBus<ObjectInteractionNotifications>;
@@ -224,7 +238,8 @@ namespace ObjectInteraction
             OnThrowStart,
             OnThrowStop,
             OnThrowStateCounterZero,
-            OnMaxThrowDistance);
+            OnMaxThrowDistance,
+            OnChargeComplete);
 
         void OnObjectSphereCastHit() override
         {
@@ -261,6 +276,10 @@ namespace ObjectInteraction
         void OnMaxThrowDistance() override
         {
             Call(FN_OnMaxThrowDistance);
+        }
+        void OnChargeComplete() override
+        {
+            Call(FN_OnChargeComplete);
         }
     };
 } // namespace ObjectInteraction
