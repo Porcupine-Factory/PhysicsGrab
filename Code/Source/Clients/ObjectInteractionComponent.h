@@ -290,6 +290,7 @@ namespace ObjectInteraction
         void TidalLock(float deltaTime);
         void UpdateGrabDistance(float deltaTime);
         void TransitionToThrow(bool isChargeEnabled);
+        void ReleaseMesh();
         void InterpolateMeshTransform(float deltaTime);
         void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
@@ -325,6 +326,7 @@ namespace ObjectInteraction
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
         AZ::Transform m_prevPhysicsTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_currentPhysicsTransform = AZ::Transform::CreateIdentity();
+        AZ::Transform m_originalMeshLocalTM = AZ::Transform::CreateIdentity();
 
         AZ::TransformInterface* m_cameraRotationTransform = nullptr;
 

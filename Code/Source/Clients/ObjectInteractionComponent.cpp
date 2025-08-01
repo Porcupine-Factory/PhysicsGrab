@@ -1009,16 +1009,33 @@ namespace ObjectInteraction
         const AZ::Quaternion interpolatedRotation =
             m_prevPhysicsTransform.GetRotation().Slerp(m_currentPhysicsTransform.GetRotation(), alpha);
 
-        // Create interpolated transform
-        const AZ::Transform interpolatedTransform =
-            AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
+        // Interpolate uniform scale to preserve parent's scale (prevents reset to 1.0)
+        const float interpolatedScale =
+            AZ::Lerp(m_prevPhysicsTransform.GetUniformScale(), m_currentPhysicsTransform.GetUniformScale(), alpha);
 
+        // Compose interpolated parent transform with original local mesh TM to preserve offsets, rotation, and scale
+        AZ::Transform interpolatedParent = AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
+        
+        // Set the interpolated uniform scale on the parent transform
+        interpolatedParent.SetUniformScale(interpolatedScale);
+        
+        AZ::Transform interpolatedMesh = interpolatedParent * m_originalMeshLocalTM;
+        
         // Update mesh entity transform
-        AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedTransform);
+        AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedMesh);
 
         // Reset accumulator if it exceeds physics timestep due to accumulated error
         if (m_physicsTimeAccumulator >= m_physicsTimestep)
             m_physicsTimeAccumulator -= m_physicsTimestep;
+    }
+
+    void ObjectInteractionComponent::ReleaseMesh()
+    {
+        if (m_meshEntityPtr)
+        {
+            AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetLocalTM, m_originalMeshLocalTM);
+            m_meshEntityPtr = nullptr;
+        }
     }
 
     void ObjectInteractionComponent::IdleState()
@@ -1133,8 +1150,13 @@ namespace ObjectInteraction
                     }
                 }
             }
+            // Capture original local transform of mesh entity for preservation during smoothing
+            if (m_meshEntityPtr)
+            {
+                AZ::TransformBus::EventResult(m_originalMeshLocalTM, m_meshEntityPtr->GetId(), &AZ::TransformInterface::GetLocalTM);
+            }
             // Warn if no mesh found but smoothing expected
-            if (!m_meshEntityPtr)
+            else
             {
                 AZ_Warning(
                     "ObjectInteractionComponent",
@@ -1293,7 +1315,9 @@ namespace ObjectInteraction
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
-            m_meshEntityPtr = nullptr;
+
+            // Restore original local TM of mesh entity before nulling pointer
+            ReleaseMesh();
 
             // Reset throw charging on drop
             m_isChargingThrow = false;
@@ -1354,7 +1378,9 @@ namespace ObjectInteraction
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
-            m_meshEntityPtr = nullptr;
+            
+            // Restore original local TM of mesh entity before nulling pointer
+            ReleaseMesh();
 
             // Reset throw charging on manual drop
             m_isChargingThrow = false;
@@ -1485,7 +1511,9 @@ namespace ObjectInteraction
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
-            m_meshEntityPtr = nullptr;
+            
+            // Restore original local TM of mesh entity before nulling pointer
+            ReleaseMesh();
 
             // Reset charging on drop m_isChargingThrow = false;
             m_currentChargeTime = 0.f;
@@ -1564,7 +1592,9 @@ namespace ObjectInteraction
             m_objectSphereCastHit = false;
             m_grabbedObjectEntityId = AZ::EntityId();
             m_lastGrabbedObjectEntityId = AZ::EntityId();
-            m_meshEntityPtr = nullptr;
+            
+            // Restore original local TM of mesh entity before nulling pointer
+            ReleaseMesh();
 
             // Reset charging on manual drop
             m_isChargingThrow = false;
@@ -2122,7 +2152,9 @@ namespace ObjectInteraction
 
         // Clear sphere cast hit flag and mesh pointer as object is being released
         m_objectSphereCastHit = false;
-        m_meshEntityPtr = nullptr;
+        
+        // Restore original local TM of mesh entity before nulling pointer
+        ReleaseMesh();
 
         // Determine whether to charge impulse
         if (isChargeEnabled)
