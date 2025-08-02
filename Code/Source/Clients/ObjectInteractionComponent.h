@@ -384,12 +384,12 @@ namespace ObjectInteraction
         float m_kinematicYawRotateScale = 1.2f;
         float m_kinematicPitchRotateScale = 2.133f;
         float m_kinematicRollRotateScale = 1.2f;
-        float m_dynamicYawRotateScale = 0.6f;
-        float m_dynamicPitchRotateScale = 1.067f;
-        float m_dynamicRollRotateScale = 0.6f;
+        float m_dynamicYawRotateScale = 0.4f;
+        float m_dynamicPitchRotateScale = 0.711f;
+        float m_dynamicRollRotateScale = 0.4f;
         float m_prevObjectAngularDamping = 0.f;
         float m_currentObjectAngularDamping = 0.f;
-        float m_tempObjectAngularDamping = 20.f;
+        float m_tempObjectAngularDamping = 0.15f;
         float m_tempObjectLinearDamping = 0.05f;
         float m_prevObjectLinearDamping = 0.f;
         float m_currentObjectLinearDamping = 0.f;

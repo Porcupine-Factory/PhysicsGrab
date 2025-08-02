@@ -287,7 +287,7 @@ namespace ObjectInteraction
                         "Dynamic Vertical Rotate Scale",
                         "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Rotating")
+                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Holding or Rotating")
                     ->DataElement(
                         nullptr,
                         &ObjectInteractionComponent::m_tempObjectLinearDamping,
@@ -1091,9 +1091,13 @@ namespace ObjectInteraction
             // Store object's original Angular Damping value
             m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
 
-            // Store object's original Linear Damping value, and set new value.
+            // Store object's original Linear Damping value, and set new value for hold/rotate.
             m_prevObjectLinearDamping = GetCurrentGrabbedObjectLinearDamping();
             SetCurrentGrabbedObjectLinearDamping(m_tempObjectLinearDamping);
+
+            // Store object's original Angular Damping value, and set new value for hold/rotate.
+            m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
+            SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
 
             // Store and disable gravity for dynamic objects if enabled
             if (m_disableGravityWhileHeld && !m_isObjectKinematic)
@@ -1436,10 +1440,6 @@ namespace ObjectInteraction
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
-            // Store object's original Angular Damping value before rotating
-            m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
-            // Set new Angular Damping before rotating object
-            SetCurrentGrabbedObjectAngularDamping(m_tempObjectAngularDamping);
 
             m_state = ObjectInteractionStates::rotateState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
@@ -1652,7 +1652,6 @@ namespace ObjectInteraction
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
         {
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             // Recompute relative quaternion after rotation changes (to lock new orientation)
