@@ -1088,9 +1088,6 @@ namespace ObjectInteraction
                 m_isObjectKinematic = false;
             }
            
-            // Store object's original Angular Damping value
-            m_prevObjectAngularDamping = GetCurrentGrabbedObjectAngularDamping();
-
             // Store object's original Linear Damping value, and set new value for hold/rotate.
             m_prevObjectLinearDamping = GetCurrentGrabbedObjectLinearDamping();
             SetCurrentGrabbedObjectLinearDamping(m_tempObjectLinearDamping);
@@ -1440,7 +1437,6 @@ namespace ObjectInteraction
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
-
             m_state = ObjectInteractionStates::rotateState;
             ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
