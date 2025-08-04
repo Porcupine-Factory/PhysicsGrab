@@ -292,6 +292,7 @@ namespace ObjectInteraction
         void ThrowObject();
         void TidalLock(float deltaTime);
         void UpdateGrabDistance(float deltaTime);
+        void ReleaseGrabbedObject(bool notifyHoldStop, bool notifyRotateStop);
         void TransitionToThrow(bool isChargeEnabled);
         void ReleaseMesh();
         void InterpolateMeshTransform(float deltaTime);

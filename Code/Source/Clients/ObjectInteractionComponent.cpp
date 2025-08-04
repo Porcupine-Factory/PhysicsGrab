@@ -1321,49 +1321,8 @@ namespace ObjectInteraction
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
-            // Set Object Current Layer variable back to initial layer if sphere cast doesn't hit
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-            // Set Angular Damping back to original value if sphere cast doesn't hit
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-            // Restore gravity if it was disabled
-            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
-            {
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
-            }
-
-            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
-            if (!m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
-            }
-            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
-            else if (m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(true);
-                m_isObjectKinematic = true;
-            }
-
-            // Reset to object's original Linear Damping value
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-            m_objectSphereCastHit = false;
-            m_grabbedObjectEntityId = AZ::EntityId();
-            m_lastGrabbedObjectEntityId = AZ::EntityId();
-
-            // Restore original local TM of mesh entity before nulling pointer
-            ReleaseMesh();
-
-            // Reset throw charging on drop
-            m_isChargingThrow = false;
-            m_currentChargeTime = 0.f;
-            m_hasNotifiedChargeComplete = false;
-
+            ReleaseGrabbedObject(true, false);
             m_state = ObjectInteractionStates::idleState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
             return;
         }
@@ -1384,49 +1343,8 @@ namespace ObjectInteraction
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
-            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-            // Set Angular Damping back to original value if Grab Key is not pressed
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-            // Restore gravity if it was disabled
-            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
-            {
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
-            }
-
-            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
-            if (!m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
-            }
-            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
-            else if (m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(true);
-                m_isObjectKinematic = true;
-            }
-
-            // Reset to object's original Linear Damping value
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-            m_objectSphereCastHit = false;
-            m_grabbedObjectEntityId = AZ::EntityId();
-            m_lastGrabbedObjectEntityId = AZ::EntityId();
-            
-            // Restore original local TM of mesh entity before nulling pointer
-            ReleaseMesh();
-
-            // Reset throw charging on manual drop
-            m_isChargingThrow = false;
-            m_currentChargeTime = 0.f;
-            m_hasNotifiedChargeComplete = false;
-
+            ReleaseGrabbedObject(true, false);
             m_state = ObjectInteractionStates::idleState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
         // Enter Rotate State if rotate key is pressed. Other conditionals allow forced state transition 
@@ -1510,51 +1428,10 @@ namespace ObjectInteraction
         if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
-            // Set Angular Damping back to original value if sphere cast doesn't hit
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-            
-            // Set Linear Damping back to zero if sphere cast doesn't hit
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-            
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-            // Restore gravity if it was disabled
-            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
-            {
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
-            }
-
-            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
-            if (!m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
-            }
-            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
-            else if (m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(true);
-                m_isObjectKinematic = true;
-            }
-
-            m_objectSphereCastHit = false;
-            m_grabbedObjectEntityId = AZ::EntityId();
-            m_lastGrabbedObjectEntityId = AZ::EntityId();
-            
-            // Restore original local TM of mesh entity before nulling pointer
-            ReleaseMesh();
-
-            // Reset charging on drop m_isChargingThrow = false;
-            m_currentChargeTime = 0.f;
-            m_hasNotifiedChargeComplete = false;
-
+            ReleaseGrabbedObject(true, true);
             m_state = ObjectInteractionStates::idleState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
             return;
         }
@@ -1590,53 +1467,10 @@ namespace ObjectInteraction
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
         {
-            // Set Angular Damping back to original value if Grab Key is not pressed
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-            // Set Linear Damping back to zero if sphere cast doesn't hit
-            SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
             // Set Angular Velocity back to zero if Grab Key is not pressed
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-
-            // Set Object Current Layer variable back to initial layer if Grab Key is not pressed
-            SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-            // Restore gravity if it was disabled
-            if (m_disableGravityWhileHeld && !m_isObjectKinematic)
-            {
-                Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
-            }
-
-            // Set Grabbed Object back to Dynamic Rigid Body if previously dynamic
-            if (!m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(false);
-                m_isObjectKinematic = false;
-            }
-            // Set Grabbed Object back to Kinematic Rigid Body if previously kinematic
-            else if (m_isInitialObjectKinematic)
-            {
-                SetGrabbedObjectKinematicElseDynamic(true);
-                m_isObjectKinematic = true;
-            }
-
-            m_objectSphereCastHit = false;
-            m_grabbedObjectEntityId = AZ::EntityId();
-            m_lastGrabbedObjectEntityId = AZ::EntityId();
-            
-            // Restore original local TM of mesh entity before nulling pointer
-            ReleaseMesh();
-
-            // Reset charging on manual drop
-            m_isChargingThrow = false;
-            m_currentChargeTime = 0.f;
-            m_hasNotifiedChargeComplete = false;
-
+            ReleaseGrabbedObject(true, true);
             m_state = ObjectInteractionStates::idleState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
             m_forceTransition = false;
         }
         // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
@@ -2148,6 +1982,49 @@ namespace ObjectInteraction
         {
             Physics::RigidBodyRequestBus::Event(
                 m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+        }
+    }
+
+    void ObjectInteractionComponent::ReleaseGrabbedObject(bool notifyHoldStop = true, bool notifyRotateStop = false)
+    {
+        // Set Object Current Layer variable back to initial layer
+        SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+
+        // Set Object Angular Damping back to original value
+        SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+
+        // Set Object Linear Damping back to original value
+        SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+
+        // Store and disable gravity for dynamic objects
+        if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+        {
+            Physics::RigidBodyRequestBus::Event(
+                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+        }
+
+        SetGrabbedObjectKinematicElseDynamic(m_isInitialObjectKinematic);
+        m_isObjectKinematic = m_isInitialObjectKinematic;
+
+        m_objectSphereCastHit = false;
+        m_grabbedObjectEntityId = AZ::EntityId();
+        m_lastGrabbedObjectEntityId = AZ::EntityId();
+
+        // Restore original local TM of mesh entity before nulling pointer
+        ReleaseMesh();
+
+        // Reset throw charging on drop
+        m_isChargingThrow = false;
+        m_currentChargeTime = 0.f;
+        m_hasNotifiedChargeComplete = false;
+
+        if (notifyHoldStop)
+        {
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+        }
+        if (notifyRotateStop)
+        {
+            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
         }
     }
 
