@@ -519,14 +519,18 @@ namespace ObjectInteraction
                 ->Event("Set Object Tidal Lock", &ObjectInteractionComponentRequests::SetTidalLock)
                 ->Event("Get Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::GetFullTidalLockForFPC)
                 ->Event("Set Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::SetFullTidalLockForFPC)
-                ->Event("Get Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicYawRotateScale)
-                ->Event("Set Dynamic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicYawRotateScale)
-                ->Event("Get Dynamic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicPitchRotateScale)
-                ->Event("Set Dynamic Vertical Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicPitchRotateScale)
-                ->Event("Get Kinematic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicYawRotateScale)
-                ->Event("Set Kinematic Horizontal Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicYawRotateScale)
-                ->Event("Get Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
-                ->Event("Set Kinematic Vertical Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
+                ->Event("Get Dynamic Yaw Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicYawRotateScale)
+                ->Event("Set Dynamic Yaw Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicYawRotateScale)
+                ->Event("Get Dynamic Pitch Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicPitchRotateScale)
+                ->Event("Set Dynamic Pitch Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicPitchRotateScale)
+                ->Event("Get Dynamic Roll Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicRollRotateScale)
+                ->Event("Set Dynamic Roll Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicRollRotateScale)
+                ->Event("Get Kinematic Yaw Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicYawRotateScale)
+                ->Event("Set Kinematic Yaw Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicYawRotateScale)
+                ->Event("Get Kinematic Pitch Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
+                ->Event("Set Kinematic Pitch Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
+                ->Event("Get Kinematic Roll Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
+                ->Event("Set Kinematic Roll Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
                 ->Event("Get Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::GetVelocityCompDampRate)
                 ->Event("Set Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::SetVelocityCompDampRate)
                 ->Event("Get Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::GetAngularVelocityDampRate)
@@ -2648,6 +2652,16 @@ namespace ObjectInteraction
         m_dynamicPitchRotateScale = new_dynamicPitchRotateScale;
     }
 
+    float ObjectInteractionComponent::GetDynamicRollRotateScale() const
+    {
+        return m_dynamicRollRotateScale;
+    }
+
+    void ObjectInteractionComponent::SetDynamicRollRotateScale(const float& new_dynamicRollRotateScale)
+    {
+        m_dynamicRollRotateScale = new_dynamicRollRotateScale;
+    }
+
     float ObjectInteractionComponent::GetKinematicYawRotateScale() const
     {
         return m_kinematicYawRotateScale;
@@ -2666,6 +2680,16 @@ namespace ObjectInteraction
     void ObjectInteractionComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
     {
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
+    }
+
+        float ObjectInteractionComponent::GetKinematicRollRotateScale() const
+    {
+        return m_kinematicRollRotateScale;
+    }
+
+    void ObjectInteractionComponent::SetKinematicRollRotateScale(const float& new_kinematicRollRotateScale)
+    {
+        m_kinematicRollRotateScale = new_kinematicRollRotateScale;
     }
 
     bool ObjectInteractionComponent::GetVelocityCompensation() const

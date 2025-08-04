@@ -52,27 +52,27 @@ namespace ObjectInteraction
             m_derivativeMode = mode;
         }
 
-        void SetProportionalGain(float proportionalGain)
+        void SetProportionalGain(const float proportionalGain)
         {
             m_proportionalGain = proportionalGain;
         }
 
-        void SetIntegralGain(float integralGain)
+        void SetIntegralGain(const float integralGain)
         {
             m_integralGain = integralGain;
         }
 
-        void SetDerivativeGain(float derivativeGain)
+        void SetDerivativeGain(const float derivativeGain)
         {
             m_derivativeGain = derivativeGain;
         }
 
-        void SetIntegralWindupLimit(float integralWindupLimit)
+        void SetIntegralWindupLimit(const float integralWindupLimit)
         {
             m_integralWindupLimit = integralWindupLimit;
         }
 
-        void SetDerivativeFilterAlpha(float derivativeFilterAlpha)
+        void SetDerivativeFilterAlpha(const float derivativeFilterAlpha)
         {
             m_derivativeFilterAlpha = derivativeFilterAlpha;
         }

@@ -82,10 +82,14 @@ namespace ObjectInteraction
         virtual void SetDynamicYawRotateScale(const float&) = 0;
         virtual float GetDynamicPitchRotateScale() const = 0;
         virtual void SetDynamicPitchRotateScale(const float&) = 0;
+        virtual float GetDynamicRollRotateScale() const = 0;
+        virtual void SetDynamicRollRotateScale(const float&) = 0;
         virtual float GetKinematicYawRotateScale() const = 0;
         virtual void SetKinematicYawRotateScale(const float&) = 0;
         virtual float GetKinematicPitchRotateScale() const = 0;
         virtual void SetKinematicPitchRotateScale(const float&) = 0;
+        virtual float GetKinematicRollRotateScale() const = 0;
+        virtual void SetKinematicRollRotateScale(const float&) = 0;
         virtual float GetVelocityCompDampRate() const = 0;
         virtual void SetVelocityCompDampRate(const float&) = 0;
         virtual float GetAngularVelocityDampRate() const = 0;
