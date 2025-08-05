@@ -28,47 +28,19 @@ namespace PhysicsGrab
                 ->Field("Rotate Yaw Key", &PhysicsGrabComponent::m_strRotateYaw)
                 ->Field("Rotate Roll Key", &PhysicsGrabComponent::m_strRotateRoll)
 
-                ->Field("GrabbingEntityId", &PhysicsGrabComponent::m_grabbingEntityId)
-                ->Field("Mesh Smoothing", &PhysicsGrabComponent::m_meshSmoothing)
-                ->Field("Mesh Tag", &PhysicsGrabComponent::m_meshTagName)
-                #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Use First Person Controller For Grab", &PhysicsGrabComponent::m_useFPControllerForGrab)
-                ->Field("Freeze Character Rotation", &PhysicsGrabComponent::m_freezeCharacterRotation)
-                #endif
-                ->Field("Grab Enable Toggle", &PhysicsGrabComponent::m_grabEnableToggle)
-                ->Field("Maintain Grab", &PhysicsGrabComponent::m_grabMaintained)
-                ->Field("Kinematic While Grabbing", &PhysicsGrabComponent::m_kinematicWhileHeld)
-                ->Field("Rotate Enable Toggle", &PhysicsGrabComponent::m_rotateEnableToggle)
-                ->Field("Disable Gravity", &PhysicsGrabComponent::m_disableGravityWhileHeld)
-                ->Field("Offset Grab", &PhysicsGrabComponent::m_offsetGrab)
-                ->Field("Gravity Applies To Point Rotation", &PhysicsGrabComponent::m_gravityAppliesToPointRotation)
-                ->Field("Tidal Lock Grabbed Object", &PhysicsGrabComponent::m_tidalLock)
-                #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Full Tidal Lock For First Person Controller", &PhysicsGrabComponent::m_fullTidalLockForFPC)
-                #endif
                 ->Field("Sphere Cast Radius", &PhysicsGrabComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Sphere Cast Distance", &PhysicsGrabComponent::m_sphereCastDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Min Grab Distance", &PhysicsGrabComponent::m_minGrabDistance)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Max Grab Distance", &PhysicsGrabComponent::m_maxGrabDistance)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
-                
-                ->Field("Enable Mass Independent Throw", &PhysicsGrabComponent::m_massIndependentThrow)
-                ->Field("Charge Throw", &PhysicsGrabComponent::m_enableChargeThrow)
-                ->Field("Charge While Rotating", &PhysicsGrabComponent::m_enableChargeWhileRotating)
-                ->Field("Throw Impulse", &PhysicsGrabComponent::m_throwImpulse)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Min Throw Impulse", &PhysicsGrabComponent::m_minThrowImpulse)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Max Throw Impulse", &PhysicsGrabComponent::m_maxThrowImpulse)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Charge Time", &PhysicsGrabComponent::m_chargeTime)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " s")
+                ->Field("Grabbed Object Collision Group", &PhysicsGrabComponent::m_grabbedCollisionGroupId)
+                ->Field("Grabbed Object Temporary Collision Layer", &PhysicsGrabComponent::m_tempGrabbedCollisionLayer)
 
+                ->Field("GrabbingEntityId", &PhysicsGrabComponent::m_grabbingEntityId)
+                #ifdef FIRST_PERSON_CONTROLLER
+                ->Field("Use First Person Controller For Grab", &PhysicsGrabComponent::m_useFPControllerForGrab)
+                #endif
+                ->Field("Mesh Smoothing", &PhysicsGrabComponent::m_meshSmoothing)
+                ->Field("Mesh Tag", &PhysicsGrabComponent::m_meshTagName)
                 ->Field("Grab Response", &PhysicsGrabComponent::m_grabResponse)
                 ->Attribute(
                     AZ::Edit::Attributes::Suffix,
@@ -76,22 +48,54 @@ namespace PhysicsGrab
                         " s%s%s",
                         Physics::NameConstants::GetSuperscriptMinus().c_str(),
                         Physics::NameConstants::GetSuperscriptOne().c_str()))
-                ->Field("Kinematic Horizontal Rotate Scale", &PhysicsGrabComponent::m_kinematicYawRotateScale)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Kinematic Vertical Rotate Scale", &PhysicsGrabComponent::m_kinematicPitchRotateScale)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Dynamic Horizontal Rotate Scale", &PhysicsGrabComponent::m_dynamicYawRotateScale)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Dynamic Vertical Rotate Scale", &PhysicsGrabComponent::m_dynamicPitchRotateScale)
-                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Grab Enable Toggle", &PhysicsGrabComponent::m_grabEnableToggle)
+                ->Field("Maintain Grab", &PhysicsGrabComponent::m_grabMaintained)
+                ->Field("Kinematic While Grabbing", &PhysicsGrabComponent::m_kinematicWhileHeld)
+                ->Field("Disable Gravity", &PhysicsGrabComponent::m_disableGravityWhileHeld)
+                ->Field("Offset Grab", &PhysicsGrabComponent::m_offsetGrab)
+                ->Field("Tidal Lock Grabbed Object", &PhysicsGrabComponent::m_tidalLock)
+                #ifdef FIRST_PERSON_CONTROLLER
+                ->Field("Full Tidal Lock For First Person Controller", &PhysicsGrabComponent::m_fullTidalLockForFPC)
+                #endif
                 ->Field("Angular Damping", &PhysicsGrabComponent::m_tempObjectAngularDamping)
                 ->Field("Linear Damping", &PhysicsGrabComponent::m_tempObjectLinearDamping)
                 ->Field("Velocity Compensation", &PhysicsGrabComponent::m_velocityCompensation)
                 ->Field("Velocity Compensation Damp Rate", &PhysicsGrabComponent::m_velocityCompDampRate)
+                
+                ->Field("Min Grab Distance", &PhysicsGrabComponent::m_minGrabDistance)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Field("Max Grab Distance", &PhysicsGrabComponent::m_maxGrabDistance)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+
+                ->Field("Throw Impulse", &PhysicsGrabComponent::m_throwImpulse)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Charge Throw", &PhysicsGrabComponent::m_enableChargeThrow)
+                ->Field("Charge While Rotating", &PhysicsGrabComponent::m_enableChargeWhileRotating)
+                ->Field("Min Throw Impulse", &PhysicsGrabComponent::m_minThrowImpulse)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Max Throw Impulse", &PhysicsGrabComponent::m_maxThrowImpulse)
+                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Field("Charge Time", &PhysicsGrabComponent::m_chargeTime)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " s")
+                ->Field("Enable Mass Independent Throw", &PhysicsGrabComponent::m_massIndependentThrow)
+
+                #ifdef FIRST_PERSON_CONTROLLER
+                ->Field("Freeze Character Rotation", &PhysicsGrabComponent::m_freezeCharacterRotation)
+                #endif
+                ->Field("Dynamic Horizontal Rotate Scale", &PhysicsGrabComponent::m_dynamicYawRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Dynamic Vertical Rotate Scale", &PhysicsGrabComponent::m_dynamicPitchRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Kinematic Horizontal Rotate Scale", &PhysicsGrabComponent::m_kinematicYawRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Kinematic Vertical Rotate Scale", &PhysicsGrabComponent::m_kinematicPitchRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Rotate Enable Toggle", &PhysicsGrabComponent::m_rotateEnableToggle)
+                ->Field("Gravity Applies To Point Rotation", &PhysicsGrabComponent::m_gravityAppliesToPointRotation)
                 ->Field("Smooth Dynamic Rotation", &PhysicsGrabComponent::m_smoothDynamicRotation)
                 ->Field("Angular Velocity Damp Rate", &PhysicsGrabComponent::m_angularVelocityDampRate)
-                ->Field("Grabbed Object Collision Group", &PhysicsGrabComponent::m_grabbedCollisionGroupId)
-                ->Field("Grabbed Object Temporary Collision Layer", &PhysicsGrabComponent::m_tempGrabbedCollisionLayer)
 
                 ->Field("PID Held Dynamics", &PhysicsGrabComponent::m_enablePIDHeldDynamics)
                 ->Field("Mass Independent PID", &PhysicsGrabComponent::m_massIndependentHeldPID)
@@ -127,6 +131,42 @@ namespace PhysicsGrab
                     ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
                     ->Attribute(AZ::Edit::Attributes::Category, "Physics Grab")
 
+                    // Input Binding Keys
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Input Configuration")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Detection Parameters")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_grabbedCollisionGroupId,
+                        "Sphere Cast Collision Group",
+                        "The collision group which will be used for detecting grabbable objects.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_tempGrabbedCollisionLayer,
+                        "Grabbed Object Temporary Collision Layer",
+                        "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_sphereCastRadius,
+                        "Sphere Cast Radius",
+                        "Sphere Cast radius used for grabbing objects")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_sphereCastDistance,
+                        "Sphere Cast Distance",
+                        "Sphere Cast distance along m_sphereCastDirection")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Hold Parameters")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         0,
                         &PhysicsGrabComponent::m_grabbingEntityId,
@@ -142,33 +182,20 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_meshTagName,
                         "Mesh Tag",
                         "Tag name for the child entity to use for mesh interpolation (e.g., 'GrabMesh').")
-
-                    // Input Binding Keys
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
-
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_useFPControllerForGrab,
                         "Use First Person Controller For Grab",
-                        "Use First Person Controller player character for grab reference. Enabling this creates tighter tracking by bypassing "
+                        "Use First Person Controller player character for grab reference. Enabling this creates tighter tracking by "
+                        "bypassing "
                         "potential camera interpolation lag.")
+                    #endif
                     ->DataElement(
                         nullptr,
-                        &PhysicsGrabComponent::m_freezeCharacterRotation,
-                        "Freeze Character Rotation",
-                        "Enables character controller rotation while in Rotate State.")
-                    #endif
+                        &PhysicsGrabComponent::m_grabResponse,
+                        "Grab Response",
+                        "Linear velocity scale applied when holding grabbed object. Only applies when PID Held Dynamics is disabled.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabEnableToggle,
@@ -182,17 +209,14 @@ namespace PhysicsGrab
                         "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from "
                         "flying off when quickly changing directions.")
                     ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_kinematicWhileHeld, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
-                    ->DataElement(
                         nullptr,
-                        &PhysicsGrabComponent::m_rotateEnableToggle,
-                        "Rotate Enable Toggle",
-                        "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
-                        "maintain Rotate mode.") 
+                        &PhysicsGrabComponent::m_kinematicWhileHeld,
+                        "Kinematic While Grabbing",
+                        "Sets the grabbed object to kinematic.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_disableGravityWhileHeld,
-                        "Disable Gravity While Held",
+                        "Disable Gravity While Holding",
                         "Disables gravity for dynamic objects while being held.")
                     ->DataElement(
                         nullptr,
@@ -202,33 +226,117 @@ namespace PhysicsGrab
                         "Disable to apply at center of mass.")
                     ->DataElement(
                         nullptr,
-                        &PhysicsGrabComponent::m_gravityAppliesToPointRotation,
-                        "Gravity Applies To Point Rotation",
-                        "Enables gravity when rotating objects if Offset Grab enabled. "
-                        "Only applies to when PID Tidal Lock Dynamics is enabled.")
-                    ->DataElement(
-                        nullptr,
                         &PhysicsGrabComponent::m_tidalLock,
                         "Tidal Lock Grabbed Object",
                         "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
-                          nullptr,
-                          &PhysicsGrabComponent::m_fullTidalLockForFPC,
-                          "Full Tidal Lock For First Person Controller",
-                          "When enabled with First Person Controller, uses full camera rotation for tidal lock instead of character yaw "
-                          "only.")
+                        nullptr,
+                        &PhysicsGrabComponent::m_fullTidalLockForFPC,
+                        "Full Tidal Lock For First Person Controller",
+                        "When enabled with First Person Controller, uses full camera rotation for tidal lock instead of character yaw "
+                        "only.")
                     #endif
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_velocityCompensation,
+                        "Velocity Compensation",
+                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
+                        "the same whether you are walking, sprinting, or standing still.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_velocityCompDampRate,
+                        "Velocity Compensation Damp Rate",
+                        "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to "
+                        "take effect.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_tempObjectLinearDamping,
+                        "Linear Damping",
+                        "Linear Damping of Grabbed Object while Grabbing")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_tempObjectAngularDamping,
+                        "Angular Damping",
+                        "Angular Damping of Grabbed Object while Holding or Rotating")
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Throwing Parameters")
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &PhysicsGrabComponent::m_massIndependentThrow,
-                        "Enable Mass Independent Throw",
-                        "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
-                        "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
+                        &PhysicsGrabComponent::m_minGrabDistance,
+                        "Min Grab Distance",
+                        "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_maxGrabDistance,
+                        "Max Grab Distance",
+                        "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_grabDistanceSpeed,
+                        "Grab Distance Speed",
+                        "The speed at which you move the grabbed object closer or away.")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Rotate Parameters")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_dynamicYawRotateScale,
+                        "Dynamic Horizontal Rotate Scale",
+                        "Angular velocity scale for horizontal (yaw) rotation of dynamic objects")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_dynamicPitchRotateScale,
+                        "Dynamic Vertical Rotate Scale",
+                        "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_kinematicYawRotateScale,
+                        "Kinematic Horizontal Rotate Scale",
+                        "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_kinematicPitchRotateScale,
+                        "Kinematic Vertical Rotate Scale",
+                        "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
+                    #ifdef FIRST_PERSON_CONTROLLER
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_freezeCharacterRotation,
+                        "Freeze Character Rotation",
+                        "Enables character controller rotation while in Rotate State.")
+                    #endif
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_rotateEnableToggle,
+                        "Rotate Enable Toggle",
+                        "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
+                        "maintain Rotate mode.") 
+                        ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_smoothDynamicRotation,
+                        "Smooth Dynamic Rotation",
+                        "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_angularVelocityDampRate,
+                        "Angular Velocity Damp Rate",
+                        "Gradually increase angular velocity for dynamic object. Smooth dynamic rotation must be enabled for this to take "
+                        "effect.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_gravityAppliesToPointRotation,
+                        "Gravity Applies To Point Rotation",
+                        "Enables gravity when rotating objects if Offset Grab enabled. "
+                        "Only applies to when PID Tidal Lock Dynamics is enabled.")
+
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Throw Parameters")
+                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(
+                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Throwing strength. The linear impulse scale applied when throwing grabbed " 
+                        "object. Used when Chargeable Throw is disabled.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_enableChargeThrow,
@@ -238,10 +346,8 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_enableChargeWhileRotating,
                         "Enable Charge While Rotating",
-                        "If true, allow charging throw in rotate state; if false, only in hold state. Relevant when Chargeable Throw is enabled.")
-                    ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed " 
-                        "object. Used when Chargeable Throw is disabled.")
+                        "If true, allow charging throw in rotate state; if false, only in hold state. Relevant when Chargeable Throw is "
+                        "enabled.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_minThrowImpulse,
@@ -262,94 +368,14 @@ namespace PhysicsGrab
                         "Charge Time",
                         "Time (seconds) to reach max impulse while holding. Used when Chargeable Throw is enabled.")
                     ->Attribute(AZ::Edit::Attributes::Suffix, " s")    
-                    
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(
                         nullptr,
-                        &PhysicsGrabComponent::m_kinematicYawRotateScale,
-                        "Kinematic Horizontal Rotate Scale",
-                        "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_kinematicPitchRotateScale,
-                        "Kinematic Vertical Rotate Scale",
-                        "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_dynamicYawRotateScale,
-                        "Dynamic Horizontal Rotate Scale",
-                        "Angular velocity scale for horizontal (yaw) rotation of dynamic objects")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_dynamicPitchRotateScale,
-                        "Dynamic Vertical Rotate Scale",
-                        "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
-                    ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Holding or Rotating")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_tempObjectLinearDamping,
-                        "Linear Damping", "Linear Damping of Grabbed Object while Grabbing")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_velocityCompensation,
-                        "Velocity Compensation",
-                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
-                        "the same whether you are walking, sprinting, or standing still.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_velocityCompDampRate,
-                        "Velocity Compensation Damp Rate",
-                        "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to take effect.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_smoothDynamicRotation,
-                        "Smooth Dynamic Rotation",
-                        "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_angularVelocityDampRate,
-                        "Angular Velocity Damp Rate",
-                        "Gradually increase angular velocity for dynamic object. Smooth dynamic rotation must be enabled for this to take effect.")
-
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Sphere Cast Parameters")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_grabbedCollisionGroupId,
-                        "Sphere Cast Collision Group",
-                        "The collision group which will be used for detecting grabbable objects.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_tempGrabbedCollisionLayer,
-                        "Grabbed Object Temporary Collision Layer",
-                        "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
-                    ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
-
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distance Parameters")
-                    ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_minGrabDistance,
-                        "Min Grab Distance",
-                        "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_maxGrabDistance,
-                        "Max Grab Distance",
-                        "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_grabDistanceSpeed,
-                        "Grab Distance Speed",
-                        "The speed at which you move the grabbed object closer or away.")
+                        &PhysicsGrabComponent::m_massIndependentThrow,
+                        "Enable Mass Independent Throw",
+                        "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
+                        "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
                         
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Held Dynamics")
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Hold Dynamics")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
                         nullptr,
@@ -433,7 +459,7 @@ namespace PhysicsGrab
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockDerivativeFilterAlpha,
-                        "Tidal Lock PID Deriv Filter Alpha",
+                        "Tidal Lock PID Derivative Filter Alpha",
                         "Derivative filter (0=raw, 1=heavy smoothing).");
             }
         }
@@ -506,7 +532,7 @@ namespace PhysicsGrab
                 ->Event("Set Grabbed Object Distance", &PhysicsGrabComponentRequests::SetGrabbedObjectDistance)
                 ->Event("Get Minimum Grabbed Object Distance", &PhysicsGrabComponentRequests::GetMinGrabbedObjectDistance)
                 ->Event("Set Minimum Grabbed Object Distance", &PhysicsGrabComponentRequests::SetMinGrabbedObjectDistance)
-                ->Event("Get Maximum Grabbed Objectt Distance", &PhysicsGrabComponentRequests::GetMaxGrabbedObjectDistance)
+                ->Event("Get Maximum Grabbed Object Distance", &PhysicsGrabComponentRequests::GetMaxGrabbedObjectDistance)
                 ->Event("Set Maximum Grabbed Object Distance", &PhysicsGrabComponentRequests::SetMaxGrabbedObjectDistance)
                 ->Event("Get Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::GetGrabbedObjectDistanceSpeed)
                 ->Event("Set Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::SetGrabbedObjectDistanceSpeed)
@@ -582,8 +608,8 @@ namespace PhysicsGrab
                 ->Event("Force State Transition", &PhysicsGrabComponentRequests::ForceTransition)
                 ->Event("Set Locked State Transition", &PhysicsGrabComponentRequests::SetStateLocked)
                 ->Event("Get Locked State Transition", &PhysicsGrabComponentRequests::GetStateLocked)
-                ->Event("Get Disable Gravity While Held", &PhysicsGrabComponentRequests::GetDisableGravityWhileHeld)
-                ->Event("Set Disable Gravity While Held", &PhysicsGrabComponentRequests::SetDisableGravityWhileHeld)
+                ->Event("Get Disable Gravity While Holding", &PhysicsGrabComponentRequests::GetDisableGravityWhileHeld)
+                ->Event("Set Disable Gravity While Holding", &PhysicsGrabComponentRequests::SetDisableGravityWhileHeld)
                 ->Event("Get Offset Grab", &PhysicsGrabComponentRequests::GetOffsetGrab)
                 ->Event("Set Offset Grab", &PhysicsGrabComponentRequests::SetOffsetGrab)
                 ->Event("Get Gravity Applies To Point Rotation", &PhysicsGrabComponentRequests::GetGravityAppliesToPointRotation)
@@ -1080,13 +1106,13 @@ namespace PhysicsGrab
             // Set Object Current Layer variable to Temp Layer
             SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
 
-            // Set Grabbed Object as Kinematic Rigid Body if set to be kinematic while held
+            // Set Grabbed Object as Kinematic Rigid Body if set to be kinematic while holding
             if (m_kinematicWhileHeld)
             {
                 SetGrabbedObjectKinematicElseDynamic(true);
                 m_isObjectKinematic = true;
             }
-            // Set Grabbed Object as Dynamic Rigid Body if set to be dynamic while held
+            // Set Grabbed Object as Dynamic Rigid Body if set to be dynamic while holding
             else
             {
                 SetGrabbedObjectKinematicElseDynamic(false);

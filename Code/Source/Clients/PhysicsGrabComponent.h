@@ -384,7 +384,7 @@ namespace PhysicsGrab
         float m_physicsTimeAccumulator = 0.0f;
         float m_physicsTimestep = 1.0f / 60.0f;
         float m_minGrabDistance = 1.5f;
-        float m_maxGrabDistance = 4.0f;
+        float m_maxGrabDistance = 4.5f;
         float m_grabDistance = 0.0f;
         float m_velocityCompDampRate = 9.f;
         float m_angularVelocityDampRate = 25.0f;
@@ -400,7 +400,7 @@ namespace PhysicsGrab
         float m_tempObjectLinearDamping = 0.05f;
         float m_prevObjectLinearDamping = 0.f;
         float m_currentObjectLinearDamping = 0.0f;
-        float m_grabDistanceSpeed = 0.2f;
+        float m_grabDistanceSpeed = 0.4f;
         float m_grabResponse = 10.f;
         float m_throwImpulse = 8.0f;
         float m_minThrowImpulse = 3.0f;
@@ -411,7 +411,7 @@ namespace PhysicsGrab
         float m_prevThrowKeyValue = 0.0f;
         float m_grabbedObjectMass = 1.0f;
         float m_sphereCastRadius = 0.3f;
-        float m_sphereCastDistance = 3.0f;
+        float m_sphereCastDistance = 4.5f;
         float m_throwStateMaxTime = 0.5f;
         float m_throwStateCounter = 0.0f;
         float m_combinedGrabDistance = 0.0f;
