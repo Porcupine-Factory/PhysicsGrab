@@ -3,7 +3,7 @@
 #include <AzCore/Math/Vector2.h>
 #include <AzCore/Math/Vector3.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
     // Templated PID controller for scalar or vector control
     // Supports two derivative modes: ErrorRate (dError/dt) for standard PID, Velocity (-dValue/dt) for velocity feedback
@@ -200,4 +200,4 @@ namespace ObjectInteraction
     {
         return AZ::GetClamp(val, min, max);
     }
-}; // namespace ObjectInteraction
+}; // namespace PhysicsGrab

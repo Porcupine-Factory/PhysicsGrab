@@ -2,13 +2,13 @@
     "Amazon": {
         "AssetProcessor": {
             "Settings": {
-                "ScanFolder ObjectInteraction/Assets": {
-                    "watch": "@GEMROOT:ObjectInteraction@/Assets",
+                "ScanFolder PhysicsGrab/Assets": {
+                    "watch": "@GEMROOT:PhysicsGrab@/Assets",
                     "recursive": 1,
                     "order": 101
                 },
-                "ScanFolder ObjectInteraction/Registry": {
-                    "watch": "@GEMROOT:ObjectInteraction@/Registry",
+                "ScanFolder PhysicsGrab/Registry": {
+                    "watch": "@GEMROOT:PhysicsGrab@/Registry",
                     "recursive": 1,
                     "order": 102
                 }

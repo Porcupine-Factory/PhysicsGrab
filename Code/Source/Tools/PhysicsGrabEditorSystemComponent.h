@@ -3,22 +3,23 @@
 
 #include <AzToolsFramework/API/ToolsApplicationAPI.h>
 
-#include <Clients/ObjectInteractionSystemComponent.h>
+#include <Clients/PhysicsGrabSystemComponent.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
-    /// System component for ObjectInteraction editor
-    class ObjectInteractionEditorSystemComponent
-        : public ObjectInteractionSystemComponent
+    /// System component for PhysicsGrab editor
+    class PhysicsGrabEditorSystemComponent
+        : public PhysicsGrabSystemComponent
         , protected AzToolsFramework::EditorEvents::Bus::Handler
     {
-        using BaseSystemComponent = ObjectInteractionSystemComponent;
+        using BaseSystemComponent = PhysicsGrabSystemComponent;
     public:
-        AZ_COMPONENT(ObjectInteractionEditorSystemComponent, "{C4A42620-D49B-4853-B06C-275FE75268F5}", BaseSystemComponent);
+        AZ_COMPONENT_DECL(PhysicsGrabEditorSystemComponent);
+
         static void Reflect(AZ::ReflectContext* context);
 
-        ObjectInteractionEditorSystemComponent();
-        ~ObjectInteractionEditorSystemComponent();
+        PhysicsGrabEditorSystemComponent();
+        ~PhysicsGrabEditorSystemComponent();
 
     private:
         static void GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided);
@@ -30,4 +31,4 @@ namespace ObjectInteraction
         void Activate() override;
         void Deactivate() override;
     };
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

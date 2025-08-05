@@ -3,17 +3,17 @@
 
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/TickBus.h>
-#include <ObjectInteraction/ObjectInteractionBus.h>
+#include <PhysicsGrab/PhysicsGrabBus.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
-    class ObjectInteractionSystemComponent
+    class PhysicsGrabSystemComponent
         : public AZ::Component
-        , protected ObjectInteractionRequestBus::Handler
+        , protected PhysicsGrabRequestBus::Handler
         , public AZ::TickBus::Handler
     {
     public:
-        AZ_COMPONENT(ObjectInteractionSystemComponent, "{2CF1EBBE-80F8-4508-9251-7F1FEF6B7511}");
+        AZ_COMPONENT_DECL(PhysicsGrabSystemComponent);
 
         static void Reflect(AZ::ReflectContext* context);
 
@@ -22,12 +22,12 @@ namespace ObjectInteraction
         static void GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required);
         static void GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent);
 
-        ObjectInteractionSystemComponent();
-        ~ObjectInteractionSystemComponent();
+        PhysicsGrabSystemComponent();
+        ~PhysicsGrabSystemComponent();
 
     protected:
         ////////////////////////////////////////////////////////////////////////
-        // ObjectInteractionRequestBus interface implementation
+        // PhysicsGrabRequestBus interface implementation
 
         ////////////////////////////////////////////////////////////////////////
 
@@ -44,4 +44,4 @@ namespace ObjectInteraction
         ////////////////////////////////////////////////////////////////////////
     };
 
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

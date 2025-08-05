@@ -1,5 +1,6 @@
 #pragma once
 
+#include <PhysicsGrab/PhysicsGrabTypeIds.h>
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/TickBus.h>
@@ -12,15 +13,15 @@
 #include <StartingPointInput/InputEventNotificationBus.h>
 #include "PidController.h"
 #include <LmbrCentral/Scripting/TagComponentBus.h>
-#include <ObjectInteraction/ObjectInteractionComponentBus.h>
+#include <PhysicsGrab/PhysicsGrabComponentBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
 #include <FirstPersonController/FirstPersonControllerComponentBus.h>
 #endif
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
-    enum class ObjectInteractionStates
+    enum class PhysicsGrabStates
     {
         idleState,
         checkState,
@@ -29,15 +30,15 @@ namespace ObjectInteraction
         throwState
     };
 
-    class ObjectInteractionComponent
+    class PhysicsGrabComponent
         : public AZ::Component
         , public AZ::EntityBus::Handler
         , public AZ::TickBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
-        , public ObjectInteractionComponentRequestBus::Handler
+        , public PhysicsGrabComponentRequestBus::Handler
     {
     public:
-        AZ_COMPONENT(ObjectInteractionComponent, "{E4630B86-1755-4F7F-88C6-AE11704D7F00}");
+        AZ_COMPONENT(PhysicsGrabComponent, PhysicsGrabComponentTypeId);
 
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
@@ -64,7 +65,7 @@ namespace ObjectInteraction
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
 
-        // ObjectInteractionRequestBus
+        // PhysicsGrabRequestBus
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
@@ -197,7 +198,7 @@ namespace ObjectInteraction
         void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
         bool GetInitialAngularVelocityZero() const override;
         void SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero) override;
-        void ForceTransition(const ObjectInteractionStates& targetState) override;
+        void ForceTransition(const PhysicsGrabStates& targetState) override;
         void SetStateLocked(const bool& isLocked) override;
         bool GetStateLocked() const override;
         bool GetDisableGravityWhileHeld() const override;
@@ -310,7 +311,7 @@ namespace ObjectInteraction
         void UpdateInputBinding(
             StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue);
 
-        // ObjectInteractionNotificationBus
+        // PhysicsGrabNotificationBus
         void OnObjectSphereCastHit();
         void OnHoldStart();
         void OnHoldStop();
@@ -421,7 +422,7 @@ namespace ObjectInteraction
         float m_heldDerivativeFilterAlpha = 0.8f;
         float m_tidalLockProportionalGain = 100.0f;
         float m_tidalLockIntegralGain = 0.0f;
-        float m_tidalLockDerivativeGain = 2.58f;
+        float m_tidalLockDerivativeGain = 9.0f;
         float m_tidalLockIntegralWindupLimit = 200.0f;
         float m_tidalLockDerivativeFilterAlpha = 0.8f;
         float m_effectiveInertiaFactor = 0.0f;
@@ -473,8 +474,8 @@ namespace ObjectInteraction
         bool m_offsetGrab = false;
         bool m_gravityAppliesToPointRotation = true;
 
-        ObjectInteractionStates m_state = ObjectInteractionStates::idleState;
-        ObjectInteractionStates m_targetState = ObjectInteractionStates::idleState;
+        PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
+        PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;
 
         PidController<AZ::Vector3> m_pidController;
         PidController<AZ::Vector3> m_tidalLockPidController;
@@ -482,12 +483,12 @@ namespace ObjectInteraction
         PidController<AZ::Vector3>::DerivativeCalculationMode m_heldDerivativeMode = PidController<AZ::Vector3>::Velocity;
         PidController<AZ::Vector3>::DerivativeCalculationMode m_tidalLockDerivativeMode = PidController<AZ::Vector3>::ErrorRate;
 
-        AZStd::map<ObjectInteractionStates, AZStd::string> m_statesMap = {
-          {ObjectInteractionStates::idleState,   "idleState"},
-          {ObjectInteractionStates::checkState,  "checkState"},
-          {ObjectInteractionStates::holdState,   "holdState"},
-          {ObjectInteractionStates::rotateState, "rotateState"},
-          {ObjectInteractionStates::throwState,  "throwState"}
+        AZStd::map<PhysicsGrabStates, AZStd::string> m_statesMap = {
+          {PhysicsGrabStates::idleState,   "idleState"},
+          {PhysicsGrabStates::checkState,  "checkState"},
+          {PhysicsGrabStates::holdState,   "holdState"},
+          {PhysicsGrabStates::rotateState, "rotateState"},
+          {PhysicsGrabStates::throwState,  "throwState"}
         };
     };
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

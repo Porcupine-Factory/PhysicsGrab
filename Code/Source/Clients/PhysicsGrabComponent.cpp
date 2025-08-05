@@ -1,4 +1,4 @@
-#include "ObjectInteractionComponent.h"
+#include "PhysicsGrabComponent.h"
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
@@ -9,212 +9,213 @@
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
     using namespace StartingPointInput;
 
-    void ObjectInteractionComponent::Reflect(AZ::ReflectContext* rc)
+    void PhysicsGrabComponent::Reflect(AZ::ReflectContext* rc)
     {
         if (auto sc = azrtti_cast<AZ::SerializeContext*>(rc))
         {
-            sc->Class<ObjectInteractionComponent, AZ::Component>()
+            sc->Class<PhysicsGrabComponent, AZ::Component>()
 
                 // Grab Input Binding Keys
-                ->Field("Grab Input Key", &ObjectInteractionComponent::m_strGrab)
-                ->Field("Grab Distance Input Key", &ObjectInteractionComponent::m_strGrabDistance)
-                ->Field("Throw Input Key", &ObjectInteractionComponent::m_strThrow)
-                ->Field("Rotate Enable Input Key", &ObjectInteractionComponent::m_strRotate)
-                ->Field("Rotate Pitch Key", &ObjectInteractionComponent::m_strRotatePitch)
-                ->Field("Rotate Yaw Key", &ObjectInteractionComponent::m_strRotateYaw)
-                ->Field("Rotate Roll Key", &ObjectInteractionComponent::m_strRotateRoll)
+                ->Field("Grab Input Key", &PhysicsGrabComponent::m_strGrab)
+                ->Field("Grab Distance Input Key", &PhysicsGrabComponent::m_strGrabDistance)
+                ->Field("Throw Input Key", &PhysicsGrabComponent::m_strThrow)
+                ->Field("Rotate Enable Input Key", &PhysicsGrabComponent::m_strRotate)
+                ->Field("Rotate Pitch Key", &PhysicsGrabComponent::m_strRotatePitch)
+                ->Field("Rotate Yaw Key", &PhysicsGrabComponent::m_strRotateYaw)
+                ->Field("Rotate Roll Key", &PhysicsGrabComponent::m_strRotateRoll)
 
-                ->Field("GrabbingEntityId", &ObjectInteractionComponent::m_grabbingEntityId)
-                ->Field("Mesh Smoothing", &ObjectInteractionComponent::m_meshSmoothing)
-                ->Field("Mesh Tag", &ObjectInteractionComponent::m_meshTagName)
+                ->Field("GrabbingEntityId", &PhysicsGrabComponent::m_grabbingEntityId)
+                ->Field("Mesh Smoothing", &PhysicsGrabComponent::m_meshSmoothing)
+                ->Field("Mesh Tag", &PhysicsGrabComponent::m_meshTagName)
                 #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Use First Person Controller For Grab", &ObjectInteractionComponent::m_useFPControllerForGrab)
-                ->Field("Freeze Character Rotation", &ObjectInteractionComponent::m_freezeCharacterRotation)
+                ->Field("Use First Person Controller For Grab", &PhysicsGrabComponent::m_useFPControllerForGrab)
+                ->Field("Freeze Character Rotation", &PhysicsGrabComponent::m_freezeCharacterRotation)
                 #endif
-                ->Field("Grab Enable Toggle", &ObjectInteractionComponent::m_grabEnableToggle)
-                ->Field("Maintain Grab", &ObjectInteractionComponent::m_grabMaintained)
-                ->Field("Kinematic While Grabbing", &ObjectInteractionComponent::m_kinematicWhileHeld)
-                ->Field("Rotate Enable Toggle", &ObjectInteractionComponent::m_rotateEnableToggle)
-                ->Field("Disable Gravity", &ObjectInteractionComponent::m_disableGravityWhileHeld)
-                ->Field("Offset Grab", &ObjectInteractionComponent::m_offsetGrab)
-                ->Field("Gravity Applies To Point Rotation", &ObjectInteractionComponent::m_gravityAppliesToPointRotation)
-                ->Field("Tidal Lock Grabbed Object", &ObjectInteractionComponent::m_tidalLock)
+                ->Field("Grab Enable Toggle", &PhysicsGrabComponent::m_grabEnableToggle)
+                ->Field("Maintain Grab", &PhysicsGrabComponent::m_grabMaintained)
+                ->Field("Kinematic While Grabbing", &PhysicsGrabComponent::m_kinematicWhileHeld)
+                ->Field("Rotate Enable Toggle", &PhysicsGrabComponent::m_rotateEnableToggle)
+                ->Field("Disable Gravity", &PhysicsGrabComponent::m_disableGravityWhileHeld)
+                ->Field("Offset Grab", &PhysicsGrabComponent::m_offsetGrab)
+                ->Field("Gravity Applies To Point Rotation", &PhysicsGrabComponent::m_gravityAppliesToPointRotation)
+                ->Field("Tidal Lock Grabbed Object", &PhysicsGrabComponent::m_tidalLock)
                 #ifdef FIRST_PERSON_CONTROLLER
-                ->Field("Full Tidal Lock For First Person Controller", &ObjectInteractionComponent::m_fullTidalLockForFPC)
+                ->Field("Full Tidal Lock For First Person Controller", &PhysicsGrabComponent::m_fullTidalLockForFPC)
                 #endif
-                ->Field("Sphere Cast Radius", &ObjectInteractionComponent::m_sphereCastRadius)
+                ->Field("Sphere Cast Radius", &PhysicsGrabComponent::m_sphereCastRadius)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Sphere Cast Distance", &ObjectInteractionComponent::m_sphereCastDistance)
+                ->Field("Sphere Cast Distance", &PhysicsGrabComponent::m_sphereCastDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Min Grab Distance", &ObjectInteractionComponent::m_minGrabDistance)
+                ->Field("Min Grab Distance", &PhysicsGrabComponent::m_minGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Max Grab Distance", &ObjectInteractionComponent::m_maxGrabDistance)
+                ->Field("Max Grab Distance", &PhysicsGrabComponent::m_maxGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
-                ->Field("Grab Distance Speed", &ObjectInteractionComponent::m_grabDistanceSpeed)
+                ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
                 
-                ->Field("Enable Mass Independent Throw", &ObjectInteractionComponent::m_massIndependentThrow)
-                ->Field("Charge Throw", &ObjectInteractionComponent::m_enableChargeThrow)
-                ->Field("Charge While Rotating", &ObjectInteractionComponent::m_enableChargeWhileRotating)
-                ->Field("Throw Impulse", &ObjectInteractionComponent::m_throwImpulse)
+                ->Field("Enable Mass Independent Throw", &PhysicsGrabComponent::m_massIndependentThrow)
+                ->Field("Charge Throw", &PhysicsGrabComponent::m_enableChargeThrow)
+                ->Field("Charge While Rotating", &PhysicsGrabComponent::m_enableChargeWhileRotating)
+                ->Field("Throw Impulse", &PhysicsGrabComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Min Throw Impulse", &ObjectInteractionComponent::m_minThrowImpulse)
+                ->Field("Min Throw Impulse", &PhysicsGrabComponent::m_minThrowImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Max Throw Impulse", &ObjectInteractionComponent::m_maxThrowImpulse)
+                ->Field("Max Throw Impulse", &PhysicsGrabComponent::m_maxThrowImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Charge Time", &ObjectInteractionComponent::m_chargeTime)
+                ->Field("Charge Time", &PhysicsGrabComponent::m_chargeTime)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " s")
 
-                ->Field("Grab Response", &ObjectInteractionComponent::m_grabResponse)
+                ->Field("Grab Response", &PhysicsGrabComponent::m_grabResponse)
                 ->Attribute(
                     AZ::Edit::Attributes::Suffix,
                     AZStd::string::format(
                         " s%s%s",
                         Physics::NameConstants::GetSuperscriptMinus().c_str(),
                         Physics::NameConstants::GetSuperscriptOne().c_str()))
-                ->Field("Kinematic Horizontal Rotate Scale", &ObjectInteractionComponent::m_kinematicYawRotateScale)
+                ->Field("Kinematic Horizontal Rotate Scale", &PhysicsGrabComponent::m_kinematicYawRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Kinematic Vertical Rotate Scale", &ObjectInteractionComponent::m_kinematicPitchRotateScale)
+                ->Field("Kinematic Vertical Rotate Scale", &PhysicsGrabComponent::m_kinematicPitchRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Dynamic Horizontal Rotate Scale", &ObjectInteractionComponent::m_dynamicYawRotateScale)
+                ->Field("Dynamic Horizontal Rotate Scale", &PhysicsGrabComponent::m_dynamicYawRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Dynamic Vertical Rotate Scale", &ObjectInteractionComponent::m_dynamicPitchRotateScale)
+                ->Field("Dynamic Vertical Rotate Scale", &PhysicsGrabComponent::m_dynamicPitchRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
-                ->Field("Angular Damping", &ObjectInteractionComponent::m_tempObjectAngularDamping)
-                ->Field("Linear Damping", &ObjectInteractionComponent::m_tempObjectLinearDamping)
-                ->Field("Velocity Compensation", &ObjectInteractionComponent::m_velocityCompensation)
-                ->Field("Velocity Compensation Damp Rate", &ObjectInteractionComponent::m_velocityCompDampRate)
-                ->Field("Smooth Dynamic Rotation", &ObjectInteractionComponent::m_smoothDynamicRotation)
-                ->Field("Angular Velocity Damp Rate", &ObjectInteractionComponent::m_angularVelocityDampRate)
-                ->Field("Grabbed Object Collision Group", &ObjectInteractionComponent::m_grabbedCollisionGroupId)
-                ->Field("Grabbed Object Temporary Collision Layer", &ObjectInteractionComponent::m_tempGrabbedCollisionLayer)
+                ->Field("Angular Damping", &PhysicsGrabComponent::m_tempObjectAngularDamping)
+                ->Field("Linear Damping", &PhysicsGrabComponent::m_tempObjectLinearDamping)
+                ->Field("Velocity Compensation", &PhysicsGrabComponent::m_velocityCompensation)
+                ->Field("Velocity Compensation Damp Rate", &PhysicsGrabComponent::m_velocityCompDampRate)
+                ->Field("Smooth Dynamic Rotation", &PhysicsGrabComponent::m_smoothDynamicRotation)
+                ->Field("Angular Velocity Damp Rate", &PhysicsGrabComponent::m_angularVelocityDampRate)
+                ->Field("Grabbed Object Collision Group", &PhysicsGrabComponent::m_grabbedCollisionGroupId)
+                ->Field("Grabbed Object Temporary Collision Layer", &PhysicsGrabComponent::m_tempGrabbedCollisionLayer)
 
-                ->Field("PID Held Dynamics", &ObjectInteractionComponent::m_enablePIDHeldDynamics)
-                ->Field("Mass Independent PID", &ObjectInteractionComponent::m_massIndependentHeldPID)
-                ->Field("PID P Gain", &ObjectInteractionComponent::m_heldProportionalGain)
+                ->Field("PID Held Dynamics", &PhysicsGrabComponent::m_enablePIDHeldDynamics)
+                ->Field("Mass Independent PID", &PhysicsGrabComponent::m_massIndependentHeldPID)
+                ->Field("PID P Gain", &PhysicsGrabComponent::m_heldProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
-                ->Field("PID I Gain", &ObjectInteractionComponent::m_heldIntegralGain)
+                ->Field("PID I Gain", &PhysicsGrabComponent::m_heldIntegralGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N/(m%ss)", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("PID D Gain", &ObjectInteractionComponent::m_heldDerivativeGain)
+                ->Field("PID D Gain", &PhysicsGrabComponent::m_heldDerivativeGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss/m", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("PID Integral Limit", &ObjectInteractionComponent::m_heldIntegralWindupLimit)
+                ->Field("PID Integral Limit", &PhysicsGrabComponent::m_heldIntegralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
-                ->Field("PID Deriv Filter Alpha", &ObjectInteractionComponent::m_heldDerivativeFilterAlpha)
+                ->Field("PID Deriv Filter Alpha", &PhysicsGrabComponent::m_heldDerivativeFilterAlpha)
 
-                ->Field("Enable PID Tidal Lock Dynamics", &ObjectInteractionComponent::m_enablePIDTidalLockDynamics)
-                ->Field("Mass Independent Tidal Lock", &ObjectInteractionComponent::m_massIndependentTidalLock)
-                ->Field("Scale Independent Tidal Lock", &ObjectInteractionComponent::m_scaleIndependentTidalLock)
-                ->Field("Tidal Lock PID P Gain", &ObjectInteractionComponent::m_tidalLockProportionalGain)
+                ->Field("Enable PID Tidal Lock Dynamics", &PhysicsGrabComponent::m_enablePIDTidalLockDynamics)
+                ->Field("Mass Independent Tidal Lock", &PhysicsGrabComponent::m_massIndependentTidalLock)
+                ->Field("Scale Independent Tidal Lock", &PhysicsGrabComponent::m_scaleIndependentTidalLock)
+                ->Field("Tidal Lock PID P Gain", &PhysicsGrabComponent::m_tidalLockProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/rad", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Tidal Lock PID I Gain", &ObjectInteractionComponent::m_tidalLockIntegralGain)
+                ->Field("Tidal Lock PID I Gain", &PhysicsGrabComponent::m_tidalLockIntegralGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/(rad%ss)", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Tidal Lock PID D Gain", &ObjectInteractionComponent::m_tidalLockDerivativeGain)
+                ->Field("Tidal Lock PID D Gain", &PhysicsGrabComponent::m_tidalLockDerivativeGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm%ss/rad", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Tidal Lock PID Integral Limit", &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit)
+                ->Field("Tidal Lock PID Integral Limit", &PhysicsGrabComponent::m_tidalLockIntegralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm", Physics::NameConstants::GetInterpunct().c_str()))
-                ->Field("Tidal Lock PID Deriv Filter Alpha", &ObjectInteractionComponent::m_tidalLockDerivativeFilterAlpha)
+                ->Field("Tidal Lock PID Deriv Filter Alpha", &PhysicsGrabComponent::m_tidalLockDerivativeFilterAlpha)
                 ->Version(1);
 
             if (AZ::EditContext* ec = sc->GetEditContext())
             {
                 using namespace AZ::Edit;
-                ec->Class<ObjectInteractionComponent>("Object Interaction", "[Object Interaction Component]")
+                ec->Class<PhysicsGrabComponent>("Physics Grab", "[Enables grabbing, holding, rotating, and throwing physics objects.]")
                     ->ClassElement(ClassElements::EditorData, "")
                     ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
+                    ->Attribute(AZ::Edit::Attributes::Category, "Physics Grab")
 
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_grabbingEntityId,
+                        &PhysicsGrabComponent::m_grabbingEntityId,
                         "Grab Entity",
                         "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_meshSmoothing,
+                        &PhysicsGrabComponent::m_meshSmoothing,
                         "Mesh Smoothing",
                         "Enables smooth interpolation of the mesh transform for dynamic objects to reduce stuttering.")
                     ->DataElement(
                         0,
-                        &ObjectInteractionComponent::m_meshTagName,
+                        &PhysicsGrabComponent::m_meshTagName,
                         "Mesh Tag",
                         "Tag name for the child entity to use for mesh interpolation (e.g., 'GrabMesh').")
 
                     // Input Binding Keys
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Toggle Preferences")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_useFPControllerForGrab,
+                        &PhysicsGrabComponent::m_useFPControllerForGrab,
                         "Use First Person Controller For Grab",
                         "Use First Person Controller player character for grab reference. Enabling this creates tighter tracking by bypassing "
                         "potential camera interpolation lag.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_freezeCharacterRotation,
+                        &PhysicsGrabComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Enables character controller rotation while in Rotate State.")
                     #endif
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_grabEnableToggle,
+                        &PhysicsGrabComponent::m_grabEnableToggle,
                         "Grab Enable Toggle",
                         "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to "
                         "maintain Grab mode.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_grabMaintained,
+                        &PhysicsGrabComponent::m_grabMaintained,
                         "Maintain Grab",
                         "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from "
                         "flying off when quickly changing directions.")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_kinematicWhileHeld, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
+                        nullptr, &PhysicsGrabComponent::m_kinematicWhileHeld, "Kinematic Grabbed Object", "Sets the grabbed object to kinematic.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_rotateEnableToggle,
+                        &PhysicsGrabComponent::m_rotateEnableToggle,
                         "Rotate Enable Toggle",
                         "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
                         "maintain Rotate mode.") 
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_disableGravityWhileHeld,
+                        &PhysicsGrabComponent::m_disableGravityWhileHeld,
                         "Disable Gravity While Held",
                         "Disables gravity for dynamic objects while being held.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_offsetGrab,
+                        &PhysicsGrabComponent::m_offsetGrab,
                         "Offset Grab",
                         "When enabled for dynamic objects, applies forces at an offset point causing natural tilting. "
                         "Disable to apply at center of mass.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_gravityAppliesToPointRotation,
+                        &PhysicsGrabComponent::m_gravityAppliesToPointRotation,
                         "Gravity Applies To Point Rotation",
                         "Enables gravity when rotating objects if Offset Grab enabled. "
                         "Only applies to when PID Tidal Lock Dynamics is enabled.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLock,
+                        &PhysicsGrabComponent::m_tidalLock,
                         "Tidal Lock Grabbed Object",
                         "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
                         "face the Grabbing Entity in it's current relative rotation.")
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                           nullptr,
-                          &ObjectInteractionComponent::m_fullTidalLockForFPC,
+                          &PhysicsGrabComponent::m_fullTidalLockForFPC,
                           "Full Tidal Lock For First Person Controller",
                           "When enabled with First Person Controller, uses full camera rotation for tidal lock instead of character yaw "
                           "only.")
@@ -224,40 +225,40 @@ namespace ObjectInteraction
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_massIndependentThrow,
+                        &PhysicsGrabComponent::m_massIndependentThrow,
                         "Enable Mass Independent Throw",
                         "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
                         "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableChargeThrow,
+                        &PhysicsGrabComponent::m_enableChargeThrow,
                         "Enable Chargeable Throw",
                         "If true, hold throw key to charge impulse from min to max.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enableChargeWhileRotating,
+                        &PhysicsGrabComponent::m_enableChargeWhileRotating,
                         "Enable Charge While Rotating",
                         "If true, allow charging throw in rotate state; if false, only in hold state. Relevant when Chargeable Throw is enabled.")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed " 
+                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Linear Impulse scale applied when throwing grabbed " 
                         "object. Used when Chargeable Throw is disabled.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_minThrowImpulse,
+                        &PhysicsGrabComponent::m_minThrowImpulse,
                         "Min Throw Impulse",
                         "Minimum throw impulse for quick release. Used when Chargeable Throw is enabled.")
                     ->Attribute(
                         AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_maxThrowImpulse,
+                        &PhysicsGrabComponent::m_maxThrowImpulse,
                         "Max Throw Impulse",
                         "Maximum throw impulse after full charge. Used when Chargeable Throw is enabled.")
                     ->Attribute(
                         AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_chargeTime,
+                        &PhysicsGrabComponent::m_chargeTime,
                         "Charge Time",
                         "Time (seconds) to reach max impulse while holding. Used when Chargeable Throw is enabled.")
                     ->Attribute(AZ::Edit::Attributes::Suffix, " s")    
@@ -265,52 +266,52 @@ namespace ObjectInteraction
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Scaling Factors")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
+                        nullptr, &PhysicsGrabComponent::m_grabResponse, "Grab Response", "Linear velocity scale applied when holding grabbed object")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_kinematicYawRotateScale,
+                        &PhysicsGrabComponent::m_kinematicYawRotateScale,
                         "Kinematic Horizontal Rotate Scale",
                         "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_kinematicPitchRotateScale,
+                        &PhysicsGrabComponent::m_kinematicPitchRotateScale,
                         "Kinematic Vertical Rotate Scale",
                         "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_dynamicYawRotateScale,
+                        &PhysicsGrabComponent::m_dynamicYawRotateScale,
                         "Dynamic Horizontal Rotate Scale",
                         "Angular velocity scale for horizontal (yaw) rotation of dynamic objects")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_dynamicPitchRotateScale,
+                        &PhysicsGrabComponent::m_dynamicPitchRotateScale,
                         "Dynamic Vertical Rotate Scale",
                         "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Holding or Rotating")
+                        nullptr, &PhysicsGrabComponent::m_tempObjectAngularDamping, "Angular Damping", "Angular Damping of Grabbed Object while Holding or Rotating")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tempObjectLinearDamping,
+                        &PhysicsGrabComponent::m_tempObjectLinearDamping,
                         "Linear Damping", "Linear Damping of Grabbed Object while Grabbing")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_velocityCompensation,
+                        &PhysicsGrabComponent::m_velocityCompensation,
                         "Velocity Compensation",
                         "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
                         "the same whether you are walking, sprinting, or standing still.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_velocityCompDampRate,
+                        &PhysicsGrabComponent::m_velocityCompDampRate,
                         "Velocity Compensation Damp Rate",
                         "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to take effect.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_smoothDynamicRotation,
+                        &PhysicsGrabComponent::m_smoothDynamicRotation,
                         "Smooth Dynamic Rotation",
                         "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_angularVelocityDampRate,
+                        &PhysicsGrabComponent::m_angularVelocityDampRate,
                         "Angular Velocity Damp Rate",
                         "Gradually increase angular velocity for dynamic object. Smooth dynamic rotation must be enabled for this to take effect.")
 
@@ -318,33 +319,33 @@ namespace ObjectInteraction
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_grabbedCollisionGroupId,
+                        &PhysicsGrabComponent::m_grabbedCollisionGroupId,
                         "Sphere Cast Collision Group",
                         "The collision group which will be used for detecting grabbable objects.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tempGrabbedCollisionLayer,
+                        &PhysicsGrabComponent::m_tempGrabbedCollisionLayer,
                         "Grabbed Object Temporary Collision Layer",
                         "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
-                    ->DataElement(nullptr, &ObjectInteractionComponent::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
+                    ->DataElement(nullptr, &PhysicsGrabComponent::m_sphereCastRadius, "Sphere Cast Radius", "Sphere Cast radius used for grabbing objects")
                     ->DataElement(
-                        nullptr, &ObjectInteractionComponent::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
+                        nullptr, &PhysicsGrabComponent::m_sphereCastDistance, "Sphere Cast Distance", "Sphere Cast distance along m_sphereCastDirection")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Grab Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_minGrabDistance,
+                        &PhysicsGrabComponent::m_minGrabDistance,
                         "Min Grab Distance",
                         "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_maxGrabDistance,
+                        &PhysicsGrabComponent::m_maxGrabDistance,
                         "Max Grab Distance",
                         "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_grabDistanceSpeed,
+                        &PhysicsGrabComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
                         "The speed at which you move the grabbed object closer or away.")
                         
@@ -352,40 +353,40 @@ namespace ObjectInteraction
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enablePIDHeldDynamics,
+                        &PhysicsGrabComponent::m_enablePIDHeldDynamics,
                         "Enable PID Held Dynamics",
                         "Enables PID controller for dynamic held objects, creating spring-like (underdamped/overdamped) motion. Disabling "
                         "uses simple linear velocity.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_massIndependentHeldPID,
+                        &PhysicsGrabComponent::m_massIndependentHeldPID,
                         "Enable Mass Independent PID",
                         "When enabled, PID controller scales forces by object mass for consistent behavior regardless of mass "
                         "(mass-independent). "
                         "Disable for realistic mass-dependent motion where heavier objects feel slower and harder to move.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_heldProportionalGain,
+                        &PhysicsGrabComponent::m_heldProportionalGain,
                         "Held PID P Gain",
                         "Proportional gain when holding objects. Controls stiffness/pull strength (higher = stronger spring).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_heldIntegralGain,
+                        &PhysicsGrabComponent::m_heldIntegralGain,
                         "Held PID I Gain",
                         "Integral gain when holding objects. Corrects persistent errors (e.g., gravity offset; usually low or 0).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_heldDerivativeGain,
+                        &PhysicsGrabComponent::m_heldDerivativeGain,
                         "Held PID D Gain",
                         "Derivative gain when holding objects. Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_heldIntegralWindupLimit,
+                        &PhysicsGrabComponent::m_heldIntegralWindupLimit,
                         "Held PID Integral Limit",
                         "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_heldDerivativeFilterAlpha,
+                        &PhysicsGrabComponent::m_heldDerivativeFilterAlpha,
                         "Held PID Derivative Filter Alpha",
                         "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).")
 
@@ -393,45 +394,45 @@ namespace ObjectInteraction
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_enablePIDTidalLockDynamics,
+                        &PhysicsGrabComponent::m_enablePIDTidalLockDynamics,
                         "Enable PID Tidal Lock Dynamics",
                         "Enables PID controller for dynamic tidal lock rotation, creating spring-like motion. Disabling "
                         "uses simple angular velocity.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_massIndependentTidalLock,
+                        &PhysicsGrabComponent::m_massIndependentTidalLock,
                         "Enable Mass Independent Tidal Lock",
                         "When enabled and PID is active, scales torque by object mass for consistent rotation regardless of mass. "
                         "Disable for realistic mass-dependent rotation where heavier objects rotate slower.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_scaleIndependentTidalLock,
+                        &PhysicsGrabComponent::m_scaleIndependentTidalLock,
                         "Enable Scale Independent Tidal Lock",
                         "When enabled and PID is active, scales torque by approximate inertia factor (based on grab offset) for consistent "
                         "rotation oscillations regardless of object scale/size.")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockProportionalGain,
+                        &PhysicsGrabComponent::m_tidalLockProportionalGain,
                         "Tidal Lock PID P Gain",
                         "Proportional gain for tidal lock. Controls rotational stiffness (higher = faster facing).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockIntegralGain,
+                        &PhysicsGrabComponent::m_tidalLockIntegralGain,
                         "Tidal Lock PID I Gain",
                         "Integral gain for tidal lock. Corrects persistent rotational errors (usually low or 0).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockDerivativeGain,
+                        &PhysicsGrabComponent::m_tidalLockDerivativeGain,
                         "Tidal Lock PID D Gain",
                         "Derivative gain for tidal lock. Controls rotational damping (higher = less oscillation).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockIntegralWindupLimit,
+                        &PhysicsGrabComponent::m_tidalLockIntegralWindupLimit,
                         "Tidal Lock PID Integral Limit",
                         "Anti-windup limit for integral (higher = stronger I).")
                     ->DataElement(
                         nullptr,
-                        &ObjectInteractionComponent::m_tidalLockDerivativeFilterAlpha,
+                        &PhysicsGrabComponent::m_tidalLockDerivativeFilterAlpha,
                         "Tidal Lock PID Deriv Filter Alpha",
                         "Derivative filter (0=raw, 1=heavy smoothing).");
             }
@@ -439,214 +440,214 @@ namespace ObjectInteraction
 
         if (auto bc = azrtti_cast<AZ::BehaviorContext*>(rc))
         {
-            bc->EBus<ObjectInteractionNotificationBus>("GrabNotificationBus", "GrabComponentNotificationBus", "Notifications for Grab Component")
-                ->Handler<ObjectInteractionNotificationHandler>();
+            bc->EBus<PhysicsGrabNotificationBus>("PhysicsGrabNotificationBus", "PhysicsGrabComponentNotificationBus", "Notifications for Physics Grab Component")
+                ->Handler<PhysicsGrabNotificationHandler>();
 
             // Reflect the enum
-            bc->Enum<static_cast<int>(ObjectInteractionStates::idleState)>("ObjectInteractionStates_IdleState")
-                ->Enum<static_cast<int>(ObjectInteractionStates::checkState)>("ObjectInteractionStates_CheckState")
-                ->Enum<static_cast<int>(ObjectInteractionStates::holdState)>("ObjectInteractionStates_HoldState")
-                ->Enum<static_cast<int>(ObjectInteractionStates::rotateState)>("ObjectInteractionStates_RotateState")
-                ->Enum<static_cast<int>(ObjectInteractionStates::throwState)>("ObjectInteractionStates_ThrowState");
+            bc->Enum<static_cast<int>(PhysicsGrabStates::idleState)>("PhysicsGrabStates_IdleState")
+                ->Enum<static_cast<int>(PhysicsGrabStates::checkState)>("PhysicsGrabStates_CheckState")
+                ->Enum<static_cast<int>(PhysicsGrabStates::holdState)>("PhysicsGrabStates_HoldState")
+                ->Enum<static_cast<int>(PhysicsGrabStates::rotateState)>("PhysicsGrabStates_RotateState")
+                ->Enum<static_cast<int>(PhysicsGrabStates::throwState)>("PhysicsGrabStates_ThrowState");
 
-            bc->EBus<ObjectInteractionComponentRequestBus>("ObjectInteractionComponentRequestBus")
+            bc->EBus<PhysicsGrabComponentRequestBus>("PhysicsGrabComponentRequestBus")
                 ->Attribute(AZ::Script::Attributes::Scope, AZ::Script::Attributes::ScopeFlags::Common)
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
-                ->Attribute(AZ::Script::Attributes::Category, "Object Interaction")
-                ->Event("Get Grabbing EntityId", &ObjectInteractionComponentRequests::GetGrabbingEntityId)
-                ->Event("Get Active Camera EntityId", &ObjectInteractionComponentRequests::GetActiveCameraEntityId)
-                ->Event("Get Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetGrabbedObjectEntityId)
-                ->Event("Get Last Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetLastGrabbedObjectEntityId)
-                ->Event("Get Thrown Grabbed Object EntityId", &ObjectInteractionComponentRequests::GetThrownGrabbedObjectEntityId)
-                ->Event("Set Thrown Grabbed Object EntityId", &ObjectInteractionComponentRequests::SetThrownGrabbedObjectEntityId)
-                ->Event("Set Grabbing Entity", &ObjectInteractionComponentRequests::SetGrabbingEntity)
-                ->Event("Get Grabbed Collision Group", &ObjectInteractionComponentRequests::GetGrabbedCollisionGroup)
-                ->Event("Set Grabbed Collision Group", &ObjectInteractionComponentRequests::SetGrabbedCollisionGroup)
-                ->Event("Get Current Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayerName)
-                ->Event("Set Current Grabbed Collision Layer By Name", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayerByName)
-                ->Event("Get Current Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetCurrentGrabbedCollisionLayer)
-                ->Event("Set Current Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetCurrentGrabbedCollisionLayer)
-                ->Event("Get Previous Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayerName)
-                ->Event("Set Previous Grabbed Collision Layer Name By Name", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayerByName)
-                ->Event("Get Previous Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetPrevGrabbedCollisionLayer)
-                ->Event("Set Previous Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetPrevGrabbedCollisionLayer)
-                ->Event("Get Temporary Grabbed Collision Layer Name", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayerName)
-                ->Event("Set Temporary Grabbed Collision Layer By Name", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayerByName)
-                ->Event("Get Temporary Grabbed Collision Layer", &ObjectInteractionComponentRequests::GetTempGrabbedCollisionLayer)
-                ->Event("Set Temporary Grabbed Collision Layer", &ObjectInteractionComponentRequests::SetTempGrabbedCollisionLayer)
-                ->Event("Get State String", &ObjectInteractionComponentRequests::GetStateString)
-                ->Event("Get Is In Idle State", &ObjectInteractionComponentRequests::GetIsInIdleState)
-                ->Event("Get Is In Check State", &ObjectInteractionComponentRequests::GetIsInCheckState)
-                ->Event("Get Is In Held State", &ObjectInteractionComponentRequests::GetIsInHeldState)
-                ->Event("Get Is In Rotate State", &ObjectInteractionComponentRequests::GetIsInRotateState)
-                ->Event("Get Is In Throw State", &ObjectInteractionComponentRequests::GetIsInThrowState)
-                ->Event("Get Object Sphere Cast Hit", &ObjectInteractionComponentRequests::GetObjectSphereCastHit)
-                ->Event("Get Stay In Idle State", &ObjectInteractionComponentRequests::GetStayInIdleState)
-                ->Event("Set Stay In Idle State", &ObjectInteractionComponentRequests::SetStayInIdleState)
-                ->Event("Get Grab Enable Toggle", &ObjectInteractionComponentRequests::GetGrabEnableToggle)
-                ->Event("Set Grab Enable Toggle", &ObjectInteractionComponentRequests::SetGrabEnableToggle)
-                ->Event("Get Rotate Enable Toggle", &ObjectInteractionComponentRequests::GetRotateEnableToggle)
-                ->Event("Set Rotate Enable Toggle", &ObjectInteractionComponentRequests::SetRotateEnableToggle)
-                ->Event("Get Grab Key Value", &ObjectInteractionComponentRequests::GetGrabKeyValue)
-                ->Event("Set Grab Key Value", &ObjectInteractionComponentRequests::SetGrabKeyValue)
-                ->Event("Get Throw Key Value", &ObjectInteractionComponentRequests::GetThrowKeyValue)
-                ->Event("Set Throw Key Value", &ObjectInteractionComponentRequests::SetThrowKeyValue)
-                ->Event("Get Rotate Key Value", &ObjectInteractionComponentRequests::GetRotateKeyValue)
-                ->Event("Set Rotate Key Value", &ObjectInteractionComponentRequests::SetRotateKeyValue)
-                ->Event("Get Pitch Key Value", &ObjectInteractionComponentRequests::GetPitchKeyValue)
-                ->Event("Set Pitch Key Value", &ObjectInteractionComponentRequests::SetPitchKeyValue)
-                ->Event("Get Yaw Key Value", &ObjectInteractionComponentRequests::GetYawKeyValue)
-                ->Event("Set Yaw Key Value", &ObjectInteractionComponentRequests::SetYawKeyValue)
-                ->Event("Get Roll Key Value", &ObjectInteractionComponentRequests::GetRollKeyValue)
-                ->Event("Set Roll Key Value", &ObjectInteractionComponentRequests::SetRollKeyValue)
-                ->Event("Get Grab Distance Key Value", &ObjectInteractionComponentRequests::GetGrabbedDistanceKeyValue)
-                ->Event("Set Grab Distance Key Value", &ObjectInteractionComponentRequests::SetGrabbedDistanceKeyValue)         
-                ->Event("Get Grabbed Object Distance", &ObjectInteractionComponentRequests::GetGrabbedObjectDistance)
-                ->Event("Set Grabbed Object Distance", &ObjectInteractionComponentRequests::SetGrabbedObjectDistance)
-                ->Event("Get Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::GetMinGrabbedObjectDistance)
-                ->Event("Set Minimum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMinGrabbedObjectDistance)
-                ->Event("Get Maximum Grabbed Objectt Distance", &ObjectInteractionComponentRequests::GetMaxGrabbedObjectDistance)
-                ->Event("Set Maximum Grabbed Object Distance", &ObjectInteractionComponentRequests::SetMaxGrabbedObjectDistance)
-                ->Event("Get Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::GetGrabbedObjectDistanceSpeed)
-                ->Event("Set Grabbed Object Distance Speed", &ObjectInteractionComponentRequests::SetGrabbedObjectDistanceSpeed)
-                ->Event("Get Grab Response", &ObjectInteractionComponentRequests::GetGrabResponse)
-                ->Event("Set Grab Response", &ObjectInteractionComponentRequests::SetGrabResponse)
-                ->Event("Get Dynamic Object Tidal Lock", &ObjectInteractionComponentRequests::GetDynamicTidalLock)
-                ->Event("Set Dynamic Object Tidal Lock", &ObjectInteractionComponentRequests::SetDynamicTidalLock)
-                ->Event("Get Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::GetKinematicTidalLock)
-                ->Event("Set Kinematic Object Tidal Lock", &ObjectInteractionComponentRequests::SetKinematicTidalLock)
-                ->Event("Get Object Tidal Lock", &ObjectInteractionComponentRequests::GetTidalLock)
-                ->Event("Set Object Tidal Lock", &ObjectInteractionComponentRequests::SetTidalLock)
-                ->Event("Get Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::GetFullTidalLockForFPC)
-                ->Event("Set Full Tidal Lock For First Person Controller", &ObjectInteractionComponentRequests::SetFullTidalLockForFPC)
-                ->Event("Get Dynamic Yaw Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicYawRotateScale)
-                ->Event("Set Dynamic Yaw Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicYawRotateScale)
-                ->Event("Get Dynamic Pitch Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicPitchRotateScale)
-                ->Event("Set Dynamic Pitch Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicPitchRotateScale)
-                ->Event("Get Dynamic Roll Rotate Scale", &ObjectInteractionComponentRequests::GetDynamicRollRotateScale)
-                ->Event("Set Dynamic Roll Rotate Scale", &ObjectInteractionComponentRequests::SetDynamicRollRotateScale)
-                ->Event("Get Kinematic Yaw Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicYawRotateScale)
-                ->Event("Set Kinematic Yaw Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicYawRotateScale)
-                ->Event("Get Kinematic Pitch Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
-                ->Event("Set Kinematic Pitch Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
-                ->Event("Get Kinematic Roll Rotate Scale", &ObjectInteractionComponentRequests::GetKinematicPitchRotateScale)
-                ->Event("Set Kinematic Roll Rotate Scale", &ObjectInteractionComponentRequests::SetKinematicPitchRotateScale)
-                ->Event("Get Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::GetVelocityCompDampRate)
-                ->Event("Set Velocity Compensation Damp Rate", &ObjectInteractionComponentRequests::SetVelocityCompDampRate)
-                ->Event("Get Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::GetAngularVelocityDampRate)
-                ->Event("Set Angular Velocity Damp Rate", &ObjectInteractionComponentRequests::SetAngularVelocityDampRate)
-                ->Event("Get Velocity Compensation", &ObjectInteractionComponentRequests::GetVelocityCompensation)
-                ->Event("Set Velocity Compensation", &ObjectInteractionComponentRequests::SetVelocityCompensation)
-                ->Event("Get Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::GetSmoothDynamicRotation)
-                ->Event("Set Smooth Dynamic Rotation", &ObjectInteractionComponentRequests::SetSmoothDynamicRotation)
-                ->Event("Get Grab Throw Impulse", &ObjectInteractionComponentRequests::GetThrowImpulse)
-                ->Event("Set Grab Throw Impulse", &ObjectInteractionComponentRequests::SetThrowImpulse)
-                ->Event("Get Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateCounter)
-                ->Event("Set Grabbed Object Throw State Counter", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateCounter)
-                ->Event("Get Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::GetGrabbedObjectThrowStateTime)
-                ->Event("Set Grabbed Object Throw State Max Time", &ObjectInteractionComponentRequests::SetGrabbedObjectThrowStateTime)
-                ->Event("Get Enable Charge Throw", &ObjectInteractionComponentRequests::GetEnableChargeThrow)
-                ->Event("Set Enable Charge Throw", &ObjectInteractionComponentRequests::SetEnableChargeThrow)
-                ->Event("Get Enable Charge While Rotating", &ObjectInteractionComponentRequests::GetEnableChargeWhileRotating)
-                ->Event("Set Enable Charge While Rotating", &ObjectInteractionComponentRequests::SetEnableChargeWhileRotating)
-                ->Event("Get Min Throw Impulse", &ObjectInteractionComponentRequests::GetMinThrowImpulse)
-                ->Event("Set Min Throw Impulse", &ObjectInteractionComponentRequests::SetMinThrowImpulse)
-                ->Event("Get Max Throw Impulse", &ObjectInteractionComponentRequests::GetMaxThrowImpulse)
-                ->Event("Set Max Throw Impulse", &ObjectInteractionComponentRequests::SetMaxThrowImpulse)
-                ->Event("Get Current Throw Impulse", &ObjectInteractionComponentRequests::GetCurrentThrowImpulse)
-                ->Event("Get Charge Time", &ObjectInteractionComponentRequests::GetChargeTime)
-                ->Event("Set Charge Time", &ObjectInteractionComponentRequests::SetChargeTime)
-                ->Event("Get Current Charge Time", &ObjectInteractionComponentRequests::GetCurrentChargeTime)
-                ->Event("Get Is Charging Throw", &ObjectInteractionComponentRequests::GetIsChargingThrow)
-                ->Event("Get Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::GetSphereCastRadius)
-                ->Event("Set Grab Sphere Cast Radius", &ObjectInteractionComponentRequests::SetSphereCastRadius)
-                ->Event("Get Grab Sphere Cast Distance", &ObjectInteractionComponentRequests::GetSphereCastDistance)
-                ->Event("Set Grab Sphere Cast Distance", &ObjectInteractionComponentRequests::SetSphereCastDistance)
-                ->Event("Get Grabbed Object Is Kinematic", &ObjectInteractionComponentRequests::GetGrabbedObjectKinematicElseDynamic)
-                ->Event("Set Grabbed Object Is Kinematic", &ObjectInteractionComponentRequests::SetGrabbedObjectKinematicElseDynamic)
-                ->Event("Get Current Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetCurrentGrabbedObjectAngularDamping)
-                ->Event("Set Current Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetCurrentGrabbedObjectAngularDamping)
-                ->Event("Get Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetPrevGrabbedObjectAngularDamping)
-                ->Event("Set Previous Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectAngularDamping)
-                ->Event("Get Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectAngularDamping)
-                ->Event("Set Temporary Grabbed Object Angular Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectAngularDamping)
-                ->Event("Get Current Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetCurrentGrabbedObjectLinearDamping)
-                ->Event("Set Current Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetCurrentGrabbedObjectLinearDamping)
-                ->Event("Get Previous Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetPrevGrabbedObjectLinearDamping)
-                ->Event("Set Previous Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetPrevGrabbedObjectLinearDamping)
-                ->Event("Get Temporary Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::GetTempGrabbedObjectLinearDamping)
-                ->Event("Set Temporary Grabbed Object Linear Damping", &ObjectInteractionComponentRequests::SetTempGrabbedObjectLinearDamping)
-                ->Event("Get Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::GetInitialAngularVelocityZero)
-                ->Event("Set Initial Angular Velocity Zero", &ObjectInteractionComponentRequests::SetInitialAngularVelocityZero)
-                ->Event("Force State Transition", &ObjectInteractionComponentRequests::ForceTransition)
-                ->Event("Set Locked State Transition", &ObjectInteractionComponentRequests::SetStateLocked)
-                ->Event("Get Locked State Transition", &ObjectInteractionComponentRequests::GetStateLocked)
-                ->Event("Get Disable Gravity While Held", &ObjectInteractionComponentRequests::GetDisableGravityWhileHeld)
-                ->Event("Set Disable Gravity While Held", &ObjectInteractionComponentRequests::SetDisableGravityWhileHeld)
-                ->Event("Get Offset Grab", &ObjectInteractionComponentRequests::GetOffsetGrab)
-                ->Event("Set Offset Grab", &ObjectInteractionComponentRequests::SetOffsetGrab)
-                ->Event("Get Gravity Applies To Point Rotation", &ObjectInteractionComponentRequests::GetGravityAppliesToPointRotation)
-                ->Event("Set Gravity Applies To Point Rotation", &ObjectInteractionComponentRequests::SetGravityAppliesToPointRotation)
-                ->Event("Get Mass Independent Throw", &ObjectInteractionComponentRequests::GetMassIndependentThrow)
-                ->Event("Set Mass Independent Throw", &ObjectInteractionComponentRequests::SetMassIndependentThrow)
-                ->Event("Get Enable PID Held Dynamics", &ObjectInteractionComponentRequests::GetEnablePIDHeldDynamics)
-                ->Event("Set Enable PID Held Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDHeldDymamics)
-                ->Event("Get Mass Independent Held PID", &ObjectInteractionComponentRequests::GetMassIndependentHeldPID)
-                ->Event("Set Mass Independent Held PID", &ObjectInteractionComponentRequests::SetMassIndependentHeldPID)
-                ->Event("Get Held Proportional Gain", &ObjectInteractionComponentRequests::GetHeldProportionalGain)
-                ->Event("Set Held Proportional Gain", &ObjectInteractionComponentRequests::SetHeldProportionalGain)
-                ->Event("Get Held Integral Gain", &ObjectInteractionComponentRequests::GetHeldIntegralGain)
-                ->Event("Set Held Integral Gain", &ObjectInteractionComponentRequests::SetHeldIntegralGain)
-                ->Event("Get Held Derivative Gain", &ObjectInteractionComponentRequests::GetHeldDerivativeGain)
-                ->Event("Set Held Derivative Gain", &ObjectInteractionComponentRequests::SetHeldDerivativeGain)
-                ->Event("Get Held Integral Windup Limit", &ObjectInteractionComponentRequests::GetHeldIntegralWindupLimit)
-                ->Event("Set Held Integral Windup Limit", &ObjectInteractionComponentRequests::SetHeldIntegralWindupLimit)
-                ->Event("Get Held Derivative Filter Alpha", &ObjectInteractionComponentRequests::GetHeldDerivativeFilterAlpha)
-                ->Event("Set Held Derivative Filter Alpha", &ObjectInteractionComponentRequests::SetHeldDerivativeFilterAlpha)
-                ->Event("Get Held Derivative Mode", &ObjectInteractionComponentRequests::GetHeldDerivativeMode)
-                ->Event("Set Held Derivative Mode", &ObjectInteractionComponentRequests::SetHeldDerivativeMode)
-                ->Event("Get Enable PID Tidal Lock Dynamics", &ObjectInteractionComponentRequests::GetEnablePIDTidalLockDynamics)
-                ->Event("Set Enable PID Tidal Lock Dynamics", &ObjectInteractionComponentRequests::SetEnablePIDTidalLockDynamics)
-                ->Event("Get Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::GetMassIndependentTidalLock)
-                ->Event("Set Mass Independent Tidal Lock", &ObjectInteractionComponentRequests::SetMassIndependentTidalLock)
-                ->Event("Get Scale Independent Tidal Lock", &ObjectInteractionComponentRequests::GetScaleIndependentTidalLock)
-                ->Event("Set Scale Independent Tidal Lock", &ObjectInteractionComponentRequests::SetScaleIndependentTidalLock)
-                ->Event("Get Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::GetTidalLockProportionalGain)
-                ->Event("Set Tidal Lock Proportional Gain", &ObjectInteractionComponentRequests::SetTidalLockProportionalGain)
-                ->Event("Get Tidal Lock Integral Gain", &ObjectInteractionComponentRequests::GetTidalLockIntegralGain)
-                ->Event("Set Tidal Lock Integral Gain", &ObjectInteractionComponentRequests::SetTidalLockIntegralGain)
-                ->Event("Get Tidal Lock Derivative Gain", &ObjectInteractionComponentRequests::GetTidalLockDerivativeGain)
-                ->Event("Set Tidal Lock Derivative Gain", &ObjectInteractionComponentRequests::SetTidalLockDerivativeGain)
-                ->Event("Get Tidal Lock Integral Windup Limit", &ObjectInteractionComponentRequests::GetTidalLockIntegralWindupLimit)
-                ->Event("Set Tidal Lock Integral Windup Limit", &ObjectInteractionComponentRequests::SetTidalLockIntegralWindupLimit)
-                ->Event("Get Tidal Lock Derivative Filter Alpha", &ObjectInteractionComponentRequests::GetTidalLockDerivativeFilterAlpha)
-                ->Event("Set Tidal Lock Derivative Filter Alpha", &ObjectInteractionComponentRequests::SetTidalLockDerivativeFilterAlpha)
-                ->Event("Get Tidal Lock Derivative Mode", &ObjectInteractionComponentRequests::GetTidalLockDerivativeMode)
-                ->Event("Set Tidal Lock Derivative Mode", &ObjectInteractionComponentRequests::SetTidalLockDerivativeMode)
-                ->Event("GetGrabInputKey", &ObjectInteractionComponentRequests::GetGrabInputKey)
-                ->Event("SetGrabInputKey", &ObjectInteractionComponentRequests::SetGrabInputKey)
-                ->Event("GetThrowInputKey", &ObjectInteractionComponentRequests::GetThrowInputKey)
-                ->Event("SetThrowInputKey", &ObjectInteractionComponentRequests::SetThrowInputKey)
-                ->Event("GetRotateInputKey", &ObjectInteractionComponentRequests::GetRotateInputKey)
-                ->Event("SetRotateInputKey", &ObjectInteractionComponentRequests::SetRotateInputKey)
-                ->Event("GetRotatePitchInputKey", &ObjectInteractionComponentRequests::GetRotatePitchInputKey)
-                ->Event("SetRotatePitchInputKey", &ObjectInteractionComponentRequests::SetRotatePitchInputKey)
-                ->Event("GetRotateYawInputKey", &ObjectInteractionComponentRequests::GetRotateYawInputKey)
-                ->Event("SetRotateYawInputKey", &ObjectInteractionComponentRequests::SetRotateYawInputKey)
-                ->Event("GetRotateRollInputKey", &ObjectInteractionComponentRequests::GetRotateRollInputKey)
-                ->Event("SetRotateRollInputKey", &ObjectInteractionComponentRequests::SetRotateRollInputKey)
-                ->Event("GetGrabDistanceInputKey", &ObjectInteractionComponentRequests::GetGrabDistanceInputKey)
-                ->Event("SetGrabDistanceInputKey", &ObjectInteractionComponentRequests::SetGrabDistanceInputKey)
-                ->Event("GetMeshEntityId", &ObjectInteractionComponentRequests::GetMeshEntityId)
-                ->Event("SetMeshEntityId", &ObjectInteractionComponentRequests::SetMeshEntityId)
-                ->Event("GetMeshTagName", &ObjectInteractionComponentRequests::GetMeshTagName)
-                ->Event("SetMeshTagName", &ObjectInteractionComponentRequests::SetMeshTagName);
+                ->Attribute(AZ::Script::Attributes::Category, "Physics Grab")
+                ->Event("Get Grabbing EntityId", &PhysicsGrabComponentRequests::GetGrabbingEntityId)
+                ->Event("Get Active Camera EntityId", &PhysicsGrabComponentRequests::GetActiveCameraEntityId)
+                ->Event("Get Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetGrabbedObjectEntityId)
+                ->Event("Get Last Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetLastGrabbedObjectEntityId)
+                ->Event("Get Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetThrownGrabbedObjectEntityId)
+                ->Event("Set Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetThrownGrabbedObjectEntityId)
+                ->Event("Set Grabbing Entity", &PhysicsGrabComponentRequests::SetGrabbingEntity)
+                ->Event("Get Grabbed Collision Group", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroup)
+                ->Event("Set Grabbed Collision Group", &PhysicsGrabComponentRequests::SetGrabbedCollisionGroup)
+                ->Event("Get Current Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayerName)
+                ->Event("Set Current Grabbed Collision Layer By Name", &PhysicsGrabComponentRequests::SetCurrentGrabbedCollisionLayerByName)
+                ->Event("Get Current Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayer)
+                ->Event("Set Current Grabbed Collision Layer", &PhysicsGrabComponentRequests::SetCurrentGrabbedCollisionLayer)
+                ->Event("Get Previous Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetPrevGrabbedCollisionLayerName)
+                ->Event("Set Previous Grabbed Collision Layer Name By Name", &PhysicsGrabComponentRequests::SetPrevGrabbedCollisionLayerByName)
+                ->Event("Get Previous Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetPrevGrabbedCollisionLayer)
+                ->Event("Set Previous Grabbed Collision Layer", &PhysicsGrabComponentRequests::SetPrevGrabbedCollisionLayer)
+                ->Event("Get Temporary Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetTempGrabbedCollisionLayerName)
+                ->Event("Set Temporary Grabbed Collision Layer By Name", &PhysicsGrabComponentRequests::SetTempGrabbedCollisionLayerByName)
+                ->Event("Get Temporary Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetTempGrabbedCollisionLayer)
+                ->Event("Set Temporary Grabbed Collision Layer", &PhysicsGrabComponentRequests::SetTempGrabbedCollisionLayer)
+                ->Event("Get State String", &PhysicsGrabComponentRequests::GetStateString)
+                ->Event("Get Is In Idle State", &PhysicsGrabComponentRequests::GetIsInIdleState)
+                ->Event("Get Is In Check State", &PhysicsGrabComponentRequests::GetIsInCheckState)
+                ->Event("Get Is In Held State", &PhysicsGrabComponentRequests::GetIsInHeldState)
+                ->Event("Get Is In Rotate State", &PhysicsGrabComponentRequests::GetIsInRotateState)
+                ->Event("Get Is In Throw State", &PhysicsGrabComponentRequests::GetIsInThrowState)
+                ->Event("Get Object Sphere Cast Hit", &PhysicsGrabComponentRequests::GetObjectSphereCastHit)
+                ->Event("Get Stay In Idle State", &PhysicsGrabComponentRequests::GetStayInIdleState)
+                ->Event("Set Stay In Idle State", &PhysicsGrabComponentRequests::SetStayInIdleState)
+                ->Event("Get Grab Enable Toggle", &PhysicsGrabComponentRequests::GetGrabEnableToggle)
+                ->Event("Set Grab Enable Toggle", &PhysicsGrabComponentRequests::SetGrabEnableToggle)
+                ->Event("Get Rotate Enable Toggle", &PhysicsGrabComponentRequests::GetRotateEnableToggle)
+                ->Event("Set Rotate Enable Toggle", &PhysicsGrabComponentRequests::SetRotateEnableToggle)
+                ->Event("Get Grab Key Value", &PhysicsGrabComponentRequests::GetGrabKeyValue)
+                ->Event("Set Grab Key Value", &PhysicsGrabComponentRequests::SetGrabKeyValue)
+                ->Event("Get Throw Key Value", &PhysicsGrabComponentRequests::GetThrowKeyValue)
+                ->Event("Set Throw Key Value", &PhysicsGrabComponentRequests::SetThrowKeyValue)
+                ->Event("Get Rotate Key Value", &PhysicsGrabComponentRequests::GetRotateKeyValue)
+                ->Event("Set Rotate Key Value", &PhysicsGrabComponentRequests::SetRotateKeyValue)
+                ->Event("Get Pitch Key Value", &PhysicsGrabComponentRequests::GetPitchKeyValue)
+                ->Event("Set Pitch Key Value", &PhysicsGrabComponentRequests::SetPitchKeyValue)
+                ->Event("Get Yaw Key Value", &PhysicsGrabComponentRequests::GetYawKeyValue)
+                ->Event("Set Yaw Key Value", &PhysicsGrabComponentRequests::SetYawKeyValue)
+                ->Event("Get Roll Key Value", &PhysicsGrabComponentRequests::GetRollKeyValue)
+                ->Event("Set Roll Key Value", &PhysicsGrabComponentRequests::SetRollKeyValue)
+                ->Event("Get Grab Distance Key Value", &PhysicsGrabComponentRequests::GetGrabbedDistanceKeyValue)
+                ->Event("Set Grab Distance Key Value", &PhysicsGrabComponentRequests::SetGrabbedDistanceKeyValue)         
+                ->Event("Get Grabbed Object Distance", &PhysicsGrabComponentRequests::GetGrabbedObjectDistance)
+                ->Event("Set Grabbed Object Distance", &PhysicsGrabComponentRequests::SetGrabbedObjectDistance)
+                ->Event("Get Minimum Grabbed Object Distance", &PhysicsGrabComponentRequests::GetMinGrabbedObjectDistance)
+                ->Event("Set Minimum Grabbed Object Distance", &PhysicsGrabComponentRequests::SetMinGrabbedObjectDistance)
+                ->Event("Get Maximum Grabbed Objectt Distance", &PhysicsGrabComponentRequests::GetMaxGrabbedObjectDistance)
+                ->Event("Set Maximum Grabbed Object Distance", &PhysicsGrabComponentRequests::SetMaxGrabbedObjectDistance)
+                ->Event("Get Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::GetGrabbedObjectDistanceSpeed)
+                ->Event("Set Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::SetGrabbedObjectDistanceSpeed)
+                ->Event("Get Grab Response", &PhysicsGrabComponentRequests::GetGrabResponse)
+                ->Event("Set Grab Response", &PhysicsGrabComponentRequests::SetGrabResponse)
+                ->Event("Get Dynamic Object Tidal Lock", &PhysicsGrabComponentRequests::GetDynamicTidalLock)
+                ->Event("Set Dynamic Object Tidal Lock", &PhysicsGrabComponentRequests::SetDynamicTidalLock)
+                ->Event("Get Kinematic Object Tidal Lock", &PhysicsGrabComponentRequests::GetKinematicTidalLock)
+                ->Event("Set Kinematic Object Tidal Lock", &PhysicsGrabComponentRequests::SetKinematicTidalLock)
+                ->Event("Get Object Tidal Lock", &PhysicsGrabComponentRequests::GetTidalLock)
+                ->Event("Set Object Tidal Lock", &PhysicsGrabComponentRequests::SetTidalLock)
+                ->Event("Get Full Tidal Lock For First Person Controller", &PhysicsGrabComponentRequests::GetFullTidalLockForFPC)
+                ->Event("Set Full Tidal Lock For First Person Controller", &PhysicsGrabComponentRequests::SetFullTidalLockForFPC)
+                ->Event("Get Dynamic Yaw Rotate Scale", &PhysicsGrabComponentRequests::GetDynamicYawRotateScale)
+                ->Event("Set Dynamic Yaw Rotate Scale", &PhysicsGrabComponentRequests::SetDynamicYawRotateScale)
+                ->Event("Get Dynamic Pitch Rotate Scale", &PhysicsGrabComponentRequests::GetDynamicPitchRotateScale)
+                ->Event("Set Dynamic Pitch Rotate Scale", &PhysicsGrabComponentRequests::SetDynamicPitchRotateScale)
+                ->Event("Get Dynamic Roll Rotate Scale", &PhysicsGrabComponentRequests::GetDynamicRollRotateScale)
+                ->Event("Set Dynamic Roll Rotate Scale", &PhysicsGrabComponentRequests::SetDynamicRollRotateScale)
+                ->Event("Get Kinematic Yaw Rotate Scale", &PhysicsGrabComponentRequests::GetKinematicYawRotateScale)
+                ->Event("Set Kinematic Yaw Rotate Scale", &PhysicsGrabComponentRequests::SetKinematicYawRotateScale)
+                ->Event("Get Kinematic Pitch Rotate Scale", &PhysicsGrabComponentRequests::GetKinematicPitchRotateScale)
+                ->Event("Set Kinematic Pitch Rotate Scale", &PhysicsGrabComponentRequests::SetKinematicPitchRotateScale)
+                ->Event("Get Kinematic Roll Rotate Scale", &PhysicsGrabComponentRequests::GetKinematicPitchRotateScale)
+                ->Event("Set Kinematic Roll Rotate Scale", &PhysicsGrabComponentRequests::SetKinematicPitchRotateScale)
+                ->Event("Get Velocity Compensation Damp Rate", &PhysicsGrabComponentRequests::GetVelocityCompDampRate)
+                ->Event("Set Velocity Compensation Damp Rate", &PhysicsGrabComponentRequests::SetVelocityCompDampRate)
+                ->Event("Get Angular Velocity Damp Rate", &PhysicsGrabComponentRequests::GetAngularVelocityDampRate)
+                ->Event("Set Angular Velocity Damp Rate", &PhysicsGrabComponentRequests::SetAngularVelocityDampRate)
+                ->Event("Get Velocity Compensation", &PhysicsGrabComponentRequests::GetVelocityCompensation)
+                ->Event("Set Velocity Compensation", &PhysicsGrabComponentRequests::SetVelocityCompensation)
+                ->Event("Get Smooth Dynamic Rotation", &PhysicsGrabComponentRequests::GetSmoothDynamicRotation)
+                ->Event("Set Smooth Dynamic Rotation", &PhysicsGrabComponentRequests::SetSmoothDynamicRotation)
+                ->Event("Get Grab Throw Impulse", &PhysicsGrabComponentRequests::GetThrowImpulse)
+                ->Event("Set Grab Throw Impulse", &PhysicsGrabComponentRequests::SetThrowImpulse)
+                ->Event("Get Grabbed Object Throw State Counter", &PhysicsGrabComponentRequests::GetGrabbedObjectThrowStateCounter)
+                ->Event("Set Grabbed Object Throw State Counter", &PhysicsGrabComponentRequests::SetGrabbedObjectThrowStateCounter)
+                ->Event("Get Grabbed Object Throw State Max Time", &PhysicsGrabComponentRequests::GetGrabbedObjectThrowStateTime)
+                ->Event("Set Grabbed Object Throw State Max Time", &PhysicsGrabComponentRequests::SetGrabbedObjectThrowStateTime)
+                ->Event("Get Enable Charge Throw", &PhysicsGrabComponentRequests::GetEnableChargeThrow)
+                ->Event("Set Enable Charge Throw", &PhysicsGrabComponentRequests::SetEnableChargeThrow)
+                ->Event("Get Enable Charge While Rotating", &PhysicsGrabComponentRequests::GetEnableChargeWhileRotating)
+                ->Event("Set Enable Charge While Rotating", &PhysicsGrabComponentRequests::SetEnableChargeWhileRotating)
+                ->Event("Get Min Throw Impulse", &PhysicsGrabComponentRequests::GetMinThrowImpulse)
+                ->Event("Set Min Throw Impulse", &PhysicsGrabComponentRequests::SetMinThrowImpulse)
+                ->Event("Get Max Throw Impulse", &PhysicsGrabComponentRequests::GetMaxThrowImpulse)
+                ->Event("Set Max Throw Impulse", &PhysicsGrabComponentRequests::SetMaxThrowImpulse)
+                ->Event("Get Current Throw Impulse", &PhysicsGrabComponentRequests::GetCurrentThrowImpulse)
+                ->Event("Get Charge Time", &PhysicsGrabComponentRequests::GetChargeTime)
+                ->Event("Set Charge Time", &PhysicsGrabComponentRequests::SetChargeTime)
+                ->Event("Get Current Charge Time", &PhysicsGrabComponentRequests::GetCurrentChargeTime)
+                ->Event("Get Is Charging Throw", &PhysicsGrabComponentRequests::GetIsChargingThrow)
+                ->Event("Get Grab Sphere Cast Radius", &PhysicsGrabComponentRequests::GetSphereCastRadius)
+                ->Event("Set Grab Sphere Cast Radius", &PhysicsGrabComponentRequests::SetSphereCastRadius)
+                ->Event("Get Grab Sphere Cast Distance", &PhysicsGrabComponentRequests::GetSphereCastDistance)
+                ->Event("Set Grab Sphere Cast Distance", &PhysicsGrabComponentRequests::SetSphereCastDistance)
+                ->Event("Get Grabbed Object Is Kinematic", &PhysicsGrabComponentRequests::GetGrabbedObjectKinematicElseDynamic)
+                ->Event("Set Grabbed Object Is Kinematic", &PhysicsGrabComponentRequests::SetGrabbedObjectKinematicElseDynamic)
+                ->Event("Get Current Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::GetCurrentGrabbedObjectAngularDamping)
+                ->Event("Set Current Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::SetCurrentGrabbedObjectAngularDamping)
+                ->Event("Get Previous Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::GetPrevGrabbedObjectAngularDamping)
+                ->Event("Set Previous Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::SetPrevGrabbedObjectAngularDamping)
+                ->Event("Get Temporary Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::GetTempGrabbedObjectAngularDamping)
+                ->Event("Set Temporary Grabbed Object Angular Damping", &PhysicsGrabComponentRequests::SetTempGrabbedObjectAngularDamping)
+                ->Event("Get Current Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::GetCurrentGrabbedObjectLinearDamping)
+                ->Event("Set Current Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::SetCurrentGrabbedObjectLinearDamping)
+                ->Event("Get Previous Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::GetPrevGrabbedObjectLinearDamping)
+                ->Event("Set Previous Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::SetPrevGrabbedObjectLinearDamping)
+                ->Event("Get Temporary Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::GetTempGrabbedObjectLinearDamping)
+                ->Event("Set Temporary Grabbed Object Linear Damping", &PhysicsGrabComponentRequests::SetTempGrabbedObjectLinearDamping)
+                ->Event("Get Initial Angular Velocity Zero", &PhysicsGrabComponentRequests::GetInitialAngularVelocityZero)
+                ->Event("Set Initial Angular Velocity Zero", &PhysicsGrabComponentRequests::SetInitialAngularVelocityZero)
+                ->Event("Force State Transition", &PhysicsGrabComponentRequests::ForceTransition)
+                ->Event("Set Locked State Transition", &PhysicsGrabComponentRequests::SetStateLocked)
+                ->Event("Get Locked State Transition", &PhysicsGrabComponentRequests::GetStateLocked)
+                ->Event("Get Disable Gravity While Held", &PhysicsGrabComponentRequests::GetDisableGravityWhileHeld)
+                ->Event("Set Disable Gravity While Held", &PhysicsGrabComponentRequests::SetDisableGravityWhileHeld)
+                ->Event("Get Offset Grab", &PhysicsGrabComponentRequests::GetOffsetGrab)
+                ->Event("Set Offset Grab", &PhysicsGrabComponentRequests::SetOffsetGrab)
+                ->Event("Get Gravity Applies To Point Rotation", &PhysicsGrabComponentRequests::GetGravityAppliesToPointRotation)
+                ->Event("Set Gravity Applies To Point Rotation", &PhysicsGrabComponentRequests::SetGravityAppliesToPointRotation)
+                ->Event("Get Mass Independent Throw", &PhysicsGrabComponentRequests::GetMassIndependentThrow)
+                ->Event("Set Mass Independent Throw", &PhysicsGrabComponentRequests::SetMassIndependentThrow)
+                ->Event("Get Enable PID Held Dynamics", &PhysicsGrabComponentRequests::GetEnablePIDHeldDynamics)
+                ->Event("Set Enable PID Held Dynamics", &PhysicsGrabComponentRequests::SetEnablePIDHeldDymamics)
+                ->Event("Get Mass Independent Held PID", &PhysicsGrabComponentRequests::GetMassIndependentHeldPID)
+                ->Event("Set Mass Independent Held PID", &PhysicsGrabComponentRequests::SetMassIndependentHeldPID)
+                ->Event("Get Held Proportional Gain", &PhysicsGrabComponentRequests::GetHeldProportionalGain)
+                ->Event("Set Held Proportional Gain", &PhysicsGrabComponentRequests::SetHeldProportionalGain)
+                ->Event("Get Held Integral Gain", &PhysicsGrabComponentRequests::GetHeldIntegralGain)
+                ->Event("Set Held Integral Gain", &PhysicsGrabComponentRequests::SetHeldIntegralGain)
+                ->Event("Get Held Derivative Gain", &PhysicsGrabComponentRequests::GetHeldDerivativeGain)
+                ->Event("Set Held Derivative Gain", &PhysicsGrabComponentRequests::SetHeldDerivativeGain)
+                ->Event("Get Held Integral Windup Limit", &PhysicsGrabComponentRequests::GetHeldIntegralWindupLimit)
+                ->Event("Set Held Integral Windup Limit", &PhysicsGrabComponentRequests::SetHeldIntegralWindupLimit)
+                ->Event("Get Held Derivative Filter Alpha", &PhysicsGrabComponentRequests::GetHeldDerivativeFilterAlpha)
+                ->Event("Set Held Derivative Filter Alpha", &PhysicsGrabComponentRequests::SetHeldDerivativeFilterAlpha)
+                ->Event("Get Held Derivative Mode", &PhysicsGrabComponentRequests::GetHeldDerivativeMode)
+                ->Event("Set Held Derivative Mode", &PhysicsGrabComponentRequests::SetHeldDerivativeMode)
+                ->Event("Get Enable PID Tidal Lock Dynamics", &PhysicsGrabComponentRequests::GetEnablePIDTidalLockDynamics)
+                ->Event("Set Enable PID Tidal Lock Dynamics", &PhysicsGrabComponentRequests::SetEnablePIDTidalLockDynamics)
+                ->Event("Get Mass Independent Tidal Lock", &PhysicsGrabComponentRequests::GetMassIndependentTidalLock)
+                ->Event("Set Mass Independent Tidal Lock", &PhysicsGrabComponentRequests::SetMassIndependentTidalLock)
+                ->Event("Get Scale Independent Tidal Lock", &PhysicsGrabComponentRequests::GetScaleIndependentTidalLock)
+                ->Event("Set Scale Independent Tidal Lock", &PhysicsGrabComponentRequests::SetScaleIndependentTidalLock)
+                ->Event("Get Tidal Lock Proportional Gain", &PhysicsGrabComponentRequests::GetTidalLockProportionalGain)
+                ->Event("Set Tidal Lock Proportional Gain", &PhysicsGrabComponentRequests::SetTidalLockProportionalGain)
+                ->Event("Get Tidal Lock Integral Gain", &PhysicsGrabComponentRequests::GetTidalLockIntegralGain)
+                ->Event("Set Tidal Lock Integral Gain", &PhysicsGrabComponentRequests::SetTidalLockIntegralGain)
+                ->Event("Get Tidal Lock Derivative Gain", &PhysicsGrabComponentRequests::GetTidalLockDerivativeGain)
+                ->Event("Set Tidal Lock Derivative Gain", &PhysicsGrabComponentRequests::SetTidalLockDerivativeGain)
+                ->Event("Get Tidal Lock Integral Windup Limit", &PhysicsGrabComponentRequests::GetTidalLockIntegralWindupLimit)
+                ->Event("Set Tidal Lock Integral Windup Limit", &PhysicsGrabComponentRequests::SetTidalLockIntegralWindupLimit)
+                ->Event("Get Tidal Lock Derivative Filter Alpha", &PhysicsGrabComponentRequests::GetTidalLockDerivativeFilterAlpha)
+                ->Event("Set Tidal Lock Derivative Filter Alpha", &PhysicsGrabComponentRequests::SetTidalLockDerivativeFilterAlpha)
+                ->Event("Get Tidal Lock Derivative Mode", &PhysicsGrabComponentRequests::GetTidalLockDerivativeMode)
+                ->Event("Set Tidal Lock Derivative Mode", &PhysicsGrabComponentRequests::SetTidalLockDerivativeMode)
+                ->Event("GetGrabInputKey", &PhysicsGrabComponentRequests::GetGrabInputKey)
+                ->Event("SetGrabInputKey", &PhysicsGrabComponentRequests::SetGrabInputKey)
+                ->Event("GetThrowInputKey", &PhysicsGrabComponentRequests::GetThrowInputKey)
+                ->Event("SetThrowInputKey", &PhysicsGrabComponentRequests::SetThrowInputKey)
+                ->Event("GetRotateInputKey", &PhysicsGrabComponentRequests::GetRotateInputKey)
+                ->Event("SetRotateInputKey", &PhysicsGrabComponentRequests::SetRotateInputKey)
+                ->Event("GetRotatePitchInputKey", &PhysicsGrabComponentRequests::GetRotatePitchInputKey)
+                ->Event("SetRotatePitchInputKey", &PhysicsGrabComponentRequests::SetRotatePitchInputKey)
+                ->Event("GetRotateYawInputKey", &PhysicsGrabComponentRequests::GetRotateYawInputKey)
+                ->Event("SetRotateYawInputKey", &PhysicsGrabComponentRequests::SetRotateYawInputKey)
+                ->Event("GetRotateRollInputKey", &PhysicsGrabComponentRequests::GetRotateRollInputKey)
+                ->Event("SetRotateRollInputKey", &PhysicsGrabComponentRequests::SetRotateRollInputKey)
+                ->Event("GetGrabDistanceInputKey", &PhysicsGrabComponentRequests::GetGrabDistanceInputKey)
+                ->Event("SetGrabDistanceInputKey", &PhysicsGrabComponentRequests::SetGrabDistanceInputKey)
+                ->Event("GetMeshEntityId", &PhysicsGrabComponentRequests::GetMeshEntityId)
+                ->Event("SetMeshEntityId", &PhysicsGrabComponentRequests::SetMeshEntityId)
+                ->Event("GetMeshTagName", &PhysicsGrabComponentRequests::GetMeshTagName)
+                ->Event("SetMeshTagName", &PhysicsGrabComponentRequests::SetMeshTagName);
 
-            bc->Class<ObjectInteractionComponent>()->RequestBus("ObjectInteractionComponentRequestBus");
+            bc->Class<PhysicsGrabComponent>()->RequestBus("PhysicsGrabComponentRequestBus");
         }
     }
 
-    void ObjectInteractionComponent::Activate()
+    void PhysicsGrabComponent::Activate()
     {
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
@@ -678,7 +679,7 @@ namespace ObjectInteraction
         Physics::DefaultWorldBus::BroadcastResult(m_attachedSceneHandle, &Physics::DefaultWorldRequests::GetDefaultSceneHandle);
         if (m_attachedSceneHandle == AzPhysics::InvalidSceneHandle)
         {
-            AZ_Error("Object Interaction Component", false, "Failed to retrieve default scene.");
+            AZ_Error("Physics Grab Component", false, "Failed to retrieve default scene.");
             return;
         }
 
@@ -707,7 +708,7 @@ namespace ObjectInteraction
             sceneInterface->RegisterSceneSimulationFinishHandler(m_attachedSceneHandle, m_sceneSimulationFinishHandler);
         }
         // Connect the handler to the request bus
-        ObjectInteractionComponentRequestBus::Handler::BusConnect(GetEntityId());
+        PhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
 
         // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
         AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
@@ -732,12 +733,12 @@ namespace ObjectInteraction
     }
 
     // Called at the beginning of each physics tick
-    void ObjectInteractionComponent::OnSceneSimulationStart(float physicsTimestep)
+    void PhysicsGrabComponent::OnSceneSimulationStart(float physicsTimestep)
     {
         // Update physics timestep
         m_physicsTimestep = physicsTimestep;
 
-        if (!m_isObjectKinematic && (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
+        if (!m_isObjectKinematic && (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
             ProcessStates(physicsTimestep, true);
         }
@@ -746,18 +747,18 @@ namespace ObjectInteraction
         m_physicsTimeAccumulator = 0.0f;
     }
 
-    void ObjectInteractionComponent::OnSceneSimulationFinish(
+    void PhysicsGrabComponent::OnSceneSimulationFinish(
         [[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
     {
         if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_meshSmoothing &&
-            (m_state == ObjectInteractionStates::holdState || m_state == ObjectInteractionStates::rotateState))
+            (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
             m_prevPhysicsTransform = m_currentPhysicsTransform;
             AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
         }
     }
 
-    void ObjectInteractionComponent::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
+    void PhysicsGrabComponent::OnEntityActivated([[maybe_unused]] const AZ::EntityId& entityId)
     {
         AZ::EntityBus::Handler::BusDisconnect();
 
@@ -767,11 +768,11 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::Deactivate()
+    void PhysicsGrabComponent::Deactivate()
     {
         AZ::TickBus::Handler::BusDisconnect();
         InputEventNotificationBus::MultiHandler::BusDisconnect();
-        ObjectInteractionComponentRequestBus::Handler::BusDisconnect();
+        PhysicsGrabComponentRequestBus::Handler::BusDisconnect();
 
         m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         m_sceneSimulationStartHandler.Disconnect();
@@ -779,29 +780,29 @@ namespace ObjectInteraction
         m_meshEntityPtr = nullptr;
     }
 
-    void ObjectInteractionComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
+    void PhysicsGrabComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
         required.push_back(AZ_CRC_CE("InputConfigurationService"));
         required.push_back(AZ_CRC_CE("TransformService"));
     }
 
-    void ObjectInteractionComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
+    void PhysicsGrabComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
     {
         provided.push_back(AZ_CRC_CE("GrabService"));
     }
 
-    void ObjectInteractionComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
+    void PhysicsGrabComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
     {
         incompatible.push_back(AZ_CRC_CE("GrabService"));
         incompatible.push_back(AZ_CRC_CE("InputService"));
     }
 
-    void ObjectInteractionComponent::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
+    void PhysicsGrabComponent::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
         dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
     }
 
-    AZ::Entity* ObjectInteractionComponent::GetActiveCameraEntityPtr() const
+    AZ::Entity* PhysicsGrabComponent::GetActiveCameraEntityPtr() const
     {
         AZ::EntityId activeCameraId;
         Camera::CameraSystemRequestBus::BroadcastResult(activeCameraId, &Camera::CameraSystemRequestBus::Events::GetActiveCamera);
@@ -811,7 +812,7 @@ namespace ObjectInteraction
     }
 
     // Recieve the input event in OnPressed method
-    void ObjectInteractionComponent::OnPressed(float value)
+    void PhysicsGrabComponent::OnPressed(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -863,7 +864,7 @@ namespace ObjectInteraction
     }
 
     // Recieve the input event in OnReleased method
-    void ObjectInteractionComponent::OnReleased(float value)
+    void PhysicsGrabComponent::OnReleased(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -910,7 +911,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::OnHeld(float value)
+    void PhysicsGrabComponent::OnHeld(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
@@ -940,7 +941,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::ProcessStates(const float& deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::ProcessStates(const float& deltaTime, bool isPhysicsUpdate)
     {
         // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
         if (isPhysicsUpdate)
@@ -952,10 +953,10 @@ namespace ObjectInteraction
             }
             switch (m_state)
             {
-            case ObjectInteractionStates::holdState:
+            case PhysicsGrabStates::holdState:
                 HoldObjectState(deltaTime, isPhysicsUpdate);
                 break;
-            case ObjectInteractionStates::rotateState:
+            case PhysicsGrabStates::rotateState:
                 RotateObjectState(deltaTime, isPhysicsUpdate);
                 break;
             default:
@@ -966,23 +967,23 @@ namespace ObjectInteraction
 
         switch(m_state)
         {
-            case ObjectInteractionStates::idleState:
+            case PhysicsGrabStates::idleState:
                 IdleState();
                 break;
-            case ObjectInteractionStates::checkState:
+            case PhysicsGrabStates::checkState:
                 CheckForObjectsState();
                 break;
-            case ObjectInteractionStates::holdState:
+            case PhysicsGrabStates::holdState:
                 HoldObjectState(deltaTime);
                 break;
-            case ObjectInteractionStates::rotateState:
+            case PhysicsGrabStates::rotateState:
                 RotateObjectState(deltaTime);
                 break;
-            case ObjectInteractionStates::throwState:
+            case PhysicsGrabStates::throwState:
                 ThrowObjectState(deltaTime);
                 break;
             default:
-                m_state = ObjectInteractionStates::idleState;
+                m_state = PhysicsGrabStates::idleState;
                 IdleState();
         }
 
@@ -991,7 +992,7 @@ namespace ObjectInteraction
         m_prevThrowKeyValue = m_throwKeyValue;
     }
 
-    void ObjectInteractionComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
+    void PhysicsGrabComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
         ProcessStates(deltaTime);
         if (m_meshSmoothing)
@@ -1001,7 +1002,7 @@ namespace ObjectInteraction
     }
     
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
-    void ObjectInteractionComponent::InterpolateMeshTransform(float deltaTime)
+    void PhysicsGrabComponent::InterpolateMeshTransform(float deltaTime)
     {
         if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
         {
@@ -1042,7 +1043,7 @@ namespace ObjectInteraction
             m_physicsTimeAccumulator -= m_physicsTimestep;
     }
 
-    void ObjectInteractionComponent::ReleaseMesh()
+    void PhysicsGrabComponent::ReleaseMesh()
     {
         if (m_meshEntityPtr)
         {
@@ -1051,23 +1052,23 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::IdleState()
+    void PhysicsGrabComponent::IdleState()
     {
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::checkState) ||
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::checkState) ||
             (!m_isStateLocked && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f && !m_stayInIdleState))
         {
-            m_state = ObjectInteractionStates::checkState;
+            m_state = PhysicsGrabStates::checkState;
             m_forceTransition = false;
         }
     }
 
-    void ObjectInteractionComponent::CheckForObjectsState()
+    void PhysicsGrabComponent::CheckForObjectsState()
     {
         CheckForObjects();
         // Check if sphere cast hits a valid object before transitioning to holdState.
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
         // prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::holdState && m_objectSphereCastHit) ||
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::holdState && m_objectSphereCastHit) ||
             (!m_isStateLocked && m_objectSphereCastHit))
         {
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
@@ -1201,7 +1202,7 @@ namespace ObjectInteraction
             else
             {
                 AZ_Warning(
-                    "ObjectInteractionComponent",
+                    "PhysicsGrabComponent",
                     false,
                     "Mesh smoothing enabled but no tagged child entity found for %s. Skipping interpolation to avoid physics desync.",
                     GetEntityPtr(m_lastGrabbedObjectEntityId)->GetName().c_str());
@@ -1264,9 +1265,9 @@ namespace ObjectInteraction
                 grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
             m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
 
-            m_state = ObjectInteractionStates::holdState;
+            m_state = PhysicsGrabStates::holdState;
             // Broadcast a grab start notification event
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStart);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStart);
 
             #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
@@ -1290,19 +1291,19 @@ namespace ObjectInteraction
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
         // prevent state transition with m_isStateLocked
         else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+            (m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked && !(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)))
         {
-            m_state = ObjectInteractionStates::idleState;
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
         }
         else
         {
-            m_state = ObjectInteractionStates::checkState;
+            m_state = PhysicsGrabStates::checkState;
         }
     }
 
-    void ObjectInteractionComponent::HoldObjectState(float deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::HoldObjectState(float deltaTime, bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
@@ -1322,11 +1323,11 @@ namespace ObjectInteraction
         // Drop the object and go back to idle state if sphere cast doesn't hit
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
         // prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
             ReleaseGrabbedObject(true, false);
-            m_state = ObjectInteractionStates::idleState;
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
             return;
         }
@@ -1342,25 +1343,25 @@ namespace ObjectInteraction
         // Go back to idle state if grab key is pressed again because we want to stop holding the 
         // object on the second key press. Other conditionals allow forced state transition to 
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked &&
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_grabKeyValue == 0.f))))
         {
             ReleaseGrabbedObject(true, false);
-            m_state = ObjectInteractionStates::idleState;
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
         }
         // Enter Rotate State if rotate key is pressed. Other conditionals allow forced state transition 
         // to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::rotateState) ||
+            (m_forceTransition && m_targetState == PhysicsGrabStates::rotateState) ||
             (!m_isStateLocked &&
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
-            m_state = ObjectInteractionStates::rotateState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStart);
+            m_state = PhysicsGrabStates::rotateState;
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
         // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release.
@@ -1389,7 +1390,7 @@ namespace ObjectInteraction
             // Check if full charge is reached and notify if not already done
             if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
             {
-                ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnChargeComplete);
+                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
                 m_hasNotifiedChargeComplete = true;
             }
         }
@@ -1404,11 +1405,11 @@ namespace ObjectInteraction
         }
         else
         {
-            m_state = ObjectInteractionStates::holdState;
+            m_state = PhysicsGrabStates::holdState;
         }
     }
 
-    void ObjectInteractionComponent::RotateObjectState(float deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::RotateObjectState(float deltaTime, bool isPhysicsUpdate)
     {
         if (!m_grabMaintained)
         {
@@ -1429,13 +1430,13 @@ namespace ObjectInteraction
         // Drop the object and go back to idle state if sphere cast doesn't hit. Other 
         // conditionals allow forced state transition to bypass inputs with 
         // m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) || 
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || 
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             ReleaseGrabbedObject(true, true);
-            m_state = ObjectInteractionStates::idleState;
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
             return;
         }
@@ -1466,7 +1467,7 @@ namespace ObjectInteraction
         // Go back to idle state if grab key is pressed again because we want to stop holding the
         // object on the second key press. Other conditionals allow forced state transition to 
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == ObjectInteractionStates::idleState) ||
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked &&
              ((m_grabEnableToggle && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f) ||
               (!m_grabEnableToggle && m_prevGrabKeyValue == 0.f))))
@@ -1474,14 +1475,14 @@ namespace ObjectInteraction
             // Set Angular Velocity back to zero if Grab Key is not pressed
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             ReleaseGrabbedObject(true, true);
-            m_state = ObjectInteractionStates::idleState;
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
         }
         // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
         // object on the second key press. Other conditionals allow forced state transition to 
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
-            (m_forceTransition && m_targetState == ObjectInteractionStates::holdState) ||
+            (m_forceTransition && m_targetState == PhysicsGrabStates::holdState) ||
             (!m_isStateLocked &&
              ((m_rotateEnableToggle && m_prevRotateKeyValue == 0.f && m_rotateKeyValue != 0.f) ||
               (!m_rotateEnableToggle && m_rotateKeyValue == 0.f))))
@@ -1520,8 +1521,8 @@ namespace ObjectInteraction
 
             m_tidalLockPidController.Reset();
 
-            m_state = ObjectInteractionStates::holdState;
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            m_state = PhysicsGrabStates::holdState;
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
         }
         // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release. 
@@ -1550,7 +1551,7 @@ namespace ObjectInteraction
             // Check if full charge is reached and notify if not already done
             if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
             {
-                ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnChargeComplete);
+                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
                 m_hasNotifiedChargeComplete = true;
             }
         }
@@ -1565,11 +1566,11 @@ namespace ObjectInteraction
         }
         else
         {
-            m_state = ObjectInteractionStates::rotateState;
+            m_state = PhysicsGrabStates::rotateState;
         }
     }
 
-    void ObjectInteractionComponent::ThrowObjectState(const float &deltaTime)
+    void PhysicsGrabComponent::ThrowObjectState(const float &deltaTime)
     {
         // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it 
         // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
@@ -1587,26 +1588,26 @@ namespace ObjectInteraction
         if (m_grabReference.GetTranslation().GetDistance(
                 GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
         {
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnMaxThrowDistance);
-            m_state = ObjectInteractionStates::idleState;
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStop);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnMaxThrowDistance);
+            m_state = PhysicsGrabStates::idleState;
         }
         // Escape from the throw state if grabbed object is in throw state longer than m_throwStateMaxTime
         else if (m_throwStateCounter <= 0.f)
         {
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStop);
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStateCounterZero);
-            m_state = ObjectInteractionStates::idleState;
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStop);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStateCounterZero);
+            m_state = PhysicsGrabStates::idleState;
         }
         else
         {
-            m_state = ObjectInteractionStates::throwState;
+            m_state = PhysicsGrabStates::throwState;
         }
     }
 
     // Perform a spherecast query to check if colliding with a grabbable object, then assign the 
     // first returned hit to m_grabbedObjectEntityId
-    void ObjectInteractionComponent::CheckForObjects()
+    void PhysicsGrabComponent::CheckForObjects()
     {
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
@@ -1636,7 +1637,7 @@ namespace ObjectInteraction
             m_grabbingEntityTransform,
             m_forwardVector,
             m_sphereCastDistance,
-            AzPhysics::SceneQuery::QueryType::StaticAndDynamic,
+            AzPhysics::SceneQuery::QueryType::Dynamic,
             m_grabbedCollisionGroup,
             nullptr);
         request.m_reportMultipleHits = true;
@@ -1688,7 +1689,7 @@ namespace ObjectInteraction
 
     // Hold and move object using physics or translation, based on object's 
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
-    void ObjectInteractionComponent::HoldObject(float deltaTime)
+    void PhysicsGrabComponent::HoldObject(float deltaTime)
     {        
         // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
         #ifdef FIRST_PERSON_CONTROLLER
@@ -1754,7 +1755,7 @@ namespace ObjectInteraction
             
             // If object is NOT in rotate state, couple the grabbed entity's rotation to 
             // the controlling entity's local z rotation (causing object to face controlling entity)
-            if (m_state != ObjectInteractionStates::rotateState && m_tidalLock && m_kinematicTidalLock)
+            if (m_state != PhysicsGrabStates::rotateState && m_tidalLock && m_kinematicTidalLock)
             {
                 TidalLock(deltaTime);
             }
@@ -1800,7 +1801,7 @@ namespace ObjectInteraction
 
                 // Apply as impulse
                 AZ::Vector3 linearImpulse = linearForce * deltaTime;
-                if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != ObjectInteractionStates::rotateState))
+                if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != PhysicsGrabStates::rotateState))
                 {
                     Physics::RigidBodyRequestBus::Event(
                         m_lastGrabbedObjectEntityId,
@@ -1833,7 +1834,7 @@ namespace ObjectInteraction
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
-            if (m_state != ObjectInteractionStates::rotateState && m_tidalLock && m_dynamicTidalLock)
+            if (m_state != PhysicsGrabStates::rotateState && m_tidalLock && m_dynamicTidalLock)
             {
                 TidalLock(deltaTime);
             }
@@ -1856,7 +1857,7 @@ namespace ObjectInteraction
 
     // Rotate object using physics or transforms, based on object's starting 
     // Rigid Body type, or if KinematicWhileHeld is enabled.
-    void ObjectInteractionComponent::RotateObject(float deltaTime)
+    void PhysicsGrabComponent::RotateObject(float deltaTime)
     {
         // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
         #ifdef FIRST_PERSON_CONTROLLER
@@ -1954,7 +1955,7 @@ namespace ObjectInteraction
     }
 
     // Apply linear impulse to object if it is a Dynamic Rigid Body
-    void ObjectInteractionComponent::ThrowObject()
+    void PhysicsGrabComponent::ThrowObject()
     {
         // Query mass for potential scaling (default to 1 if fails)
         float mass = 1.0f;
@@ -1971,7 +1972,7 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, impulse);
 
         // Trigger an event notification when object enters Throw State
-        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
+        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
 
         m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
 
@@ -1989,7 +1990,7 @@ namespace ObjectInteraction
         }
     }
 
-    void ObjectInteractionComponent::ReleaseGrabbedObject(bool notifyHoldStop = true, bool notifyRotateStop = false)
+    void PhysicsGrabComponent::ReleaseGrabbedObject(bool notifyHoldStop = true, bool notifyRotateStop = false)
     {
         // Set Object Current Layer variable back to initial layer
         SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
@@ -2024,23 +2025,23 @@ namespace ObjectInteraction
 
         if (notifyHoldStop)
         {
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
         }
         if (notifyRotateStop)
         {
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
         }
     }
 
     // Handles throw transition from hold and rotate
-    void ObjectInteractionComponent::TransitionToThrow(bool isChargeEnabled)
+    void PhysicsGrabComponent::TransitionToThrow(bool isChargeEnabled)
     {
         // If transitioning from rotate state, reset rotation-specific properties
-        if (m_state == ObjectInteractionStates::rotateState)
+        if (m_state == PhysicsGrabStates::rotateState)
         {
             SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-            ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnRotateStop);
+            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
         }
 
         // Reset to object's original Linear Damping value
@@ -2083,9 +2084,9 @@ namespace ObjectInteraction
         }
 
         // Transition to throw state
-        m_state = ObjectInteractionStates::throwState;
-        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnHoldStop);
-        ObjectInteractionNotificationBus::Broadcast(&ObjectInteractionNotificationBus::Events::OnThrowStart);
+        m_state = PhysicsGrabStates::throwState;
+        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
+        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
 
         // Reset charging state after initiating throw
         m_isChargingThrow = false;
@@ -2094,7 +2095,7 @@ namespace ObjectInteraction
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
-    void ObjectInteractionComponent::TidalLock(float deltaTime)
+    void PhysicsGrabComponent::TidalLock(float deltaTime)
     {
         // Initialize local variables for the current entity's rotation quaternion and up vector
         AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
@@ -2196,7 +2197,7 @@ namespace ObjectInteraction
     }
 
     #ifdef FIRST_PERSON_CONTROLLER
-    void ObjectInteractionComponent::FreezeCharacterRotation()
+    void PhysicsGrabComponent::FreezeCharacterRotation()
     {
         if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
         {
@@ -2208,14 +2209,14 @@ namespace ObjectInteraction
         else if (m_freezeCharacterRotation)
         {
             AZ_Warning(
-                "Object Interaction Component",
+                "Physics Grab Component",
                 false,
                 "No First Person Controller Component handler available to freeze character rotation.")
         }
     }
     #endif
 
-    void ObjectInteractionComponent::UpdateGrabDistance(float deltaTime)
+    void PhysicsGrabComponent::UpdateGrabDistance(float deltaTime)
     {
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
@@ -2226,7 +2227,7 @@ namespace ObjectInteraction
             AZ::GetClamp(m_grabDistance + (grabDistanceValue * m_grabDistanceSpeed * deltaTime), m_minGrabDistance, m_maxGrabDistance);
     }
 
-    void ObjectInteractionComponent::ComputeGrabbingEntityVelocity(float deltaTime)
+    void PhysicsGrabComponent::ComputeGrabbingEntityVelocity(float deltaTime)
     {
         if (m_velocityCompensation)
         {
@@ -2251,14 +2252,14 @@ namespace ObjectInteraction
         }
     }
 
-    AZ::Entity* ObjectInteractionComponent::GetEntityPtr(AZ::EntityId pointer) const
+    AZ::Entity* PhysicsGrabComponent::GetEntityPtr(AZ::EntityId pointer) const
     {
         auto ca = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
         return ca->FindEntity(pointer);
     }
 
     // Handles disconnecting, updating, and reconnecting input bindings
-    void ObjectInteractionComponent::UpdateInputBinding(
+    void PhysicsGrabComponent::UpdateInputBinding(
         StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue)
     {
         if (binding == newValue)
@@ -2276,174 +2277,174 @@ namespace ObjectInteraction
     }
 
     // Event Notification methods for use in scripts
-    void ObjectInteractionComponent::OnObjectSphereCastHit()
+    void PhysicsGrabComponent::OnObjectSphereCastHit()
     {
     }
-    void ObjectInteractionComponent::OnHoldStart()
+    void PhysicsGrabComponent::OnHoldStart()
     {
     }
-    void ObjectInteractionComponent::OnHoldStop()
+    void PhysicsGrabComponent::OnHoldStop()
     {
     }
-    void ObjectInteractionComponent::OnRotateStart()
+    void PhysicsGrabComponent::OnRotateStart()
     {
     }
-    void ObjectInteractionComponent::OnRotateStop()
+    void PhysicsGrabComponent::OnRotateStop()
     {
     }
-    void ObjectInteractionComponent::OnThrowStart()
+    void PhysicsGrabComponent::OnThrowStart()
     {
     }
-    void ObjectInteractionComponent::OnThrowStop()
+    void PhysicsGrabComponent::OnThrowStop()
     {
     }
-    void ObjectInteractionComponent::OnMaxThrowDistance()
+    void PhysicsGrabComponent::OnMaxThrowDistance()
     {
     }
-    void ObjectInteractionComponent::OnThrowStateCounterZero()
+    void PhysicsGrabComponent::OnThrowStateCounterZero()
     {
     }
-    void ObjectInteractionComponent::OnChargeComplete()
+    void PhysicsGrabComponent::OnChargeComplete()
     {
     }
 
     // Request Bus getter and setter methods for use in scripts
-    AZ::EntityId ObjectInteractionComponent::GetGrabbingEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetGrabbingEntityId() const
     {
         return m_grabbingEntityPtr->GetId();
     }
 
-    AZ::EntityId ObjectInteractionComponent::GetActiveCameraEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetActiveCameraEntityId() const
     {
         return GetActiveCameraEntityPtr()->GetId();
     }
 
-    AZ::EntityId ObjectInteractionComponent::GetGrabbedObjectEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetGrabbedObjectEntityId() const
     {
         return m_grabbedObjectEntityId;
     }
 
-    AZ::EntityId ObjectInteractionComponent::GetLastGrabbedObjectEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetLastGrabbedObjectEntityId() const
     {
         return m_lastGrabbedObjectEntityId;
     }
 
-    AZ::EntityId ObjectInteractionComponent::GetThrownGrabbedObjectEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetThrownGrabbedObjectEntityId() const
     {
         return m_thrownGrabbedObjectEntityId;
     }
 
-    void ObjectInteractionComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId)
+    void PhysicsGrabComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId)
     {
         m_thrownGrabbedObjectEntityId = new_thrownGrabbedObjectEntityId;
     }
 
-    void ObjectInteractionComponent::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
+    void PhysicsGrabComponent::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
     {
         m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
     }
 
-    AZStd::string ObjectInteractionComponent::GetStateString() const
+    AZStd::string PhysicsGrabComponent::GetStateString() const
     {
         return m_statesMap.find(m_state)->second;
     }
 
-    bool ObjectInteractionComponent::GetIsInIdleState() const
+    bool PhysicsGrabComponent::GetIsInIdleState() const
     {
-        return (m_state == ObjectInteractionStates::idleState);
+        return (m_state == PhysicsGrabStates::idleState);
     }
 
-    bool ObjectInteractionComponent::GetIsInCheckState() const
+    bool PhysicsGrabComponent::GetIsInCheckState() const
     {
-        return (m_state == ObjectInteractionStates::checkState);
+        return (m_state == PhysicsGrabStates::checkState);
     }
 
-    bool ObjectInteractionComponent::GetIsInHeldState() const
+    bool PhysicsGrabComponent::GetIsInHeldState() const
     {
-        return (m_state == ObjectInteractionStates::holdState);
+        return (m_state == PhysicsGrabStates::holdState);
     }
 
-    bool ObjectInteractionComponent::GetIsInRotateState() const
+    bool PhysicsGrabComponent::GetIsInRotateState() const
     {
-        return (m_state == ObjectInteractionStates::rotateState);
+        return (m_state == PhysicsGrabStates::rotateState);
     }
 
-    bool ObjectInteractionComponent::GetIsInThrowState() const
+    bool PhysicsGrabComponent::GetIsInThrowState() const
     {
-        return (m_state == ObjectInteractionStates::throwState);
+        return (m_state == PhysicsGrabStates::throwState);
     }
 
-    bool ObjectInteractionComponent::GetObjectSphereCastHit() const
+    bool PhysicsGrabComponent::GetObjectSphereCastHit() const
     {
         return m_objectSphereCastHit;
     }
 
-    bool ObjectInteractionComponent::GetStayInIdleState() const
+    bool PhysicsGrabComponent::GetStayInIdleState() const
     {
         return m_stayInIdleState;
     }
     
-    void ObjectInteractionComponent::SetStayInIdleState(const bool& new_stayInIdleState)
+    void PhysicsGrabComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
     }
 
-    bool ObjectInteractionComponent::GetGrabEnableToggle() const
+    bool PhysicsGrabComponent::GetGrabEnableToggle() const
     {
         return m_grabEnableToggle;
     }
 
-    void ObjectInteractionComponent::SetGrabEnableToggle(const bool& new_grabEnableToggle)
+    void PhysicsGrabComponent::SetGrabEnableToggle(const bool& new_grabEnableToggle)
     {
         m_grabEnableToggle = new_grabEnableToggle;
     }
 
-    bool ObjectInteractionComponent::GetRotateEnableToggle() const
+    bool PhysicsGrabComponent::GetRotateEnableToggle() const
     {
         return m_rotateEnableToggle;
     }
 
-    void ObjectInteractionComponent::SetRotateEnableToggle(const bool& new_rotateEnableToggle)
+    void PhysicsGrabComponent::SetRotateEnableToggle(const bool& new_rotateEnableToggle)
     {
         m_rotateEnableToggle = new_rotateEnableToggle;
     }
 
-    float ObjectInteractionComponent::GetGrabKeyValue() const
+    float PhysicsGrabComponent::GetGrabKeyValue() const
     {
         return m_grabKeyValue;
     }
 
-    void ObjectInteractionComponent::SetGrabKeyValue(const float& new_grabKeyValue)
+    void PhysicsGrabComponent::SetGrabKeyValue(const float& new_grabKeyValue)
     {
         m_grabKeyValue = new_grabKeyValue;
     }
 
-    float ObjectInteractionComponent::GetThrowKeyValue() const
+    float PhysicsGrabComponent::GetThrowKeyValue() const
     {
         return m_throwKeyValue;
     }
 
-    void ObjectInteractionComponent::SetThrowKeyValue(const float& new_throwKeyValue)
+    void PhysicsGrabComponent::SetThrowKeyValue(const float& new_throwKeyValue)
     {
         m_throwKeyValue = new_throwKeyValue;
     }
 
-    float ObjectInteractionComponent::GetRotateKeyValue() const
+    float PhysicsGrabComponent::GetRotateKeyValue() const
     {
         return m_rotateKeyValue;
     }
 
-    void ObjectInteractionComponent::SetRotateKeyValue(const float& new_rotateKeyValue)
+    void PhysicsGrabComponent::SetRotateKeyValue(const float& new_rotateKeyValue)
     {
         m_rotateKeyValue = new_rotateKeyValue;
     }
 
-    float ObjectInteractionComponent::GetPitchKeyValue() const
+    float PhysicsGrabComponent::GetPitchKeyValue() const
     {
          return m_pitchKeyValue;
     }
 
-    void ObjectInteractionComponent::SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue)
+    void PhysicsGrabComponent::SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue)
     {
         if (new_ignorePitchKeyInputValue)
         {
@@ -2458,12 +2459,12 @@ namespace ObjectInteraction
         }
     }
 
-    float ObjectInteractionComponent::GetYawKeyValue() const
+    float PhysicsGrabComponent::GetYawKeyValue() const
     {
         return m_yawKeyValue;
     }
 
-    void ObjectInteractionComponent::SetYawKeyValue(const float& new_yawKeyValue, const bool& new_ignoreYawKeyInputValue)
+    void PhysicsGrabComponent::SetYawKeyValue(const float& new_yawKeyValue, const bool& new_ignoreYawKeyInputValue)
     {
         if (new_ignoreYawKeyInputValue)
         {
@@ -2478,12 +2479,12 @@ namespace ObjectInteraction
         }
     }
 
-    float ObjectInteractionComponent::GetRollKeyValue() const
+    float PhysicsGrabComponent::GetRollKeyValue() const
     {
         return m_rollKeyValue;
     }
 
-    void ObjectInteractionComponent::SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue)
+    void PhysicsGrabComponent::SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue)
     {
         if (new_ignoreRollKeyInputValue)
         {
@@ -2498,23 +2499,23 @@ namespace ObjectInteraction
         }
     }
 
-    AZ::EntityId ObjectInteractionComponent::GetMeshEntityId() const
+    AZ::EntityId PhysicsGrabComponent::GetMeshEntityId() const
     {
         return m_meshEntityId;
     }
 
-    void ObjectInteractionComponent::SetMeshEntityId(const AZ::EntityId& new_meshEntityId)
+    void PhysicsGrabComponent::SetMeshEntityId(const AZ::EntityId& new_meshEntityId)
     {
         m_meshEntityId = new_meshEntityId;
         m_meshEntityPtr = m_meshEntityId.IsValid() ? GetEntityPtr(m_meshEntityId) : nullptr;
     }
 
-    AZStd::string ObjectInteractionComponent::GetMeshTagName() const
+    AZStd::string PhysicsGrabComponent::GetMeshTagName() const
     {
         return m_meshTagName;
     }
 
-    void ObjectInteractionComponent::SetMeshTagName(const AZStd::string& new_meshTagName)
+    void PhysicsGrabComponent::SetMeshTagName(const AZStd::string& new_meshTagName)
     {
         m_meshTagName = new_meshTagName;
         // Reset m_meshEntityId to invalid to prioritize name-based lookup
@@ -2522,12 +2523,12 @@ namespace ObjectInteraction
         m_meshEntityPtr = nullptr;
     }
 
-    float ObjectInteractionComponent::GetGrabbedDistanceKeyValue() const
+    float PhysicsGrabComponent::GetGrabbedDistanceKeyValue() const
     {
         return m_grabDistanceKeyValue;
     }
 
-    void ObjectInteractionComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
+    void PhysicsGrabComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
     {
         if (new_ignoreGrabDistanceKeyInputValue)
         {
@@ -2542,312 +2543,312 @@ namespace ObjectInteraction
         }
     }
 
-    float ObjectInteractionComponent::GetGrabbedObjectDistance() const
+    float PhysicsGrabComponent::GetGrabbedObjectDistance() const
     {
         return m_grabDistance;
     }
 
-    void ObjectInteractionComponent::SetGrabbedObjectDistance(const float& new_grabDistance)
+    void PhysicsGrabComponent::SetGrabbedObjectDistance(const float& new_grabDistance)
     {
         m_grabDistance = AZ::GetClamp(new_grabDistance, m_minGrabDistance, m_maxGrabDistance);
     }
 
-    float ObjectInteractionComponent::GetMinGrabbedObjectDistance() const
+    float PhysicsGrabComponent::GetMinGrabbedObjectDistance() const
     {
         return m_minGrabDistance;
     }
 
-    void ObjectInteractionComponent::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
+    void PhysicsGrabComponent::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
     {
         m_minGrabDistance = new_minGrabDistance;
     }
 
-    float ObjectInteractionComponent::GetMaxGrabbedObjectDistance() const
+    float PhysicsGrabComponent::GetMaxGrabbedObjectDistance() const
     {
         return m_maxGrabDistance;
     }
 
-    void ObjectInteractionComponent::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
+    void PhysicsGrabComponent::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
     {
         m_maxGrabDistance = new_maxGrabDistance;
     }
 
-    float ObjectInteractionComponent::GetGrabbedObjectDistanceSpeed() const
+    float PhysicsGrabComponent::GetGrabbedObjectDistanceSpeed() const
     {
         return m_grabDistanceSpeed;
     }
 
-    void ObjectInteractionComponent::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
+    void PhysicsGrabComponent::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
     {
         m_grabDistanceSpeed = new_grabDistanceSpeed;
     }
 
-    float ObjectInteractionComponent::GetGrabResponse() const
+    float PhysicsGrabComponent::GetGrabResponse() const
     {
         return m_grabResponse;
     }
 
-    void ObjectInteractionComponent::SetGrabResponse(const float& new_grabResponse)
+    void PhysicsGrabComponent::SetGrabResponse(const float& new_grabResponse)
     {
         m_grabResponse = new_grabResponse;
     }
 
-    bool ObjectInteractionComponent::GetDynamicTidalLock() const
+    bool PhysicsGrabComponent::GetDynamicTidalLock() const
     {
         return m_dynamicTidalLock;
     }
 
-    void ObjectInteractionComponent::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
+    void PhysicsGrabComponent::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
     {
         m_dynamicTidalLock = new_dynamicTidalLock;
     }
 
-    bool ObjectInteractionComponent::GetKinematicTidalLock() const
+    bool PhysicsGrabComponent::GetKinematicTidalLock() const
     {
         return m_kinematicTidalLock;
     }
 
-    void ObjectInteractionComponent::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
+    void PhysicsGrabComponent::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
     {
         m_kinematicTidalLock = new_kinematicTidalLock;
     }
 
-    bool ObjectInteractionComponent::GetTidalLock() const
+    bool PhysicsGrabComponent::GetTidalLock() const
     {
         return m_tidalLock;
     }
 
-    void ObjectInteractionComponent::SetTidalLock(const bool& new_tidalLock)
+    void PhysicsGrabComponent::SetTidalLock(const bool& new_tidalLock)
     {
         m_tidalLock = new_tidalLock;
     }
 
-    bool ObjectInteractionComponent::GetFullTidalLockForFPC() const
+    bool PhysicsGrabComponent::GetFullTidalLockForFPC() const
     {
         return m_fullTidalLockForFPC;
     }
 
-    void ObjectInteractionComponent::SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC)
+    void PhysicsGrabComponent::SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC)
     {
         m_fullTidalLockForFPC = new_fullTidalLockForFPC;
     }
 
-    float ObjectInteractionComponent::GetDynamicYawRotateScale() const
+    float PhysicsGrabComponent::GetDynamicYawRotateScale() const
     {
         return m_dynamicYawRotateScale;
     }
 
-    void ObjectInteractionComponent::SetDynamicYawRotateScale(const float& new_dynamicYawRotateScale)
+    void PhysicsGrabComponent::SetDynamicYawRotateScale(const float& new_dynamicYawRotateScale)
     {
         m_dynamicYawRotateScale = new_dynamicYawRotateScale;
     }
 
-    float ObjectInteractionComponent::GetDynamicPitchRotateScale() const
+    float PhysicsGrabComponent::GetDynamicPitchRotateScale() const
     {
         return m_dynamicPitchRotateScale;
     }
 
-    void ObjectInteractionComponent::SetDynamicPitchRotateScale(const float& new_dynamicPitchRotateScale)
+    void PhysicsGrabComponent::SetDynamicPitchRotateScale(const float& new_dynamicPitchRotateScale)
     {
         m_dynamicPitchRotateScale = new_dynamicPitchRotateScale;
     }
 
-    float ObjectInteractionComponent::GetDynamicRollRotateScale() const
+    float PhysicsGrabComponent::GetDynamicRollRotateScale() const
     {
         return m_dynamicRollRotateScale;
     }
 
-    void ObjectInteractionComponent::SetDynamicRollRotateScale(const float& new_dynamicRollRotateScale)
+    void PhysicsGrabComponent::SetDynamicRollRotateScale(const float& new_dynamicRollRotateScale)
     {
         m_dynamicRollRotateScale = new_dynamicRollRotateScale;
     }
 
-    float ObjectInteractionComponent::GetKinematicYawRotateScale() const
+    float PhysicsGrabComponent::GetKinematicYawRotateScale() const
     {
         return m_kinematicYawRotateScale;
     }
 
-    void ObjectInteractionComponent::SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale)
+    void PhysicsGrabComponent::SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale)
     {
         m_kinematicYawRotateScale = new_kinematicYawRotateScale;
     }
 
-    float ObjectInteractionComponent::GetKinematicPitchRotateScale() const
+    float PhysicsGrabComponent::GetKinematicPitchRotateScale() const
     {
         return m_kinematicPitchRotateScale;
     }
 
-    void ObjectInteractionComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
+    void PhysicsGrabComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
     {
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
     }
 
-        float ObjectInteractionComponent::GetKinematicRollRotateScale() const
+        float PhysicsGrabComponent::GetKinematicRollRotateScale() const
     {
         return m_kinematicRollRotateScale;
     }
 
-    void ObjectInteractionComponent::SetKinematicRollRotateScale(const float& new_kinematicRollRotateScale)
+    void PhysicsGrabComponent::SetKinematicRollRotateScale(const float& new_kinematicRollRotateScale)
     {
         m_kinematicRollRotateScale = new_kinematicRollRotateScale;
     }
 
-    bool ObjectInteractionComponent::GetVelocityCompensation() const
+    bool PhysicsGrabComponent::GetVelocityCompensation() const
     {
         return m_velocityCompensation;
     }
 
-    void ObjectInteractionComponent::SetVelocityCompensation(const bool& new_velocityCompensation)
+    void PhysicsGrabComponent::SetVelocityCompensation(const bool& new_velocityCompensation)
     {
         m_velocityCompensation = new_velocityCompensation;
     }
 
-    float ObjectInteractionComponent::GetVelocityCompDampRate() const
+    float PhysicsGrabComponent::GetVelocityCompDampRate() const
     {
         return m_velocityCompDampRate;
     }
 
-    void ObjectInteractionComponent::SetVelocityCompDampRate(const float& new_velocityCompDampRate)
+    void PhysicsGrabComponent::SetVelocityCompDampRate(const float& new_velocityCompDampRate)
     {
         m_velocityCompDampRate = new_velocityCompDampRate;
     }
 
-    bool ObjectInteractionComponent::GetSmoothDynamicRotation() const
+    bool PhysicsGrabComponent::GetSmoothDynamicRotation() const
     {
         return m_smoothDynamicRotation;
     }
 
-    void ObjectInteractionComponent::SetSmoothDynamicRotation(const bool& new_smoothDynamicRotation)
+    void PhysicsGrabComponent::SetSmoothDynamicRotation(const bool& new_smoothDynamicRotation)
     {
         m_smoothDynamicRotation = new_smoothDynamicRotation;
     }
 
-    float ObjectInteractionComponent::GetAngularVelocityDampRate() const
+    float PhysicsGrabComponent::GetAngularVelocityDampRate() const
     {
         return m_angularVelocityDampRate;
     }
 
-    void ObjectInteractionComponent::SetAngularVelocityDampRate(const float& new_angularVelocityDampRate)
+    void PhysicsGrabComponent::SetAngularVelocityDampRate(const float& new_angularVelocityDampRate)
     {
         m_angularVelocityDampRate = new_angularVelocityDampRate;
     }
 
-    float ObjectInteractionComponent::GetThrowImpulse() const
+    float PhysicsGrabComponent::GetThrowImpulse() const
     {
         return m_throwImpulse;
     }
 
-    void ObjectInteractionComponent::SetThrowImpulse(const float& new_throwImpulse)
+    void PhysicsGrabComponent::SetThrowImpulse(const float& new_throwImpulse)
     {
         m_throwImpulse = new_throwImpulse;
     }
 
-    float ObjectInteractionComponent::GetGrabbedObjectThrowStateCounter() const
+    float PhysicsGrabComponent::GetGrabbedObjectThrowStateCounter() const
     {
         return m_throwStateCounter;
     }
     
-    void ObjectInteractionComponent::SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter)
+    void PhysicsGrabComponent::SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter)
     {
         m_throwStateCounter = new_throwStateCounter;
     }
 
-    float ObjectInteractionComponent::GetGrabbedObjectThrowStateTime() const
+    float PhysicsGrabComponent::GetGrabbedObjectThrowStateTime() const
     {
         return m_throwStateMaxTime;
     }
 
-    void ObjectInteractionComponent::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
+    void PhysicsGrabComponent::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
     {
         m_throwStateMaxTime = new_throwStateMaxTime;
     }
 
-    bool ObjectInteractionComponent::GetEnableChargeThrow() const
+    bool PhysicsGrabComponent::GetEnableChargeThrow() const
     {
         return m_enableChargeThrow;
     }
 
-    void ObjectInteractionComponent::SetEnableChargeThrow(const bool& new_enableChargeThrow)
+    void PhysicsGrabComponent::SetEnableChargeThrow(const bool& new_enableChargeThrow)
     {
         m_enableChargeThrow = new_enableChargeThrow;
     }
 
-    float ObjectInteractionComponent::GetMinThrowImpulse() const
+    float PhysicsGrabComponent::GetMinThrowImpulse() const
     {
         return m_minThrowImpulse;
     }
 
-    void ObjectInteractionComponent::SetMinThrowImpulse(const float& new_minThrowImpulse)
+    void PhysicsGrabComponent::SetMinThrowImpulse(const float& new_minThrowImpulse)
     {
         m_minThrowImpulse = new_minThrowImpulse;
     }
 
-    float ObjectInteractionComponent::GetMaxThrowImpulse() const
+    float PhysicsGrabComponent::GetMaxThrowImpulse() const
     {
         return m_maxThrowImpulse;
     }
 
-    void ObjectInteractionComponent::SetMaxThrowImpulse(const float& new_maxThrowImpulse)
+    void PhysicsGrabComponent::SetMaxThrowImpulse(const float& new_maxThrowImpulse)
     {
         m_maxThrowImpulse = new_maxThrowImpulse;
     }
 
-    float ObjectInteractionComponent::GetCurrentThrowImpulse() const
+    float PhysicsGrabComponent::GetCurrentThrowImpulse() const
     {
         return m_currentThrowImpulse;
     }
 
-    float ObjectInteractionComponent::GetChargeTime() const
+    float PhysicsGrabComponent::GetChargeTime() const
     {
         return m_chargeTime;
     }
 
-    void ObjectInteractionComponent::SetChargeTime(const float& new_chargeTime)
+    void PhysicsGrabComponent::SetChargeTime(const float& new_chargeTime)
     {
         m_chargeTime = new_chargeTime;
     }
 
-    float ObjectInteractionComponent::GetCurrentChargeTime() const
+    float PhysicsGrabComponent::GetCurrentChargeTime() const
     {
         return m_currentChargeTime;
     }
 
-    bool ObjectInteractionComponent::GetEnableChargeWhileRotating() const
+    bool PhysicsGrabComponent::GetEnableChargeWhileRotating() const
     {
         return m_enableChargeWhileRotating;
     }
 
-    void ObjectInteractionComponent::SetEnableChargeWhileRotating(const bool& new_enableChargeWhileRotating)
+    void PhysicsGrabComponent::SetEnableChargeWhileRotating(const bool& new_enableChargeWhileRotating)
     {
         m_enableChargeWhileRotating = new_enableChargeWhileRotating;
     }
 
-    bool ObjectInteractionComponent::GetIsChargingThrow() const
+    bool PhysicsGrabComponent::GetIsChargingThrow() const
     {
             return m_isChargingThrow;
     }
 
-    float ObjectInteractionComponent::GetSphereCastRadius() const
+    float PhysicsGrabComponent::GetSphereCastRadius() const
     {
         return m_sphereCastRadius;
     }
 
-    void ObjectInteractionComponent::SetSphereCastRadius(const float& new_sphereCastRadius)
+    void PhysicsGrabComponent::SetSphereCastRadius(const float& new_sphereCastRadius)
     {
         m_sphereCastRadius = new_sphereCastRadius;
     }
 
-    float ObjectInteractionComponent::GetSphereCastDistance() const
+    float PhysicsGrabComponent::GetSphereCastDistance() const
     {
         return m_sphereCastDistance;
     }
 
-    void ObjectInteractionComponent::SetSphereCastDistance(const float& new_sphereCastDistance)
+    void PhysicsGrabComponent::SetSphereCastDistance(const float& new_sphereCastDistance)
     {
         m_sphereCastDistance = new_sphereCastDistance;
     }
 
-    AZStd::string ObjectInteractionComponent::GetGrabbedCollisionGroup() const
+    AZStd::string PhysicsGrabComponent::GetGrabbedCollisionGroup() const
     {
         AZStd::string groupName;
         Physics::CollisionRequestBus::BroadcastResult(
@@ -2855,7 +2856,7 @@ namespace ObjectInteraction
         return groupName;
     }
 
-    void ObjectInteractionComponent::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
+    void PhysicsGrabComponent::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
     {
         bool success = false;
         AzPhysics::CollisionGroup collisionGroup;
@@ -2870,7 +2871,7 @@ namespace ObjectInteraction
         }
     }
 
-    AZStd::string ObjectInteractionComponent::GetCurrentGrabbedCollisionLayerName() const
+    AZStd::string PhysicsGrabComponent::GetCurrentGrabbedCollisionLayerName() const
     {
         AZStd::string currentGrabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
@@ -2880,7 +2881,7 @@ namespace ObjectInteraction
         return currentGrabbedCollisionLayerName;
     }
 
-    void ObjectInteractionComponent::SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName)
+    void PhysicsGrabComponent::SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer grabbedCollisionLayer;
@@ -2898,7 +2899,7 @@ namespace ObjectInteraction
         }
     }
 
-    AzPhysics::CollisionLayer ObjectInteractionComponent::GetCurrentGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer PhysicsGrabComponent::GetCurrentGrabbedCollisionLayer() const
     {
         AZStd::string grabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
@@ -2909,7 +2910,7 @@ namespace ObjectInteraction
         return grabbedCollisionLayer;
     }
 
-    void ObjectInteractionComponent::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
+    void PhysicsGrabComponent::SetCurrentGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_currentGrabbedCollisionLayer)
     {
         m_currentGrabbedCollisionLayer = new_currentGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration =
@@ -2922,14 +2923,14 @@ namespace ObjectInteraction
             AZ::Crc32());
     }
 
-    AZStd::string ObjectInteractionComponent::GetPrevGrabbedCollisionLayerName() const
+    AZStd::string PhysicsGrabComponent::GetPrevGrabbedCollisionLayerName() const
     {
         const AzPhysics::CollisionConfiguration& configuration =
             AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         return configuration.m_collisionLayers.GetName(m_prevGrabbedCollisionLayer);
     }
 
-    void ObjectInteractionComponent::SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName)
+    void PhysicsGrabComponent::SetPrevGrabbedCollisionLayerByName(const AZStd::string& new_prevGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer prevGrabbedCollisionLayer;
@@ -2939,17 +2940,17 @@ namespace ObjectInteraction
             m_prevGrabbedCollisionLayer = prevGrabbedCollisionLayer;
     }
 
-    AzPhysics::CollisionLayer ObjectInteractionComponent::GetPrevGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer PhysicsGrabComponent::GetPrevGrabbedCollisionLayer() const
     {
         return m_prevGrabbedCollisionLayer;
     }
 
-    void ObjectInteractionComponent::SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer)
+    void PhysicsGrabComponent::SetPrevGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_prevGrabbedCollisionLayer)
     {
         m_prevGrabbedCollisionLayer = new_prevGrabbedCollisionLayer;
     }
 
-    AZStd::string ObjectInteractionComponent::GetTempGrabbedCollisionLayerName() const
+    AZStd::string PhysicsGrabComponent::GetTempGrabbedCollisionLayerName() const
     {
         AZStd::string tempGrabbedCollisionLayerName;
         Physics::CollisionRequestBus::BroadcastResult(
@@ -2957,7 +2958,7 @@ namespace ObjectInteraction
         return tempGrabbedCollisionLayerName;
     }
 
-    void ObjectInteractionComponent::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
+    void PhysicsGrabComponent::SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName)
     {
         bool success = false;
         AzPhysics::CollisionLayer tempGrabbedCollisionLayer;
@@ -2969,12 +2970,12 @@ namespace ObjectInteraction
         }
     }
 
-    AzPhysics::CollisionLayer ObjectInteractionComponent::GetTempGrabbedCollisionLayer() const
+    AzPhysics::CollisionLayer PhysicsGrabComponent::GetTempGrabbedCollisionLayer() const
     {
         return m_tempGrabbedCollisionLayer;
     }
 
-    void ObjectInteractionComponent::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
+    void PhysicsGrabComponent::SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer)
     {
         m_tempGrabbedCollisionLayer = new_tempGrabbedCollisionLayer;
         const AzPhysics::CollisionConfiguration& configuration =
@@ -2987,7 +2988,7 @@ namespace ObjectInteraction
             AZ::Crc32());
     }
 
-    bool ObjectInteractionComponent::GetGrabbedObjectKinematicElseDynamic() const
+    bool PhysicsGrabComponent::GetGrabbedObjectKinematicElseDynamic() const
     {
         bool isObjectKinematic = false;
         Physics::RigidBodyRequestBus::EventResult(
@@ -2996,17 +2997,17 @@ namespace ObjectInteraction
         return isObjectKinematic;
     }
 
-    void ObjectInteractionComponent::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
+    void PhysicsGrabComponent::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
     {
         Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
     }
 
-    bool ObjectInteractionComponent::GetInitialGrabbedObjectIsKinematic() const
+    bool PhysicsGrabComponent::GetInitialGrabbedObjectIsKinematic() const
     {
         return m_isInitialObjectKinematic;
     }
 
-    float ObjectInteractionComponent::GetCurrentGrabbedObjectAngularDamping() const
+    float PhysicsGrabComponent::GetCurrentGrabbedObjectAngularDamping() const
     {
         float currentObjectAngularDamping = 0.f;
 
@@ -3016,7 +3017,7 @@ namespace ObjectInteraction
         return currentObjectAngularDamping;
     }
 
-    void ObjectInteractionComponent::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
+    void PhysicsGrabComponent::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
     {
         m_currentObjectAngularDamping = new_currentObjectAngularDamping;
 
@@ -3024,29 +3025,29 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
     }
 
-    float ObjectInteractionComponent::GetPrevGrabbedObjectAngularDamping() const
+    float PhysicsGrabComponent::GetPrevGrabbedObjectAngularDamping() const
     {
         return m_prevObjectAngularDamping;
     }
 
-    void ObjectInteractionComponent::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
+    void PhysicsGrabComponent::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
     {
         m_prevObjectAngularDamping = new_prevObjectAngularDamping;
     }
 
-    float ObjectInteractionComponent::GetTempGrabbedObjectAngularDamping() const
+    float PhysicsGrabComponent::GetTempGrabbedObjectAngularDamping() const
     {
         return m_tempObjectAngularDamping;
     }
 
-    void ObjectInteractionComponent::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
+    void PhysicsGrabComponent::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
     {
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
     }
 
-    float ObjectInteractionComponent::GetCurrentGrabbedObjectLinearDamping() const
+    float PhysicsGrabComponent::GetCurrentGrabbedObjectLinearDamping() const
     {
         float currentObjectLinearDamping = 0.f;
 
@@ -3056,7 +3057,7 @@ namespace ObjectInteraction
         return currentObjectLinearDamping;
     }
 
-    void ObjectInteractionComponent::SetCurrentGrabbedObjectLinearDamping(const float& new_currentObjectLinearDamping)
+    void PhysicsGrabComponent::SetCurrentGrabbedObjectLinearDamping(const float& new_currentObjectLinearDamping)
     {
         m_currentObjectLinearDamping = new_currentObjectLinearDamping;
 
@@ -3064,29 +3065,29 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, new_currentObjectLinearDamping);
     }
 
-    float ObjectInteractionComponent::GetPrevGrabbedObjectLinearDamping() const
+    float PhysicsGrabComponent::GetPrevGrabbedObjectLinearDamping() const
     {
         return m_prevObjectLinearDamping;
     }
 
-    void ObjectInteractionComponent::SetPrevGrabbedObjectLinearDamping(const float& new_prevObjectLinearDamping)
+    void PhysicsGrabComponent::SetPrevGrabbedObjectLinearDamping(const float& new_prevObjectLinearDamping)
     {
         m_prevObjectLinearDamping = new_prevObjectLinearDamping;
     }
 
-    float ObjectInteractionComponent::GetTempGrabbedObjectLinearDamping() const
+    float PhysicsGrabComponent::GetTempGrabbedObjectLinearDamping() const
     {
         return m_tempObjectLinearDamping;
     }
 
-    void ObjectInteractionComponent::SetTempGrabbedObjectLinearDamping(const float& new_tempObjectLinearDamping)
+    void PhysicsGrabComponent::SetTempGrabbedObjectLinearDamping(const float& new_tempObjectLinearDamping)
     {
         m_tempObjectLinearDamping = new_tempObjectLinearDamping;
         Physics::RigidBodyRequestBus::Event(
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, m_tempObjectLinearDamping);
     }
 
-    AZ::Vector3 ObjectInteractionComponent::GetGrabbedObjectAngularVelocity() const
+    AZ::Vector3 PhysicsGrabComponent::GetGrabbedObjectAngularVelocity() const
     {
         AZ::Vector3 grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
 
@@ -3095,7 +3096,7 @@ namespace ObjectInteraction
         return grabbedObjectAngularVelocity;
     }
 
-    void ObjectInteractionComponent::SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity)
+    void PhysicsGrabComponent::SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity)
     {
         m_grabbedObjectAngularVelocity = new_grabbedObjectAngularVelocity;
 
@@ -3103,153 +3104,153 @@ namespace ObjectInteraction
             m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
     }
 
-    bool ObjectInteractionComponent::GetInitialAngularVelocityZero() const
+    bool PhysicsGrabComponent::GetInitialAngularVelocityZero() const
     {
         return m_initialAngularVelocityZero;
     }
 
-    void ObjectInteractionComponent::SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero)
+    void PhysicsGrabComponent::SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero)
     {
         m_initialAngularVelocityZero = new_initialAngularVelocityZero;
     }
     
-    void ObjectInteractionComponent::ForceTransition(const ObjectInteractionStates& targetState)
+    void PhysicsGrabComponent::ForceTransition(const PhysicsGrabStates& targetState)
     {
         m_forceTransition = true;
         m_targetState = targetState;
     }
 
-    void ObjectInteractionComponent::SetStateLocked(const bool& isLocked)
+    void PhysicsGrabComponent::SetStateLocked(const bool& isLocked)
     {
         m_isStateLocked = isLocked;
     }
 
-    bool ObjectInteractionComponent::GetStateLocked() const
+    bool PhysicsGrabComponent::GetStateLocked() const
     {
         return m_isStateLocked;
     }
 
-    bool ObjectInteractionComponent::GetDisableGravityWhileHeld() const
+    bool PhysicsGrabComponent::GetDisableGravityWhileHeld() const
     {
         return m_disableGravityWhileHeld;
     }
 
-    void ObjectInteractionComponent::SetDisableGravityWhileHeld(const bool& new_disableGravityWhileHeld)
+    void PhysicsGrabComponent::SetDisableGravityWhileHeld(const bool& new_disableGravityWhileHeld)
     {
         m_disableGravityWhileHeld = new_disableGravityWhileHeld;
     }
 
-    bool ObjectInteractionComponent::GetOffsetGrab() const
+    bool PhysicsGrabComponent::GetOffsetGrab() const
     {
         return m_offsetGrab;
     }
 
-    void ObjectInteractionComponent::SetOffsetGrab(const bool& new_offsetGrab)
+    void PhysicsGrabComponent::SetOffsetGrab(const bool& new_offsetGrab)
     {
         m_offsetGrab = new_offsetGrab;
     }
 
-    bool ObjectInteractionComponent::GetGravityAppliesToPointRotation() const
+    bool PhysicsGrabComponent::GetGravityAppliesToPointRotation() const
     {
         return m_gravityAppliesToPointRotation;
     }
 
-    void ObjectInteractionComponent::SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation)
+    void PhysicsGrabComponent::SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation)
     {
         m_gravityAppliesToPointRotation = new_gravityAppliesToPointRotation;
     }
 
-    bool ObjectInteractionComponent::GetMassIndependentThrow() const
+    bool PhysicsGrabComponent::GetMassIndependentThrow() const
     {
         return m_massIndependentThrow;
     }
 
-    void ObjectInteractionComponent::SetMassIndependentThrow(const bool& new_massIndependentThrow)
+    void PhysicsGrabComponent::SetMassIndependentThrow(const bool& new_massIndependentThrow)
     {
         m_massIndependentThrow = new_massIndependentThrow;
     }
 
-    bool ObjectInteractionComponent::GetEnablePIDHeldDynamics() const
+    bool PhysicsGrabComponent::GetEnablePIDHeldDynamics() const
     {
         return m_enablePIDHeldDynamics;
     }
 
-    void ObjectInteractionComponent::SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics)
+    void PhysicsGrabComponent::SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics)
     {
         m_enablePIDHeldDynamics = new_enablePIDHeldDynamics;
     }
 
-    bool ObjectInteractionComponent::GetMassIndependentHeldPID() const
+    bool PhysicsGrabComponent::GetMassIndependentHeldPID() const
     {
         return m_massIndependentHeldPID;
     }
 
-    void ObjectInteractionComponent::SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID)
+    void PhysicsGrabComponent::SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID)
     {
         m_massIndependentHeldPID = new_massIndependentHeldPID;
     }
 
-    float ObjectInteractionComponent::GetHeldProportionalGain() const
+    float PhysicsGrabComponent::GetHeldProportionalGain() const
     {
         return m_heldProportionalGain;
     }
 
-    void ObjectInteractionComponent::SetHeldProportionalGain(const float& new_heldProportionalGain)
+    void PhysicsGrabComponent::SetHeldProportionalGain(const float& new_heldProportionalGain)
     {
         m_heldProportionalGain = new_heldProportionalGain;
         m_pidController.SetProportionalGain(new_heldProportionalGain);
     }
 
-    float ObjectInteractionComponent::GetHeldIntegralGain() const
+    float PhysicsGrabComponent::GetHeldIntegralGain() const
     {
         return m_heldIntegralGain;
     }
 
-    void ObjectInteractionComponent::SetHeldIntegralGain(const float& new_heldIntegralGain)
+    void PhysicsGrabComponent::SetHeldIntegralGain(const float& new_heldIntegralGain)
     {
         m_heldIntegralGain = new_heldIntegralGain;
         m_pidController.SetIntegralGain(new_heldIntegralGain);
     }
 
-    float ObjectInteractionComponent::GetHeldDerivativeGain() const
+    float PhysicsGrabComponent::GetHeldDerivativeGain() const
     {
         return m_heldDerivativeGain;
     }
 
-    void ObjectInteractionComponent::SetHeldDerivativeGain(const float& new_heldDerivativeGain)
+    void PhysicsGrabComponent::SetHeldDerivativeGain(const float& new_heldDerivativeGain)
     {
         m_heldDerivativeGain = new_heldDerivativeGain;
         m_pidController.SetDerivativeGain(new_heldDerivativeGain);
     }
 
-    float ObjectInteractionComponent::GetHeldIntegralWindupLimit() const
+    float PhysicsGrabComponent::GetHeldIntegralWindupLimit() const
     {
         return m_heldIntegralWindupLimit;
     }
 
-    void ObjectInteractionComponent::SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit)
+    void PhysicsGrabComponent::SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit)
     {
         m_heldIntegralWindupLimit = new_heldIntegralWindupLimit;
         m_pidController.SetIntegralWindupLimit(new_heldIntegralWindupLimit);
     }
 
-    float ObjectInteractionComponent::GetHeldDerivativeFilterAlpha() const
+    float PhysicsGrabComponent::GetHeldDerivativeFilterAlpha() const
     {
         return m_heldDerivativeFilterAlpha;
     }
 
-    void ObjectInteractionComponent::SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha)
+    void PhysicsGrabComponent::SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha)
     {
         m_heldDerivativeFilterAlpha = new_heldDerivativeFilterAlpha;
         m_pidController.SetDerivativeFilterAlpha(new_heldDerivativeFilterAlpha);
     }
 
-    PidController<AZ::Vector3>::DerivativeCalculationMode ObjectInteractionComponent::GetHeldDerivativeMode() const
+    PidController<AZ::Vector3>::DerivativeCalculationMode PhysicsGrabComponent::GetHeldDerivativeMode() const
     {
         return m_heldDerivativeMode;
     }
 
-    void ObjectInteractionComponent::SetHeldDerivativeMode(
+    void PhysicsGrabComponent::SetHeldDerivativeMode(
         const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode)
     {
         m_heldDerivativeMode = new_heldDerivativeMode;
@@ -3257,97 +3258,97 @@ namespace ObjectInteraction
         m_pidController.Reset();
     }
 
-    bool ObjectInteractionComponent::GetEnablePIDTidalLockDynamics() const
+    bool PhysicsGrabComponent::GetEnablePIDTidalLockDynamics() const
     {
         return m_enablePIDTidalLockDynamics;
     }
 
-    void ObjectInteractionComponent::SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics)
+    void PhysicsGrabComponent::SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics)
     {
         m_enablePIDTidalLockDynamics = new_enablePIDTidalLockDynamics;
     }
 
-    bool ObjectInteractionComponent::GetMassIndependentTidalLock() const
+    bool PhysicsGrabComponent::GetMassIndependentTidalLock() const
     {
         return m_massIndependentTidalLock;
     }
 
-    void ObjectInteractionComponent::SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock)
+    void PhysicsGrabComponent::SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock)
     {
         m_massIndependentTidalLock = new_massIndependentTidalLock;
     }
 
-    bool ObjectInteractionComponent::GetScaleIndependentTidalLock() const
+    bool PhysicsGrabComponent::GetScaleIndependentTidalLock() const
     {
         return m_scaleIndependentTidalLock;
     }
 
-    void ObjectInteractionComponent::SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock)
+    void PhysicsGrabComponent::SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock)
     {
         m_scaleIndependentTidalLock = new_scaleIndependentTidalLock;
     }
 
-    float ObjectInteractionComponent::GetTidalLockProportionalGain() const
+    float PhysicsGrabComponent::GetTidalLockProportionalGain() const
     {
         return m_tidalLockProportionalGain;
     }
 
-    void ObjectInteractionComponent::SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain)
+    void PhysicsGrabComponent::SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain)
     {
         m_tidalLockProportionalGain = new_tidalLockProportionalGain;
         m_tidalLockPidController.SetProportionalGain(new_tidalLockProportionalGain);
     }
 
-    float ObjectInteractionComponent::GetTidalLockIntegralGain() const
+    float PhysicsGrabComponent::GetTidalLockIntegralGain() const
     {
         return m_tidalLockIntegralGain;
     }
 
-    void ObjectInteractionComponent::SetTidalLockIntegralGain(const float& new_tidalLockIntegralGain)
+    void PhysicsGrabComponent::SetTidalLockIntegralGain(const float& new_tidalLockIntegralGain)
     {
         m_tidalLockIntegralGain = new_tidalLockIntegralGain;
         m_tidalLockPidController.SetIntegralGain(new_tidalLockIntegralGain);
     }
 
-    float ObjectInteractionComponent::GetTidalLockDerivativeGain() const
+    float PhysicsGrabComponent::GetTidalLockDerivativeGain() const
     {
         return m_tidalLockDerivativeGain;
     }
 
-    void ObjectInteractionComponent::SetTidalLockDerivativeGain(const float& new_tidalLockDerivativeGain)
+    void PhysicsGrabComponent::SetTidalLockDerivativeGain(const float& new_tidalLockDerivativeGain)
     {
         m_tidalLockDerivativeGain = new_tidalLockDerivativeGain;
         m_tidalLockPidController.SetDerivativeGain(new_tidalLockDerivativeGain);
     }
 
-    float ObjectInteractionComponent::GetTidalLockIntegralWindupLimit() const
+    float PhysicsGrabComponent::GetTidalLockIntegralWindupLimit() const
     {
         return m_tidalLockIntegralWindupLimit;
     }
 
-    void ObjectInteractionComponent::SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit)
+    void PhysicsGrabComponent::SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit)
     {
         m_tidalLockIntegralWindupLimit = new_tidalLockIntegralWindupLimit;
         m_tidalLockPidController.SetIntegralWindupLimit(new_tidalLockIntegralWindupLimit);
     }
 
-    float ObjectInteractionComponent::GetTidalLockDerivativeFilterAlpha() const
+    float PhysicsGrabComponent::GetTidalLockDerivativeFilterAlpha() const
     {
         return m_tidalLockDerivativeFilterAlpha;
     }
 
-    void ObjectInteractionComponent::SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha)
+    void PhysicsGrabComponent::SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha)
     {
         m_tidalLockDerivativeFilterAlpha = new_tidalLockDerivativeFilterAlpha;
         m_tidalLockPidController.SetDerivativeFilterAlpha(new_tidalLockDerivativeFilterAlpha);
     }
 
-    PidController<AZ::Vector3>::DerivativeCalculationMode ObjectInteractionComponent::GetTidalLockDerivativeMode() const
+    PidController<AZ::Vector3>::DerivativeCalculationMode PhysicsGrabComponent::GetTidalLockDerivativeMode() const
     {
         return m_tidalLockDerivativeMode;
     }
 
-    void ObjectInteractionComponent::SetTidalLockDerivativeMode(
+    void PhysicsGrabComponent::SetTidalLockDerivativeMode(
         const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode)
     {
         m_tidalLockDerivativeMode = new_tidalLockDerivativeMode;
@@ -3355,66 +3356,66 @@ namespace ObjectInteraction
         m_tidalLockPidController.Reset();
     }
 
-    AZStd::string ObjectInteractionComponent::GetGrabInputKey() const
+    AZStd::string PhysicsGrabComponent::GetGrabInputKey() const
     {
         return m_strGrab;
     }
-    void ObjectInteractionComponent::SetGrabInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetGrabInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_grabEventId, m_strGrab, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetThrowInputKey() const
+    AZStd::string PhysicsGrabComponent::GetThrowInputKey() const
     {
         return m_strThrow;
     }
-    void ObjectInteractionComponent::SetThrowInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetThrowInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_throwEventId, m_strThrow, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetRotateInputKey() const
+    AZStd::string PhysicsGrabComponent::GetRotateInputKey() const
     {
         return m_strRotate;
     }
-    void ObjectInteractionComponent::SetRotateInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetRotateInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_rotateEventId, m_strRotate, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetRotatePitchInputKey() const
+    AZStd::string PhysicsGrabComponent::GetRotatePitchInputKey() const
     {
         return m_strRotatePitch;
     }
-    void ObjectInteractionComponent::SetRotatePitchInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetRotatePitchInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_rotatePitchEventId, m_strRotatePitch, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetRotateYawInputKey() const
+    AZStd::string PhysicsGrabComponent::GetRotateYawInputKey() const
     {
         return m_strRotateYaw;
     }
-    void ObjectInteractionComponent::SetRotateYawInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetRotateYawInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_rotateYawEventId, m_strRotateYaw, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetRotateRollInputKey() const
+    AZStd::string PhysicsGrabComponent::GetRotateRollInputKey() const
     {
         return m_strRotateRoll;
     }
-    void ObjectInteractionComponent::SetRotateRollInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetRotateRollInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_rotateRollEventId, m_strRotateRoll, keyName);
     }
 
-    AZStd::string ObjectInteractionComponent::GetGrabDistanceInputKey() const
+    AZStd::string PhysicsGrabComponent::GetGrabDistanceInputKey() const
     {
         return m_strGrabDistance;
     }
-    void ObjectInteractionComponent::SetGrabDistanceInputKey(const AZStd::string& keyName)
+    void PhysicsGrabComponent::SetGrabDistanceInputKey(const AZStd::string& keyName)
     {
         UpdateInputBinding(m_grabDistanceEventId, m_strGrabDistance, keyName);
     }
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

@@ -1,19 +1,20 @@
 #pragma once
 
+#include <PhysicsGrab/PhysicsGrabTypeIds.h>
 #include <AzCore/Component/ComponentBus.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzFramework/Physics/Collision/CollisionLayers.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
-    // Forward declaration for the enum defined in ObjectInteractionComponent
-    enum class ObjectInteractionStates;
+    // Forward declaration for the enum defined in PhysicsGrabComponent
+    enum class PhysicsGrabStates;
 
-    class ObjectInteractionComponentRequests : public AZ::ComponentBus
+    class PhysicsGrabComponentRequests : public AZ::ComponentBus
     {
     public:
-        ~ObjectInteractionComponentRequests() override = default;
+        ~PhysicsGrabComponentRequests() override = default;
 
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
@@ -128,7 +129,7 @@ namespace ObjectInteraction
         virtual bool GetInitialAngularVelocityZero() const = 0;
         virtual void SetInitialAngularVelocityZero(const bool&) = 0;
         virtual AZStd::string GetStateString() const = 0;
-        virtual void ForceTransition(const ObjectInteractionStates&) = 0;
+        virtual void ForceTransition(const PhysicsGrabStates&) = 0;
         virtual void SetStateLocked(const bool&) = 0;
         virtual bool GetStateLocked() const = 0;
         virtual bool GetDisableGravityWhileHeld() const = 0;
@@ -208,9 +209,9 @@ namespace ObjectInteraction
         virtual bool GetObjectSphereCastHit() const = 0;
     };
 
-    using ObjectInteractionComponentRequestBus = AZ::EBus<ObjectInteractionComponentRequests>;
+    using PhysicsGrabComponentRequestBus = AZ::EBus<PhysicsGrabComponentRequests>;
 
-    class ObjectInteractionNotifications : public AZ::ComponentBus
+    class PhysicsGrabNotifications : public AZ::ComponentBus
     {
     public:
         virtual void OnObjectSphereCastHit() = 0;
@@ -225,16 +226,16 @@ namespace ObjectInteraction
         virtual void OnChargeComplete() = 0;
     };
 
-    using ObjectInteractionNotificationBus = AZ::EBus<ObjectInteractionNotifications>;
+    using PhysicsGrabNotificationBus = AZ::EBus<PhysicsGrabNotifications>;
 
-    class ObjectInteractionNotificationHandler
-        : public ObjectInteractionNotificationBus::Handler
+    class PhysicsGrabNotificationHandler
+        : public PhysicsGrabNotificationBus::Handler
         , public AZ::BehaviorEBusHandler
     {
     public:
         AZ_EBUS_BEHAVIOR_BINDER(
-            ObjectInteractionNotificationHandler,
-            "{4B8267D2-7D33-4AE4-AA30-FD933D6CF0E3}",
+            PhysicsGrabNotificationHandler,
+            PhysicsGrabNotificationHandlerTypeId,
             AZ::SystemAllocator,
             OnObjectSphereCastHit,
             OnHoldStart,
@@ -288,4 +289,4 @@ namespace ObjectInteraction
             Call(FN_OnChargeComplete);
         }
     };
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

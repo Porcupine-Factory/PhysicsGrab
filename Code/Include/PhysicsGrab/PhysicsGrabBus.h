@@ -1,20 +1,23 @@
 
 #pragma once
 
+#include <PhysicsGrab/PhysicsGrabTypeIds.h>
+
 #include <AzCore/EBus/EBus.h>
 #include <AzCore/Interface/Interface.h>
 
-namespace ObjectInteraction
+namespace PhysicsGrab
 {
-    class ObjectInteractionRequests
+    class PhysicsGrabRequests
     {
     public:
-        AZ_RTTI(ObjectInteractionRequests, "{0A402AE5-14A5-4C61-9EA8-9F9ABCF36F5E}");
-        virtual ~ObjectInteractionRequests() = default;
+        AZ_RTTI(PhysicsGrabRequests, PhysicsGrabRequestsTypeId);
+        virtual ~PhysicsGrabRequests() = default;
         // Put your public methods here
     };
 
-    class ObjectInteractionBusTraits : public AZ::EBusTraits
+    class PhysicsGrabBusTraits
+        : public AZ::EBusTraits
     {
     public:
         //////////////////////////////////////////////////////////////////////////
@@ -24,7 +27,7 @@ namespace ObjectInteraction
         //////////////////////////////////////////////////////////////////////////
     };
 
-    using ObjectInteractionRequestBus = AZ::EBus<ObjectInteractionRequests, ObjectInteractionBusTraits>;
-    using ObjectInteractionInterface = AZ::Interface<ObjectInteractionRequests>;
+    using PhysicsGrabRequestBus = AZ::EBus<PhysicsGrabRequests, PhysicsGrabBusTraits>;
+    using PhysicsGrabInterface = AZ::Interface<PhysicsGrabRequests>;
 
-} // namespace ObjectInteraction
+} // namespace PhysicsGrab

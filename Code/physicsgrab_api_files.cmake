@@ -6,7 +6,8 @@ find_path(FPC_INCLUDE_DIR
 )
 
 set(FILES
-    Include/ObjectInteraction/ObjectInteractionBus.h
-    Include/ObjectInteraction/ObjectInteractionComponentBus.h
+    Include/PhysicsGrab/PhysicsGrabComponentBus.h
+    Include/PhysicsGrab/PhysicsGrabBus.h
+    Include/PhysicsGrab/PhysicsGrabTypeIds.h
     ${FPC_INCLUDE_DIR}/FirstPersonController/FirstPersonControllerComponentBus.h
 )

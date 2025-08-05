@@ -1,37 +1,35 @@
 {
-  "gem_name": "ObjectInteraction",
-  "version": "1.0.0",
-  "display_name": "ObjectInteraction",
-  "license": "MIT",
-  "license_url": "",
-  "origin": "NanaYellen",
-  "origin_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
-  "sha256": "",
-  "last_updated": "2025-07-28",
-  "type": "Code",
-  "summary": "The ObjectInteraction Gem enables interactions with physics objects, such as grabbing, rotating and throwing.",
-  "canonical_tags": [
-    "Gem"
-  ],
-  "user_tags": [
+    "gem_name": "PhysicsGrab",
+    "version": "1.0.0",
+    "display_name": "Physics Grab",
+    "license": "Apache-2.0",
+    "license_url": "https://opensource.org/license/apache-2-0",
+    "origin": "Porcupine-Factory",
+    "origin_url": "",
+    "type": "Code",
+    "summary": "Physics Grab enables player interaction with physics objects, such as grabbing, rotating and throwing.",
+    "canonical_tags": [
+        "Gem"
+    ],
+    "user_tags": [
     "Gameplay",
     "Simulation",
     "Utility"
-  ],
-  "platforms": [
-    "Linux",
-    "Windows"
-  ],
-  "icon_path": "",
-  "requirements": "This gem requires the FastNoise, PhysX, and Starting Point Input gems",
-  "documentation_url": "",
-  "dependencies": [
+    ],
+    "platforms": [
+        "Linux",
+        "Windows"
+    ],
+    "icon_path": "",
+    "requirements": "",
+    "documentation_url": "",
+    "dependencies": [
     "PhysX5",
     "StartingPointInput",
     "LmbrCentral"
-  ],
-  "repo_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
-  "compatible_engines": [],
-  "engine_api_dependencies": [],
-  "restricted": "ObjectInteraction"
+    ],
+    "repo_uri": "",
+    "compatible_engines": [],
+    "engine_api_dependencies": [],
+    "restricted": "PhysicsGrab"
 }
