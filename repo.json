@@ -1,12 +1,12 @@
 {
-  "repo_name": "ObjectInteraction",
-  "origin": "NanaYellen",
-  "repo_uri": "https://gitlab.com/NanaYellen/ObjectInteraction.git",
-  "summary": "The ObjectInteraction provides gameplay components, such as a first person controller, headbob component, and camera shake component.",
+  "repo_name": "PhysicsGrab",
+  "origin": "Porcupine Factory",
+  "repo_uri": "https://github.com/Porcupine-Factory/PhysicsGrab.git",
+  "summary": "Physics Grab enables player interaction with physics objects, such as grabbing, rotating and throwing.",
   "additional_info": "",
-  "last_updated": "2023-10-28",
+  "last_updated": "2025-08-04",
   "gems": [
-    "https://gitlab.com/NanaYellen/ObjectInteraction.git"
+    "https://raw.githubusercontent.com/Porcupine-Factory/PhysicsGrab/main"
   ]
 }
  
