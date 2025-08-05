@@ -1755,7 +1755,7 @@ namespace PhysicsGrab
             
             // If object is NOT in rotate state, couple the grabbed entity's rotation to 
             // the controlling entity's local z rotation (causing object to face controlling entity)
-            if (m_state != PhysicsGrabStates::rotateState && m_tidalLock && m_kinematicTidalLock)
+            if (m_state != PhysicsGrabStates::rotateState && m_kinematicTidalLock && (m_tidalLock || m_fullTidalLockForFPC))
             {
                 TidalLock(deltaTime);
             }
@@ -1834,7 +1834,7 @@ namespace PhysicsGrab
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
-            if (m_state != PhysicsGrabStates::rotateState && m_tidalLock && m_dynamicTidalLock)
+            if (m_state != PhysicsGrabStates::rotateState && m_dynamicTidalLock && (m_tidalLock || m_fullTidalLockForFPC))
             {
                 TidalLock(deltaTime);
             }
