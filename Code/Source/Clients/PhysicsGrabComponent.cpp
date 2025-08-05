@@ -1255,8 +1255,8 @@ namespace PhysicsGrab
                     grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
                 }
             }
-            #endif
             else
+            #endif
             {
                 grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
             }
@@ -1274,8 +1274,8 @@ namespace PhysicsGrab
             {
                 m_lastEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
             }
-            #endif
             else
+            #endif
             {
                 m_lastEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
             }
@@ -1508,8 +1508,8 @@ namespace PhysicsGrab
                     grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
                 }
             }
-            #endif
             else
+            #endif
             {
                 grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
             }
@@ -1619,8 +1619,8 @@ namespace PhysicsGrab
             m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
             m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
         }
-        #endif
         else
+        #endif
         {
             // Get forward vector relative to the grabbing entity's transform
             m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -1718,9 +1718,9 @@ namespace PhysicsGrab
             // Add forward offset to the height-adjusted position
             m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
         }
-        #endif
         // Use user-specified grab entity for Grab Reference
         else
+        #endif
         {
             // Get forward vector relative to the grabbing entity's transform
             m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -1870,8 +1870,8 @@ namespace PhysicsGrab
             m_rightVector = m_cameraRotationTransform->GetWorldTM().GetBasisX();
             m_upVector = m_cameraRotationTransform->GetWorldTM().GetBasisZ();
         }
-        #endif
         else
+        #endif
         {
             // Get right vector relative to the grabbing entity's transform
             m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
@@ -2113,8 +2113,8 @@ namespace PhysicsGrab
                 grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
             }
         }
-        #endif
         else
+        #endif
         {
             grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
         }

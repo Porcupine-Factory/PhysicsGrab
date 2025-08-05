@@ -10,6 +10,7 @@
 #include <AzCore/std/containers/map.h>
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
+#include <AzFramework/Physics/PhysicsScene.h>
 #include <StartingPointInput/InputEventNotificationBus.h>
 #include "PidController.h"
 #include <LmbrCentral/Scripting/TagComponentBus.h>
@@ -449,7 +450,7 @@ namespace PhysicsGrab
         bool m_tidalLock = true;
         bool m_dynamicTidalLock = true;
         bool m_kinematicTidalLock = true;
-        bool m_fullTidalLockForFPC = false;
+        bool m_fullTidalLockForFPC = true;
         bool m_isInitialObjectKinematic = false;
         bool m_grabMaintained = true;
         bool m_enablePIDTidalLockDynamics = true;
