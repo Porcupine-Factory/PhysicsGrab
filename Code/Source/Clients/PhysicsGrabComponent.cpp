@@ -2059,8 +2059,6 @@ namespace PhysicsGrab
 
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
-        // Initialize grabbing entity rotation quaternion for tidal lock computation
-        AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
         // Determine the effective rotation based on First Person Controller usage if enabled
         // Use camera rotation for full tidal lock, or character rotation otherwise
         #ifdef FIRST_PERSON_CONTROLLER
