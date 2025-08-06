@@ -211,7 +211,7 @@ namespace PhysicsGrab
         bool GetMassIndependentThrow() const override;
         void SetMassIndependentThrow(const bool& new_massIndependentThrow) override;
         bool GetEnablePIDHeldDynamics() const override;
-        void SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics) override;
+        void SetEnablePIDHeldDynamics(const bool& new_enablePIDHeldDynamics) override;
         bool GetMassIndependentHeldPID() const override;
         void SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID) override;
         float GetHeldProportionalGain() const override;
@@ -299,7 +299,9 @@ namespace PhysicsGrab
         void TidalLock(float deltaTime);
         void UpdateGrabDistance(float deltaTime);
         void ReleaseGrabbedObject(bool notifyHoldStop, bool notifyRotateStop);
+        bool HandleThrowInput(float deltaTime, bool allowCharging);
         void TransitionToThrow(bool isChargeEnabled);
+        AZ::Quaternion GetEffectiveGrabbingRotation() const;
         void ReleaseMesh();
         void InterpolateMeshTransform(float deltaTime);
         void ComputeGrabbingEntityVelocity(float deltaTime);

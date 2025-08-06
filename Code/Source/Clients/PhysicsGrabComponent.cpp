@@ -80,6 +80,8 @@ namespace PhysicsGrab
                 ->Field("Charge Time", &PhysicsGrabComponent::m_chargeTime)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                 ->Field("Enable Mass Independent Throw", &PhysicsGrabComponent::m_massIndependentThrow)
+                ->Field("Throw State Max Time", &PhysicsGrabComponent::m_throwStateMaxTime)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " s")
 
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Freeze Character Rotation", &PhysicsGrabComponent::m_freezeCharacterRotation)
@@ -88,9 +90,13 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Dynamic Vertical Rotate Scale", &PhysicsGrabComponent::m_dynamicPitchRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Dynamic Roll Rotate Scale", &PhysicsGrabComponent::m_dynamicRollRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Kinematic Horizontal Rotate Scale", &PhysicsGrabComponent::m_kinematicYawRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Kinematic Vertical Rotate Scale", &PhysicsGrabComponent::m_kinematicPitchRotateScale)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
+                ->Field("Kinematic Roll Rotate Scale", &PhysicsGrabComponent::m_kinematicRollRotateScale)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " rad/s")
                 ->Field("Rotate Enable Toggle", &PhysicsGrabComponent::m_rotateEnableToggle)
                 ->Field("Gravity Applies To Point Rotation", &PhysicsGrabComponent::m_gravityAppliesToPointRotation)
@@ -293,6 +299,11 @@ namespace PhysicsGrab
                         "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
                     ->DataElement(
                         nullptr,
+                        &PhysicsGrabComponent::m_dynamicRollRotateScale,
+                        "Dynamic Roll Rotate Scale",
+                        "Angular velocity scale for roll rotation of dynamic objects")
+                    ->DataElement(
+                        nullptr,
                         &PhysicsGrabComponent::m_kinematicYawRotateScale,
                         "Kinematic Horizontal Rotate Scale",
                         "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
@@ -301,6 +312,11 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_kinematicPitchRotateScale,
                         "Kinematic Vertical Rotate Scale",
                         "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_kinematicRollRotateScale,
+                        "Kinematic Roll Rotate Scale",
+                        "Rotation speed scale for roll rotation of kinematic objects")
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
@@ -374,6 +390,13 @@ namespace PhysicsGrab
                         "Enable Mass Independent Throw",
                         "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
                         "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_throwStateMaxTime,
+                        "Throw State Max Time",
+                        "Maximum time (seconds) the grabbed object remains in throw state before returning to idle. Controls how long "
+                        "you must wait before picking up another object.")
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                         
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Hold Dynamics")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -617,7 +640,7 @@ namespace PhysicsGrab
                 ->Event("Get Mass Independent Throw", &PhysicsGrabComponentRequests::GetMassIndependentThrow)
                 ->Event("Set Mass Independent Throw", &PhysicsGrabComponentRequests::SetMassIndependentThrow)
                 ->Event("Get Enable PID Held Dynamics", &PhysicsGrabComponentRequests::GetEnablePIDHeldDynamics)
-                ->Event("Set Enable PID Held Dynamics", &PhysicsGrabComponentRequests::SetEnablePIDHeldDymamics)
+                ->Event("Set Enable PID Held Dynamics", &PhysicsGrabComponentRequests::SetEnablePIDHeldDynamics)
                 ->Event("Get Mass Independent Held PID", &PhysicsGrabComponentRequests::GetMassIndependentHeldPID)
                 ->Event("Set Mass Independent Held PID", &PhysicsGrabComponentRequests::SetMassIndependentHeldPID)
                 ->Event("Get Held Proportional Gain", &PhysicsGrabComponentRequests::GetHeldProportionalGain)
@@ -1263,30 +1286,10 @@ namespace PhysicsGrab
             // Reset angular PID and compute initial relative quaternion for tidal lock
             m_tidalLockPidController.Reset();
 
-            AZ::Quaternion grabbingEntityRotationQuat;
-            #ifdef FIRST_PERSON_CONTROLLER
-            if (m_useFPControllerForGrab)
-            {
-                if (m_fullTidalLockForFPC)
-                {
-                    // Use camera rotation for full lock
-                    FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                        m_cameraRotationTransform,
-                        GetEntityId(),
-                        &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-                    grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
-                }
-                else
-                {
-                    grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
-                }
-            }
-            else
-            #endif
-            {
-                grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
-            }
+            // Compute the effective grabbing entity rotation quaternion, handling First Person Controller cases if enabled
+            AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
             AZ::Quaternion grabbedObjectRotationQuat;
+
             AZ::TransformBus::EventResult(
                 grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
             m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
@@ -1390,43 +1393,16 @@ namespace PhysicsGrab
             PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
-        // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release.
-        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
-        // prevent state transition with m_isStateLocked
-        else if (!m_isStateLocked && m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
+        // Handle throw input and charging logic, transitioning to throw state if triggered
+        // Other conditionals prevent state transition with m_isStateLocked or if object was initially kinematic
+        else if (!m_isStateLocked && !m_isInitialObjectKinematic)
         {
-            // If chargeable throw is disabled, perform immediate throw
-            if (!m_enableChargeThrow)
+            // Process throw key input for press, hold (charging), and release events
+            // Allow charging in hold state by default
+            if (HandleThrowInput(deltaTime, true))
             {
-                TransitionToThrow(false);
-            }
-            else
-            {
-                // Start charging for throw
-                m_isChargingThrow = true;
-                m_currentChargeTime = 0.f;
-                m_hasNotifiedChargeComplete = false;
-            }
-        }
-        // Accumulate charge time only while the throw key is held (and not in physics update for input responsiveness)
-        else if (m_isChargingThrow && m_throwKeyValue != 0.f && !isPhysicsUpdate)
-        {
-            // Increment the charge timer
-            m_currentChargeTime += deltaTime;
-            // Check if full charge is reached and notify if not already done
-            if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
-            {
-                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
-                m_hasNotifiedChargeComplete = true;
-            }
-        }
-        // Detect throw key release to trigger the charged throw
-        else if (!m_isStateLocked && m_prevThrowKeyValue != 0.f && m_throwKeyValue == 0.f && !m_isInitialObjectKinematic)
-        {
-            // If chargeable throw is enabled and charging was active, perform charged throw
-            if (m_enableChargeThrow && m_isChargingThrow)
-            {
-                TransitionToThrow(true);
+                // Trigger the throw transition if the function signals a throw event (immediate or charged)
+                TransitionToThrow(m_enableChargeThrow);
             }
         }
         else
@@ -1516,31 +1492,9 @@ namespace PhysicsGrab
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             // Recompute relative quaternion after rotation changes (to lock new orientation)
-            AZ::Quaternion grabbingEntityRotationQuat;
-            #ifdef FIRST_PERSON_CONTROLLER
-            if (m_useFPControllerForGrab)
-            {
-                if (m_fullTidalLockForFPC)
-                {
-                    // Use camera rotation for full lock
-                    FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                        m_cameraRotationTransform,
-                        GetEntityId(),
-                        &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-                    grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
-                }
-                else
-                {
-                    grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
-                }
-            }
-            else
-            #endif
-            {
-                grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
-            }
-
+            AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
             AZ::Quaternion grabbedObjectRotationQuat;
+
             AZ::TransformBus::EventResult(
                 grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
             m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
@@ -1551,43 +1505,17 @@ namespace PhysicsGrab
             PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
         }
-        // Transition to throwState if Throw key is pressed. Handles throw press, charging, and release. 
-        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
-        // prevent state transition with m_isStateLocked
-        else if (!m_isStateLocked && m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f && !m_isInitialObjectKinematic)
+        // Handle throw input and charging logic, transitioning to throw state if triggered
+        // Other conditionals prevent state transition with m_isStateLocked or if object was initially kinematic
+        else if (!m_isStateLocked && !m_isInitialObjectKinematic)
         {
-            // If chargeable throw is disabled or not allowed while rotating, perform immediate throw
-            if (!m_enableChargeThrow || !m_enableChargeWhileRotating)
+            // Process throw key input for press, hold (charging), and release events
+            // Conditionally allow charging based on rotate state flag
+            if (HandleThrowInput(deltaTime, m_enableChargeWhileRotating))
             {
-                TransitionToThrow(false);
-            }
-            else
-            {
-                // Start charging for throw
-                m_isChargingThrow = true;
-                m_currentChargeTime = 0.f;
-                m_hasNotifiedChargeComplete = false;
-            }
-        }
-        // Accumulate charge time only while the throw key is held (and not in physics update for input responsiveness)
-        else if (m_isChargingThrow && m_throwKeyValue != 0.f && !isPhysicsUpdate)
-        {
-            // Increment the charge timer
-            m_currentChargeTime += deltaTime;
-            // Check if full charge is reached and notify if not already done
-            if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
-            {
-                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
-                m_hasNotifiedChargeComplete = true;
-            }
-        }
-        // Detect throw key release to trigger the charged throw
-        else if (!m_isStateLocked && m_prevThrowKeyValue != 0.f && m_throwKeyValue == 0.f && !m_isInitialObjectKinematic)
-        {
-            // If chargeable throw is enabled and charging was active, perform charged throw
-            if (m_enableChargeThrow && m_isChargingThrow)
-            {
-                TransitionToThrow(true);
+                // Trigger the throw transition if the function signals a throw event (immediate or charged)
+                // Adjust for whether charging was enabled in this state
+                TransitionToThrow(m_enableChargeThrow && m_enableChargeWhileRotating);
             }
         }
         else
@@ -1980,49 +1908,76 @@ namespace PhysicsGrab
         }
     }
 
+    // Handles throw transition from hold and rotate
+    void PhysicsGrabComponent::TransitionToThrow(bool isChargeEnabled)
+    {
+        // Determine if transitioning from rotate state to handle rotation-specific resets
+        bool fromRotate = (m_state == PhysicsGrabStates::rotateState);
+
+        // Start throw counter for timing the throw state duration
+        m_throwStateCounter = m_throwStateMaxTime;
+
+        // Set m_thrownGrabbedObjectEntityId early to preserve ID for ThrowObject impulse after release/reset
+        m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
+
+        // Determine whether to charge impulse based on enabled flag
+        if (isChargeEnabled)
+        {
+            // Calculate charged impulse as a linear interpolation between min and max based on charge fraction
+            float chargeFraction = AZ::GetClamp(m_currentChargeTime / m_chargeTime, 0.f, 1.f);
+            m_currentThrowImpulse = m_minThrowImpulse + chargeFraction * (m_maxThrowImpulse - m_minThrowImpulse);
+        }
+        else
+        {
+            // Use the fixed throw impulse for non-charged throws
+            m_currentThrowImpulse = m_throwImpulse;
+        }
+        // Transition to throw state after preparing impulse
+        m_state = PhysicsGrabStates::throwState;
+
+        // Broadcast hold stop and throw start notifications
+        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
+        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
+
+        // Reset charging state after initiating throw
+        m_isChargingThrow = false;
+        m_currentChargeTime = 0.f;
+        m_hasNotifiedChargeComplete = false;
+
+        // Restore object properties and release the grabbed object, with rotate-specific handling if applicable
+        ReleaseGrabbedObject(false, fromRotate);
+    }
+
     // Apply linear impulse to object if it is a Dynamic Rigid Body
     void PhysicsGrabComponent::ThrowObject()
     {
         // Query mass for potential scaling (default to 1 if fails)
-        float mass = 1.0f;
-        Physics::RigidBodyRequestBus::EventResult(mass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
+        float objectMass = 1.0f;
+        Physics::RigidBodyRequestBus::EventResult(objectMass, m_thrownGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
         // Compute base impulse
         AZ::Vector3 base_impulse = m_forwardVector * m_currentThrowImpulse;
 
         // Optionally scale by mass for mass-independent throw velocity
-        AZ::Vector3 impulse = m_massIndependentThrow ? mass * base_impulse : base_impulse;
+        AZ::Vector3 impulse = m_massIndependentThrow ? objectMass * base_impulse : base_impulse;
 
         // Apply a Linear Impulse to the grabbed object
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, impulse);
-
-        // Trigger an event notification when object enters Throw State
-        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
-
-        m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
-
-        // Set Object Current Layer variable back to Prev Layer when thrown
-        SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
-
-        // Set Angular Damping back to original value
-        SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-
-        // Restore gravity if it was disabled
-        if (m_disableGravityWhileHeld && !m_isObjectKinematic)
-        {
-            Physics::RigidBodyRequestBus::Event(
-                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
-        }
+            m_thrownGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, impulse);
     }
 
-    void PhysicsGrabComponent::ReleaseGrabbedObject(bool notifyHoldStop = true, bool notifyRotateStop = false)
+    void PhysicsGrabComponent::ReleaseGrabbedObject(bool notifyHoldStop, bool notifyRotateStop)
     {
         // Set Object Current Layer variable back to initial layer
         SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
 
-        // Set Object Angular Damping back to original value
-        SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+        // Set Object Angular Damping back to original value if releasing from rotate state
+        if (notifyRotateStop)
+        {
+            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+            // Set Angular Velocity back to zero when releasing from rotate state
+            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
+        }
 
         // Set Object Linear Damping back to original value
         SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
@@ -2059,65 +2014,73 @@ namespace PhysicsGrab
         }
     }
 
-    // Handles throw transition from hold and rotate
-    void PhysicsGrabComponent::TransitionToThrow(bool isChargeEnabled)
+    bool PhysicsGrabComponent::HandleThrowInput(float deltaTime, bool allowCharging)
     {
-        // If transitioning from rotate state, reset rotation-specific properties
-        if (m_state == PhysicsGrabStates::rotateState)
+        // Detect initial throw key press to start charging or prepare immediate throw
+        if (m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f)
         {
-            SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
-            SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
+            // If chargeable throw is disabled or charging not allowed in current state, signal for immediate throw
+            if (!m_enableChargeThrow || !allowCharging)
+            {
+                return true;
+            }
+            else
+            {
+                // Start charging process for throw, resetting timer and notification flag
+                m_isChargingThrow = true;
+                m_currentChargeTime = 0.f;
+                m_hasNotifiedChargeComplete = false;
+            }
         }
-
-        // Reset to object's original Linear Damping value
-        SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
-
-        // Start throw counter
-        m_throwStateCounter = m_throwStateMaxTime;
-
-        // Set Kinematic Rigid Body to dynamic if it was held as kinematic
-        if (m_isObjectKinematic)
+        // Accumulate charge time while the throw key is held
+        else if (m_isChargingThrow && m_throwKeyValue != 0.f)
         {
-            SetGrabbedObjectKinematicElseDynamic(false);
-            m_isObjectKinematic = false;
+            // Increment the charge timer based on delta time
+            m_currentChargeTime += deltaTime;
+            // Check if full charge is reached and notify if not already done, to signal completion event
+            if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
+            {
+                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
+                m_hasNotifiedChargeComplete = true;
+            }
         }
-
-        // Restore gravity if it was disabled (before throwing)
-        if (m_disableGravityWhileHeld && !m_isObjectKinematic)
+        // Detect throw key release to trigger the charged throw if applicable
+        else if (m_prevThrowKeyValue != 0.f && m_throwKeyValue == 0.f)
         {
-            Physics::RigidBodyRequestBus::Event(
-                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+            // If chargeable throw is enabled and charging was active, signal for charged throw
+            if (m_enableChargeThrow && m_isChargingThrow)
+            {
+                return true;
+            }
         }
+        // No throw triggered in this input cycle
+        return false;
+    }
 
-        // Clear sphere cast hit flag and mesh pointer as object is being released
-        m_objectSphereCastHit = false;
-        
-        // Restore original local TM of mesh entity before nulling pointer
-        ReleaseMesh();
-
-        // Determine whether to charge impulse
-        if (isChargeEnabled)
+    AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
+    {
+        // Initialize grabbing entity rotation quaternion for tidal lock computation
+        AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
+        // Determine the effective rotation based on First Person Controller usage if enabled
+        // Use camera rotation for full tidal lock, or character rotation otherwise
+        #ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
         {
-            // Calculate charged impulse as a linear interpolation between min and max based on charge fraction
-            float chargeFraction = AZ::GetClamp(m_currentChargeTime / m_chargeTime, 0.f, 1.f);
-            m_currentThrowImpulse = m_minThrowImpulse + chargeFraction * (m_maxThrowImpulse - m_minThrowImpulse);
+            if (m_fullTidalLockForFPC)
+            {
+                // Use camera rotation for full lock
+                return m_cameraRotationTransform->GetWorldRotationQuaternion();
+            }
+            else
+            {
+                return GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+            }
         }
         else
+        #endif
         {
-            // Use the fixed throw impulse for non-charged throws
-            m_currentThrowImpulse = m_throwImpulse;
+            return m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
         }
-
-        // Transition to throw state
-        m_state = PhysicsGrabStates::throwState;
-        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
-        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
-
-        // Reset charging state after initiating throw
-        m_isChargingThrow = false;
-        m_currentChargeTime = 0.f;
-        m_hasNotifiedChargeComplete = false;
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
@@ -2125,25 +2088,8 @@ namespace PhysicsGrab
     {
         // Initialize local variables for the current entity's rotation quaternion and up vector
         AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
-
-        // Determine the rotation and up vector based on whether First Person Controller is used
-        #ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
-        {
-            if (m_fullTidalLockForFPC)
-            {
-                grabbingEntityRotationQuat = m_cameraRotationTransform->GetWorldRotationQuaternion();
-            }
-            else
-            {
-                grabbingEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
-            }
-        }
-        else
-        #endif
-        {
-            grabbingEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
-        }
+        // Compute the effective grabbing entity rotation quaternion, handling First Person Controller cases if enabled
+        grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
 
         // Compute target object rotation based on stored relative
         AZ::Quaternion targetGrabbedObjectRotation = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
@@ -3201,7 +3147,7 @@ namespace PhysicsGrab
         return m_enablePIDHeldDynamics;
     }
 
-    void PhysicsGrabComponent::SetEnablePIDHeldDymamics(const bool& new_enablePIDHeldDynamics)
+    void PhysicsGrabComponent::SetEnablePIDHeldDynamics(const bool& new_enablePIDHeldDynamics)
     {
         m_enablePIDHeldDynamics = new_enablePIDHeldDynamics;
     }

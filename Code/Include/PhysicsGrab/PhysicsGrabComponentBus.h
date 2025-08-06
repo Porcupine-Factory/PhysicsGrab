@@ -141,7 +141,7 @@ namespace PhysicsGrab
         virtual bool GetMassIndependentThrow() const = 0;
         virtual void SetMassIndependentThrow(const bool&) = 0;
         virtual bool GetEnablePIDHeldDynamics() const = 0;
-        virtual void SetEnablePIDHeldDymamics(const bool&) = 0;
+        virtual void SetEnablePIDHeldDynamics(const bool&) = 0;
         virtual bool GetMassIndependentHeldPID() const = 0;
         virtual void SetMassIndependentHeldPID(const bool&) = 0;
         virtual float GetHeldProportionalGain() const = 0;
