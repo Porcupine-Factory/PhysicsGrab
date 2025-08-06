@@ -35,7 +35,7 @@ namespace PhysicsGrab
                 ->Field("Grabbed Object Collision Group", &PhysicsGrabComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &PhysicsGrabComponent::m_tempGrabbedCollisionLayer)
 
-                ->Field("GrabbingEntityId", &PhysicsGrabComponent::m_grabbingEntityId)
+                ->Field("Grab Entity", &PhysicsGrabComponent::m_grabbingEntityId)
                 #ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Use First Person Controller For Grab", &PhysicsGrabComponent::m_useFPControllerForGrab)
                 #endif
@@ -759,9 +759,6 @@ namespace PhysicsGrab
         // Connect the handler to the request bus
         PhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
 
-        // Delaying the assignment of Grabbing Entity to OnEntityActivated so the Entity is activated and ready
-        AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
-
         // Initialize Held Object PID controller
         m_pidController = PidController<AZ::Vector3>(
             m_heldProportionalGain,
@@ -779,6 +776,22 @@ namespace PhysicsGrab
             m_tidalLockIntegralWindupLimit,
             m_tidalLockDerivativeFilterAlpha,
             m_tidalLockDerivativeMode);
+
+        // Fallback to active camera if Grabbing Entity not specified in editor
+        if (!m_grabbingEntityId.IsValid())
+        {
+            m_grabbingEntityPtr = GetActiveCameraEntityPtr();
+            if (m_grabbingEntityPtr == nullptr)
+            {
+                m_needsCameraFallback = true;
+                Camera::CameraNotificationBus::Handler::BusConnect();
+            }
+        }
+        else
+        {
+            // Connect EntityBus for valid ID (pointer set in OnEntityActivated)
+            AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
+        }
     }
 
     // Called at the beginning of each physics tick
@@ -811,9 +824,35 @@ namespace PhysicsGrab
     {
         AZ::EntityBus::Handler::BusDisconnect();
 
-        if (m_grabbingEntityId.IsValid())
+        if (m_grabbingEntityId.IsValid() && entityId == m_grabbingEntityId)
         {
             m_grabbingEntityPtr = GetEntityPtr(entityId);
+            if (m_grabbingEntityPtr == nullptr)
+            {
+                AZ_Warning(
+                    "PhysicsGrabComponent", false, "Failed to retrieve grabbing entity for ID %s.", m_grabbingEntityId.ToString().c_str());
+            }
+        }
+    }
+
+    void PhysicsGrabComponent::OnActiveViewChanged(const AZ::EntityId& activeEntityId)
+    {
+        if (m_needsCameraFallback)
+        {
+            // Fallback to active camera if Grabbing Entity not specified in editor
+            m_grabbingEntityPtr = GetEntityPtr(activeEntityId);
+            if (m_grabbingEntityPtr != nullptr)
+            {
+                m_grabbingEntityId = activeEntityId;
+                Camera::CameraNotificationBus::Handler::BusDisconnect();
+                m_needsCameraFallback = false;
+                // AZ_Printf("PhysicsGrabComponent", 
+                // "Assigned active camera %s as grabbing entity.", m_grabbingEntityId.ToString().c_str());
+            }
+            else
+            {
+                AZ_Warning("PhysicsGrabComponent", false, "Active camera %s invalid.", activeEntityId.ToString().c_str());
+            }
         }
     }
 
@@ -827,6 +866,14 @@ namespace PhysicsGrab
         m_sceneSimulationStartHandler.Disconnect();
         m_sceneSimulationFinishHandler.Disconnect();
         m_meshEntityPtr = nullptr;
+
+        // Disconnect camera bus if flagged (from m_grabbingEntityPtr fallback handling) 
+        if (m_needsCameraFallback)
+        {
+            Camera::CameraNotificationBus::Handler::BusDisconnect();
+            m_needsCameraFallback = false;
+        }
+        AZ::EntityBus::Handler::BusDisconnect();
     }
 
     void PhysicsGrabComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
@@ -1048,6 +1095,11 @@ namespace PhysicsGrab
         {
             InterpolateMeshTransform(deltaTime);
         }
+
+        //AZ::Entity* activeCameraEntity = GetActiveCameraEntityPtr();
+
+        //AZ_Printf("", "Activate: activeCameraEntity=%s", activeCameraEntity ? "true" : "false");
+        //AZ_Printf("", "Activate: m_grabbingEntityPtr=%s", m_grabbingEntityPtr ? "true" : "false");
     }
     
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
@@ -1563,6 +1615,13 @@ namespace PhysicsGrab
     // first returned hit to m_grabbedObjectEntityId
     void PhysicsGrabComponent::CheckForObjects()
     {
+        // Early exit if no valid grabbing entity to prevent null dereference
+        if (m_grabbingEntityPtr == nullptr)
+        {
+            AZ_Error("PhysicsGrabComponent", false, "Grabbing entity is null. Skipping object check.");
+            return;
+        }
+
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {

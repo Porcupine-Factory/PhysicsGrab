@@ -34,6 +34,7 @@ namespace PhysicsGrab
     class PhysicsGrabComponent
         : public AZ::Component
         , public AZ::EntityBus::Handler
+        , public Camera::CameraNotificationBus::Handler
         , public AZ::TickBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public PhysicsGrabComponentRequestBus::Handler
@@ -56,6 +57,9 @@ namespace PhysicsGrab
         // AZ::EntityBus overrides
         void OnEntityActivated(const AZ::EntityId& entityId) override;
 
+        // Assigns active camera to m_grabbingEntityPtr as fallback
+        void OnActiveViewChanged(const AZ::EntityId& activeEntityId);
+
         // AZ::InputEventNotificationBus interface. Overrides OnPressed and OnReleased virtual methods.
         void OnPressed(float value) override;
         void OnReleased(float value) override;
@@ -66,7 +70,7 @@ namespace PhysicsGrab
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
 
-        // PhysicsGrabRequestBus
+        // PhysicsGrabComponentRequestBus
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
@@ -436,6 +440,7 @@ namespace PhysicsGrab
         float m_accumYaw = 0.0f;
         float m_accumRoll = 0.0f;
 
+        bool m_needsCameraFallback = false;
         bool m_enableChargeThrow = false;
         bool m_isChargingThrow = false;
         bool m_enableChargeWhileRotating = false;
