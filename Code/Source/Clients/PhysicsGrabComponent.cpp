@@ -1095,11 +1095,6 @@ namespace PhysicsGrab
         {
             InterpolateMeshTransform(deltaTime);
         }
-
-        //AZ::Entity* activeCameraEntity = GetActiveCameraEntityPtr();
-
-        //AZ_Printf("", "Activate: activeCameraEntity=%s", activeCameraEntity ? "true" : "false");
-        //AZ_Printf("", "Activate: m_grabbingEntityPtr=%s", m_grabbingEntityPtr ? "true" : "false");
     }
     
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
