@@ -19,7 +19,9 @@ namespace PhysicsGrab
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
         virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
+        virtual void SetGrabbedObjectEntityId(const AZ::EntityId) = 0;
         virtual AZ::EntityId GetLastGrabbedObjectEntityId() const = 0;
+        virtual void SetLastGrabbedObjectEntityId(const AZ::EntityId) = 0;
         virtual AZ::EntityId GetThrownGrabbedObjectEntityId() const = 0;
         virtual void SetThrownGrabbedObjectEntityId(const AZ::EntityId) = 0;
         virtual AZStd::string GetGrabbedCollisionGroup() const = 0;

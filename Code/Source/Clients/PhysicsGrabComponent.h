@@ -74,7 +74,9 @@ namespace PhysicsGrab
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
+        void SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId) override;
         AZ::EntityId GetLastGrabbedObjectEntityId() const override;
+        void SetLastGrabbedObjectEntityId(const AZ::EntityId new_lastGrabbedObjectEntityId) override;
         AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
         void SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId) override;
         AZStd::string GetGrabbedCollisionGroup() const override;

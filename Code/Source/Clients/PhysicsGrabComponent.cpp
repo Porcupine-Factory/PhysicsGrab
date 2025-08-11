@@ -506,7 +506,9 @@ namespace PhysicsGrab
                 ->Event("Get Grabbing EntityId", &PhysicsGrabComponentRequests::GetGrabbingEntityId)
                 ->Event("Get Active Camera EntityId", &PhysicsGrabComponentRequests::GetActiveCameraEntityId)
                 ->Event("Get Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetGrabbedObjectEntityId)
+                ->Event("Set Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetGrabbedObjectEntityId)
                 ->Event("Get Last Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetLastGrabbedObjectEntityId)
+                ->Event("Set Last Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetLastGrabbedObjectEntityId)
                 ->Event("Get Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetThrownGrabbedObjectEntityId)
                 ->Event("Set Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetThrownGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &PhysicsGrabComponentRequests::SetGrabbingEntity)
@@ -2348,9 +2350,19 @@ namespace PhysicsGrab
         return m_grabbedObjectEntityId;
     }
 
+    void PhysicsGrabComponent::SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId)
+    {
+        m_grabbedObjectEntityId = new_grabbedObjectEntityId;
+    }
+
     AZ::EntityId PhysicsGrabComponent::GetLastGrabbedObjectEntityId() const
     {
         return m_lastGrabbedObjectEntityId;
+    }
+
+    void PhysicsGrabComponent::SetLastGrabbedObjectEntityId(const AZ::EntityId new_lastGrabbedObjectEntityId)
+    {
+        m_lastGrabbedObjectEntityId = new_lastGrabbedObjectEntityId;
     }
 
     AZ::EntityId PhysicsGrabComponent::GetThrownGrabbedObjectEntityId() const
