@@ -73,10 +73,10 @@ namespace PhysicsGrab
         // PhysicsGrabComponentRequestBus
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
+        AZ::EntityId GetDetectedObjectEntityId() const override;
+        void SetDetectedObjectEntityId(const AZ::EntityId new_detectedObjectEntityId) override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
         void SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId) override;
-        AZ::EntityId GetLastGrabbedObjectEntityId() const override;
-        void SetLastGrabbedObjectEntityId(const AZ::EntityId new_lastGrabbedObjectEntityId) override;
         AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
         void SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId) override;
         AZStd::string GetGrabbedCollisionGroup() const override;
@@ -364,10 +364,10 @@ namespace PhysicsGrab
         AZ::Vector3 m_hitPosition = AZ::Vector3::CreateZero();
         AZ::Vector3 m_localGrabOffset = AZ::Vector3::CreateZero();
 
-        AZ::EntityId m_grabbedObjectEntityId;
+        AZ::EntityId m_detectedObjectEntityId;
         AZ::EntityId m_meshEntityId;
         AZ::EntityId m_grabbingEntityId;
-        AZ::EntityId m_lastGrabbedObjectEntityId;
+        AZ::EntityId m_grabbedObjectEntityId;
         AZ::EntityId m_thrownGrabbedObjectEntityId;
 
         AzPhysics::CollisionGroups::Id m_grabbedCollisionGroupId = AzPhysics::CollisionGroups::Id();

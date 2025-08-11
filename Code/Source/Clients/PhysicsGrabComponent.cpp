@@ -505,10 +505,10 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Script::Attributes::Category, "Physics Grab")
                 ->Event("Get Grabbing EntityId", &PhysicsGrabComponentRequests::GetGrabbingEntityId)
                 ->Event("Get Active Camera EntityId", &PhysicsGrabComponentRequests::GetActiveCameraEntityId)
+                ->Event("Get Detected Object EntityId", &PhysicsGrabComponentRequests::GetDetectedObjectEntityId)
+                ->Event("Set Detected Object EntityId", &PhysicsGrabComponentRequests::SetDetectedObjectEntityId)
                 ->Event("Get Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetGrabbedObjectEntityId)
                 ->Event("Set Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetGrabbedObjectEntityId)
-                ->Event("Get Last Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetLastGrabbedObjectEntityId)
-                ->Event("Set Last Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetLastGrabbedObjectEntityId)
                 ->Event("Get Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetThrownGrabbedObjectEntityId)
                 ->Event("Set Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetThrownGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &PhysicsGrabComponentRequests::SetGrabbingEntity)
@@ -814,11 +814,11 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::OnSceneSimulationFinish(
         [[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime)
     {
-        if (m_lastGrabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_meshSmoothing &&
+        if (m_grabbedObjectEntityId.IsValid() && !m_isObjectKinematic && m_meshSmoothing &&
             (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
             m_prevPhysicsTransform = m_currentPhysicsTransform;
-            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
         }
     }
 
@@ -1102,7 +1102,7 @@ namespace PhysicsGrab
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void PhysicsGrabComponent::InterpolateMeshTransform(float deltaTime)
     {
-        if (!m_lastGrabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
+        if (!m_grabbedObjectEntityId.IsValid() || !m_meshEntityPtr || m_isObjectKinematic)
         {
             return;
         }
@@ -1203,33 +1203,33 @@ namespace PhysicsGrab
             if (m_disableGravityWhileHeld && !m_isObjectKinematic)
             {
                 Physics::RigidBodyRequestBus::EventResult(
-                    m_prevGravityEnabled, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::IsGravityEnabled);
-                Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, false);
+                    m_prevGravityEnabled, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::IsGravityEnabled);
+                Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, false);
             }
 
             // Store mass for dynamic objects
             if (!m_isObjectKinematic)
             {
                 Physics::RigidBodyRequestBus::EventResult(
-                    m_grabbedObjectMass, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
+                    m_grabbedObjectMass, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
             }
 
             // Initialize physics transforms for dynamic objects
             if (!m_isObjectKinematic && m_meshSmoothing)
             {
-                AZ::TransformBus::EventResult(m_prevPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+                AZ::TransformBus::EventResult(m_prevPhysicsTransform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
                 m_currentPhysicsTransform = m_prevPhysicsTransform;
                 m_physicsTimeAccumulator = 0.0f;
             }
 
             // Compute local grab offset from initial hit position
             AZ::Transform objectTM = AZ::Transform::CreateIdentity();
-            AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            AZ::TransformBus::EventResult(objectTM, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
 
             // Get inertia tensor from rigid body (local space) for Tidal Lock scaling
             AZ::Matrix3x3 grabbedObjectInertiaTensor = AZ::Matrix3x3::CreateIdentity();
             Physics::RigidBodyRequestBus::EventResult(
-                grabbedObjectInertiaTensor, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
+                grabbedObjectInertiaTensor, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
 
             // Compute average inertia from diagonal elements as scalar approximation
             float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) + 
@@ -1271,11 +1271,11 @@ namespace PhysicsGrab
                 // Fallback to tag-based lookup if m_meshEntityId is invalid and m_meshTagName is set
                 else if (!m_meshTagName.empty())
                 {
-                    AZ::Entity* grabbedEntity = GetEntityPtr(m_lastGrabbedObjectEntityId);
+                    AZ::Entity* grabbedEntity = GetEntityPtr(m_grabbedObjectEntityId);
                     if (grabbedEntity)
                     {
                         AZStd::vector<AZ::EntityId> children;
-                        AZ::TransformBus::EventResult(children, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
+                        AZ::TransformBus::EventResult(children, m_grabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
                         AZ::Crc32 meshTag = AZ::Crc32(m_meshTagName.c_str());
                         for (const AZ::EntityId& childId : children)
                         {
@@ -1303,7 +1303,7 @@ namespace PhysicsGrab
                     "PhysicsGrabComponent",
                     false,
                     "Mesh smoothing enabled but no tagged child entity found for %s. Skipping interpolation to avoid physics desync.",
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetName().c_str());
+                    GetEntityPtr(m_grabbedObjectEntityId)->GetName().c_str());
             }
 
             // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current 
@@ -1340,7 +1340,7 @@ namespace PhysicsGrab
             AZ::Quaternion grabbedObjectRotationQuat;
 
             AZ::TransformBus::EventResult(
-                grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+                grabbedObjectRotationQuat, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
             m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
 
             m_state = PhysicsGrabStates::holdState;
@@ -1545,7 +1545,7 @@ namespace PhysicsGrab
             AZ::Quaternion grabbedObjectRotationQuat;
 
             AZ::TransformBus::EventResult(
-                grabbedObjectRotationQuat, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+                grabbedObjectRotationQuat, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
             m_grabbedObjectRelativeQuat = grabbingEntityRotationQuat.GetInverseFull() * grabbedObjectRotationQuat;
 
             m_tidalLockPidController.Reset();
@@ -1581,8 +1581,8 @@ namespace PhysicsGrab
         {
             ThrowObject();
             // Reset entity IDs after throwing to allow grabbing new objects
+            m_detectedObjectEntityId = AZ::EntityId();
             m_grabbedObjectEntityId = AZ::EntityId();
-            m_lastGrabbedObjectEntityId = AZ::EntityId();
         }
 
         m_throwStateCounter -= deltaTime;
@@ -1609,7 +1609,7 @@ namespace PhysicsGrab
     }
 
     // Perform a spherecast query to check if colliding with a grabbable object, then assign the 
-    // first returned hit to m_grabbedObjectEntityId
+    // first returned hit to m_detectedObjectEntityId
     void PhysicsGrabComponent::CheckForObjects()
     {
         // Early exit if no valid grabbing entity to prevent null dereference
@@ -1674,15 +1674,15 @@ namespace PhysicsGrab
 
         m_objectSphereCastHit = false;
 
-        // Prioritize hit matching m_lastGrabbedObjectEntityId if grabbing (maintain initial hit position/offset)
-        if (m_lastGrabbedObjectEntityId.IsValid())
+        // Prioritize hit matching m_grabbedObjectEntityId if grabbing (maintain initial hit position/offset)
+        if (m_grabbedObjectEntityId.IsValid())
         {
             for (const AzPhysics::SceneQueryHit& hit : hits.m_hits)
             {
-                if (hit.m_entityId == m_lastGrabbedObjectEntityId)
+                if (hit.m_entityId == m_grabbedObjectEntityId)
                 {
                     m_objectSphereCastHit = true;
-                    m_grabbedObjectEntityId = hit.m_entityId;
+                    m_detectedObjectEntityId = hit.m_entityId;
                     break;
                 }
             }
@@ -1691,8 +1691,8 @@ namespace PhysicsGrab
         {
             // Take the first hit for initial grab and store hit position
             m_objectSphereCastHit = true;
-            m_grabbedObjectEntityId = hits.m_hits.at(0).m_entityId;
-            m_lastGrabbedObjectEntityId = m_grabbedObjectEntityId;
+            m_detectedObjectEntityId = hits.m_hits.at(0).m_entityId;
+            m_grabbedObjectEntityId = m_detectedObjectEntityId;
             m_hitPosition = hits.m_hits.at(0).m_position;
         }
     }
@@ -1742,7 +1742,7 @@ namespace PhysicsGrab
 
         // Get object transform once (center of mass transform)
         AZ::Transform objectTM = AZ::Transform::CreateIdentity();
-        AZ::TransformBus::EventResult(objectTM, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+        AZ::TransformBus::EventResult(objectTM, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
         
         // Center of mass translation
         m_grabbedObjectTranslation = objectTM.GetTranslation();
@@ -1761,7 +1761,7 @@ namespace PhysicsGrab
         {
             // Move object by setting its Translation
             AZ::TransformBus::Event(
-                m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTranslation, m_grabReference.GetTranslation());
+                m_grabbedObjectEntityId, &AZ::TransformInterface::SetWorldTranslation, m_grabReference.GetTranslation());
             
             // If object is NOT in rotate state, couple the grabbed entity's rotation to 
             // the controlling entity's local z rotation (causing object to face controlling entity)
@@ -1770,12 +1770,12 @@ namespace PhysicsGrab
                 TidalLock(deltaTime);
             }
             // Update mesh entity transform if smoothing is disabled
-            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_grabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(
                     m_meshEntityPtr->GetId(),
                     &AZ::TransformInterface::SetWorldTM,
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
+                    GetEntityPtr(m_grabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
 
@@ -1814,7 +1814,7 @@ namespace PhysicsGrab
                 if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != PhysicsGrabStates::rotateState))
                 {
                     Physics::RigidBodyRequestBus::Event(
-                        m_lastGrabbedObjectEntityId,
+                        m_grabbedObjectEntityId,
                         &Physics::RigidBodyRequests::ApplyLinearImpulseAtWorldPoint,
                         linearImpulse,
                         effectivePoint);
@@ -1822,7 +1822,7 @@ namespace PhysicsGrab
                 else
                 {
                     Physics::RigidBodyRequestBus::Event(
-                        m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
+                        m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
                 }
             }
             else
@@ -1839,7 +1839,7 @@ namespace PhysicsGrab
 
                 // Simple velocity-based application
                 Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetLinearVelocity + compensation);
+                    m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetLinearVelocity + compensation);
             }
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
@@ -1852,15 +1852,15 @@ namespace PhysicsGrab
             // Update current physics transform for interpolation
             if (m_meshSmoothing)
             {
-                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             }
             // Update mesh entity transform if smoothing is disabled
-            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_grabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(
                     m_meshEntityPtr->GetId(),
                     &AZ::TransformInterface::SetWorldTM,
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
+                    GetEntityPtr(m_grabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
     }
@@ -1905,14 +1905,14 @@ namespace PhysicsGrab
                 AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * 0.01f);
 
             AZ::Transform transform = AZ::Transform::CreateIdentity();
-            AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            AZ::TransformBus::EventResult(transform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
 
             transform.SetRotation((rotation * transform.GetRotation()).GetNormalized());
 
-            AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
+            AZ::TransformBus::Event(m_grabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
 
             // Update mesh entity transform if smoothing is disabled
-            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            if (!m_meshSmoothing && m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_grabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, transform);
             }
@@ -1951,15 +1951,15 @@ namespace PhysicsGrab
             // Update current physics transform for interpolation
             if (m_meshSmoothing)
             {
-                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+                AZ::TransformBus::EventResult(m_currentPhysicsTransform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             }
             // Update mesh entity transform if smoothing is disabled
-            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_lastGrabbedObjectEntityId))
+            else if (m_meshEntityPtr && m_meshEntityPtr != GetEntityPtr(m_grabbedObjectEntityId))
             {
                 AZ::TransformBus::Event(
                     m_meshEntityPtr->GetId(),
                     &AZ::TransformInterface::SetWorldTM,
-                    GetEntityPtr(m_lastGrabbedObjectEntityId)->GetTransform()->GetWorldTM());
+                    GetEntityPtr(m_grabbedObjectEntityId)->GetTransform()->GetWorldTM());
             }
         }
     }
@@ -1974,7 +1974,7 @@ namespace PhysicsGrab
         m_throwStateCounter = m_throwStateMaxTime;
 
         // Set m_thrownGrabbedObjectEntityId early to preserve ID for ThrowObject impulse after release/reset
-        m_thrownGrabbedObjectEntityId = m_lastGrabbedObjectEntityId;
+        m_thrownGrabbedObjectEntityId = m_grabbedObjectEntityId;
 
         // Determine whether to charge impulse based on enabled flag
         if (isChargeEnabled)
@@ -2042,15 +2042,15 @@ namespace PhysicsGrab
         if (m_disableGravityWhileHeld && !m_isObjectKinematic)
         {
             Physics::RigidBodyRequestBus::Event(
-                m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+                m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
         }
 
         SetGrabbedObjectKinematicElseDynamic(m_isInitialObjectKinematic);
         m_isObjectKinematic = m_isInitialObjectKinematic;
 
         m_objectSphereCastHit = false;
+        m_detectedObjectEntityId = AZ::EntityId();
         m_grabbedObjectEntityId = AZ::EntityId();
-        m_lastGrabbedObjectEntityId = AZ::EntityId();
 
         // Restore original local TM of mesh entity before nulling pointer
         ReleaseMesh();
@@ -2151,7 +2151,7 @@ namespace PhysicsGrab
         // Get current object rotation
         AZ::Quaternion currentGrabbedObjectRotation = AZ::Quaternion::CreateIdentity();
         AZ::TransformBus::EventResult(
-            currentGrabbedObjectRotation, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+            currentGrabbedObjectRotation, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
 
         // Compute error quaternion which represents the minimal rotation needed to align the 
         // current orientation to the target. Normalizing ensures numerical stability 
@@ -2177,9 +2177,9 @@ namespace PhysicsGrab
         {
             // For kinematic objects, directly apply the delta rotation to the object's transform
             AZ::Transform transform = AZ::Transform::CreateIdentity();
-            AZ::TransformBus::EventResult(transform, m_lastGrabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
+            AZ::TransformBus::EventResult(transform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             transform.SetRotation(targetGrabbedObjectRotation);
-            AZ::TransformBus::Event(m_lastGrabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
+            AZ::TransformBus::Event(m_grabbedObjectEntityId, &AZ::TransformInterface::SetWorldTM, transform);
         }
         else
         {
@@ -2212,7 +2212,7 @@ namespace PhysicsGrab
 
                 // Apply angular impulse to the grabbed object
                 Physics::RigidBodyRequestBus::Event(
-                    m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
+                    m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
             }
             else
             {
@@ -2345,6 +2345,16 @@ namespace PhysicsGrab
         return GetActiveCameraEntityPtr()->GetId();
     }
 
+    AZ::EntityId PhysicsGrabComponent::GetDetectedObjectEntityId() const
+    {
+        return m_detectedObjectEntityId;
+    }
+
+    void PhysicsGrabComponent::SetDetectedObjectEntityId(const AZ::EntityId new_detectedObjectEntityId)
+    {
+        m_detectedObjectEntityId = new_detectedObjectEntityId;
+    }
+
     AZ::EntityId PhysicsGrabComponent::GetGrabbedObjectEntityId() const
     {
         return m_grabbedObjectEntityId;
@@ -2353,16 +2363,6 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId)
     {
         m_grabbedObjectEntityId = new_grabbedObjectEntityId;
-    }
-
-    AZ::EntityId PhysicsGrabComponent::GetLastGrabbedObjectEntityId() const
-    {
-        return m_lastGrabbedObjectEntityId;
-    }
-
-    void PhysicsGrabComponent::SetLastGrabbedObjectEntityId(const AZ::EntityId new_lastGrabbedObjectEntityId)
-    {
-        m_lastGrabbedObjectEntityId = new_lastGrabbedObjectEntityId;
     }
 
     AZ::EntityId PhysicsGrabComponent::GetThrownGrabbedObjectEntityId() const
@@ -2912,7 +2912,7 @@ namespace PhysicsGrab
         AZStd::string currentGrabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
             currentGrabbedCollisionLayerName,
-            m_lastGrabbedObjectEntityId,
+            m_grabbedObjectEntityId,
             &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
         return currentGrabbedCollisionLayerName;
     }
@@ -2928,7 +2928,7 @@ namespace PhysicsGrab
             m_currentGrabbedCollisionLayerName = new_currentGrabbedCollisionLayerName;
             m_currentGrabbedCollisionLayer = grabbedCollisionLayer;
             Physics::CollisionFilteringRequestBus::Event(
-                m_lastGrabbedObjectEntityId,
+                m_grabbedObjectEntityId,
                 &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
                 m_currentGrabbedCollisionLayerName,
                 AZ::Crc32());
@@ -2939,7 +2939,7 @@ namespace PhysicsGrab
     {
         AZStd::string grabbedCollisionLayerName;
         Physics::CollisionFilteringRequestBus::EventResult(
-            grabbedCollisionLayerName, m_lastGrabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
+            grabbedCollisionLayerName, m_grabbedObjectEntityId, &Physics::CollisionFilteringRequestBus::Events::GetCollisionLayerName);
         AzPhysics::CollisionLayer grabbedCollisionLayer;
         Physics::CollisionRequestBus::BroadcastResult(
             grabbedCollisionLayer, &Physics::CollisionRequests::GetCollisionLayerByName, grabbedCollisionLayerName);
@@ -2953,7 +2953,7 @@ namespace PhysicsGrab
             AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         m_currentGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_currentGrabbedCollisionLayer);
         Physics::CollisionFilteringRequestBus::Event(
-            m_lastGrabbedObjectEntityId,
+            m_grabbedObjectEntityId,
             &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
             m_currentGrabbedCollisionLayerName,
             AZ::Crc32());
@@ -3018,7 +3018,7 @@ namespace PhysicsGrab
             AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         AZStd::string tempGrabbedCollisionLayerName = configuration.m_collisionLayers.GetName(m_tempGrabbedCollisionLayer);
         Physics::CollisionFilteringRequestBus::Event(
-            m_lastGrabbedObjectEntityId,
+            m_grabbedObjectEntityId,
             &Physics::CollisionFilteringRequestBus::Events::SetCollisionLayer,
             tempGrabbedCollisionLayerName,
             AZ::Crc32());
@@ -3028,14 +3028,14 @@ namespace PhysicsGrab
     {
         bool isObjectKinematic = false;
         Physics::RigidBodyRequestBus::EventResult(
-            isObjectKinematic, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::IsKinematic);
+            isObjectKinematic, m_grabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::IsKinematic);
 
         return isObjectKinematic;
     }
 
     void PhysicsGrabComponent::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
     {
-        Physics::RigidBodyRequestBus::Event(m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
+        Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
     }
 
     bool PhysicsGrabComponent::GetInitialGrabbedObjectIsKinematic() const
@@ -3048,7 +3048,7 @@ namespace PhysicsGrab
         float currentObjectAngularDamping = 0.f;
 
         Physics::RigidBodyRequestBus::EventResult(
-            currentObjectAngularDamping, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularDamping);
+            currentObjectAngularDamping, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularDamping);
 
         return currentObjectAngularDamping;
     }
@@ -3058,7 +3058,7 @@ namespace PhysicsGrab
         m_currentObjectAngularDamping = new_currentObjectAngularDamping;
 
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
+            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, new_currentObjectAngularDamping);
     }
 
     float PhysicsGrabComponent::GetPrevGrabbedObjectAngularDamping() const
@@ -3080,7 +3080,7 @@ namespace PhysicsGrab
     {
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
+            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularDamping, m_tempObjectAngularDamping);
     }
 
     float PhysicsGrabComponent::GetCurrentGrabbedObjectLinearDamping() const
@@ -3088,7 +3088,7 @@ namespace PhysicsGrab
         float currentObjectLinearDamping = 0.f;
 
         Physics::RigidBodyRequestBus::EventResult(
-            currentObjectLinearDamping, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetLinearDamping);
+            currentObjectLinearDamping, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetLinearDamping);
 
         return currentObjectLinearDamping;
     }
@@ -3098,7 +3098,7 @@ namespace PhysicsGrab
         m_currentObjectLinearDamping = new_currentObjectLinearDamping;
 
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, new_currentObjectLinearDamping);
+            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, new_currentObjectLinearDamping);
     }
 
     float PhysicsGrabComponent::GetPrevGrabbedObjectLinearDamping() const
@@ -3120,7 +3120,7 @@ namespace PhysicsGrab
     {
         m_tempObjectLinearDamping = new_tempObjectLinearDamping;
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, m_tempObjectLinearDamping);
+            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearDamping, m_tempObjectLinearDamping);
     }
 
     AZ::Vector3 PhysicsGrabComponent::GetGrabbedObjectAngularVelocity() const
@@ -3128,7 +3128,7 @@ namespace PhysicsGrab
         AZ::Vector3 grabbedObjectAngularVelocity = AZ::Vector3::CreateZero();
 
         Physics::RigidBodyRequestBus::EventResult(
-            grabbedObjectAngularVelocity, m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularVelocity);
+            grabbedObjectAngularVelocity, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetAngularVelocity);
         return grabbedObjectAngularVelocity;
     }
 
@@ -3137,7 +3137,7 @@ namespace PhysicsGrab
         m_grabbedObjectAngularVelocity = new_grabbedObjectAngularVelocity;
 
         Physics::RigidBodyRequestBus::Event(
-            m_lastGrabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
+            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, m_grabbedObjectAngularVelocity);
     }
 
     bool PhysicsGrabComponent::GetInitialAngularVelocityZero() const
