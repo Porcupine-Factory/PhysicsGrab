@@ -23,7 +23,7 @@
         "Windows"
     ],
     "icon_path": "",
-    "requirements": "",
+    "requirements": "This gem requires the PhysX5, Starting Point Input, and LmbrCentral gems.",
     "documentation_url": "",
     "dependencies": [
     "PhysX5",
