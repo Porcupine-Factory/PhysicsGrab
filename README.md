@@ -1,5 +1,5 @@
 # PhysicsGrab
-O3DE Physics Grab Gem licensed under the [Apache-2.0](/LICENSE.txt).
+O3DE Physics Grab Gem is licensed under [Apache-2.0](/LICENSE.txt).
 
 ## Installation Instructions
 You can install this gem in your project using O3DE's project manager. Navigate to the Gem Repositories page and provide this repo's git URL.
