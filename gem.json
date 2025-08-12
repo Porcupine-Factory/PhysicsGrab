@@ -5,7 +5,7 @@
     "license": "Apache-2.0",
     "license_url": "https://opensource.org/license/apache-2-0",
     "origin": "Porcupine-Factory",
-    "origin_url": "https://github.com/Porcupine-Factory/PhysicsGrab.git",
+    "origin_uri": "https://github.com/Porcupine-Factory/PhysicsGrab.git",
     "type": "Code",
     "summary": "Physics Grab enables player interaction with physics objects, such as grabbing, rotating and throwing.",
     "canonical_tags": [
