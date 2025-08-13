@@ -2405,7 +2405,12 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::SetGrabbedObjectEntityId(const AZ::EntityId& new_grabbedObjectEntityId)
     {
+        const AZ::EntityId prevGrabbedObjectEntityId = m_grabbedObjectEntityId;
         m_grabbedObjectEntityId = new_grabbedObjectEntityId;
+        // Check if the entity ID that was given is on a layer which the m_grabbedCollisionGroup has set.
+        // Otherwise, don't change m_grabbedObjectEntityId.
+        if (not m_grabbedCollisionGroup.IsSet(GetCurrentGrabbedCollisionLayer()))
+            m_grabbedObjectEntityId = prevGrabbedObjectEntityId;
     }
 
     AZ::EntityId PhysicsGrabComponent::GetThrownGrabbedObjectEntityId() const
@@ -3231,16 +3236,26 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::ForceGrab(const AZ::EntityId& new_objectId)
     {
-        SetGrabbedObjectEntityId(new_objectId);
-        if (m_state == PhysicsGrabStates::idleState)
+        const AZ::EntityId prevGrabbedObjectEntityId = m_grabbedObjectEntityId;
+        m_grabbedObjectEntityId = new_objectId;
+        // Check if the entity ID that was given is on a layer which the m_grabbedCollisionGroup has set.
+        // Otherwise, don't change m_grabbedObjectEntityId and bail on doing the force grab.
+        if (not m_grabbedCollisionGroup.IsSet(GetCurrentGrabbedCollisionLayer()))
         {
-            // Go to the checkState but set a flag that makes sure m_forceTransition stays true until it gets to holdState
-            m_continueToHoldState = true;
-            ForceTransition(PhysicsGrabStates::checkState);
+            m_grabbedObjectEntityId = prevGrabbedObjectEntityId;
         }
         else
         {
-            ForceTransition(PhysicsGrabStates::holdState);
+            if (m_state == PhysicsGrabStates::idleState)
+            {
+                // Go to the checkState but set a flag that makes sure m_forceTransition stays true until it gets to holdState
+                m_continueToHoldState = true;
+                ForceTransition(PhysicsGrabStates::checkState);
+            }
+            else
+            {
+                ForceTransition(PhysicsGrabStates::holdState);
+            }
         }
     }
 
