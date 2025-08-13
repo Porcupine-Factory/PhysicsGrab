@@ -963,7 +963,7 @@ namespace PhysicsGrab
         if (*inputId == m_grabDistanceEventId)
         {
             m_grabDistanceKeyValue = value;
-            AZ_Printf("Object", "Grab Distance value %f", value);
+            // AZ_Printf("Object", "Grab Distance value %f", value);
         }
 
         if (*inputId == m_throwEventId)
