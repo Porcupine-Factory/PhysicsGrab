@@ -211,6 +211,7 @@ namespace PhysicsGrab
         bool GetInitialAngularVelocityZero() const override;
         void SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero) override;
         void ForceTransition(const PhysicsGrabStates& targetState) override;
+        void ForceGrab(const AZ::EntityId& objectId);
         void SetStateLocked(const bool& isLocked) override;
         bool GetStateLocked() const override;
         bool GetDisableGravityWhileHeld() const override;
@@ -480,6 +481,7 @@ namespace PhysicsGrab
         bool m_ignorePitchKeyInputValue = true;
         bool m_ignoreRollKeyInputValue = true;
         bool m_forceTransition = false;
+        bool m_bypassSphereCast = false;
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
         bool m_massIndependentThrow = true;

@@ -137,6 +137,7 @@ namespace PhysicsGrab
         virtual void SetInitialAngularVelocityZero(const bool&) = 0;
         virtual AZStd::string GetStateString() const = 0;
         virtual void ForceTransition(const PhysicsGrabStates&) = 0;
+        virtual void ForceGrab(const AZ::EntityId& objectId) = 0;
         virtual void SetStateLocked(const bool&) = 0;
         virtual bool GetStateLocked() const = 0;
         virtual bool GetDisableGravityWhileHeld() const = 0;

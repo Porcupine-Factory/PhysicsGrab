@@ -664,6 +664,7 @@ namespace PhysicsGrab
                 ->Event("Get Initial Angular Velocity Zero", &PhysicsGrabComponentRequests::GetInitialAngularVelocityZero)
                 ->Event("Set Initial Angular Velocity Zero", &PhysicsGrabComponentRequests::SetInitialAngularVelocityZero)
                 ->Event("Force State Transition", &PhysicsGrabComponentRequests::ForceTransition)
+                ->Event("Force Grab", &PhysicsGrabComponentRequests::ForceGrab)
                 ->Event("Set Locked State Transition", &PhysicsGrabComponentRequests::SetStateLocked)
                 ->Event("Get Locked State Transition", &PhysicsGrabComponentRequests::GetStateLocked)
                 ->Event("Get Disable Gravity While Holding", &PhysicsGrabComponentRequests::GetDisableGravityWhileHeld)
@@ -1195,7 +1196,10 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::CheckForObjectsState()
     {
-        CheckForObjects();
+        if (!m_bypassSphereCast)
+        {
+            CheckForObjects();
+        }
         // Check if sphere cast hits a valid object before transitioning to holdState.
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
         // prevent state transition with m_isStateLocked
@@ -1397,6 +1401,9 @@ namespace PhysicsGrab
                 SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             }
             m_forceTransition = false;
+
+            // Reset bypass after successful transition
+            m_bypassSphereCast = false;
         }
         // Go back to idleState if grab key is not pressed
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
@@ -3208,10 +3215,37 @@ namespace PhysicsGrab
         m_initialAngularVelocityZero = new_initialAngularVelocityZero;
     }
     
+    // 0 == idleState
+    // 1 == checkState
+    // 2 == holdState
+    // 3 == rotateState
+    // 4 == throwState
     void PhysicsGrabComponent::ForceTransition(const PhysicsGrabStates& targetState)
     {
+        // Ignore non-hold if using ForceGrab
+        if (m_bypassSphereCast && targetState != PhysicsGrabStates::holdState)
+        {
+            return;
+        }
         m_forceTransition = true;
         m_targetState = targetState;
+    }
+
+    void PhysicsGrabComponent::ForceGrab(const AZ::EntityId& objectId)
+    {
+        if (!objectId.IsValid())
+        {
+            return;
+        }
+        m_detectedObjectEntityId = objectId;
+        m_grabbedObjectEntityId = objectId;
+        m_objectSphereCastHit = true;
+        AZ::Transform objectTM;
+        AZ::TransformBus::EventResult(objectTM, objectId, &AZ::TransformInterface::GetWorldTM);
+        // Use center of object (no offset)
+        m_hitPosition = objectTM.GetTranslation();
+        m_bypassSphereCast = true;
+        ForceTransition(PhysicsGrabStates::holdState);
     }
 
     void PhysicsGrabComponent::SetStateLocked(const bool& isLocked)
