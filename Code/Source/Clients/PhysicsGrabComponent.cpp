@@ -199,6 +199,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_grabResponse,
                         "Grab Response",
                         "Linear velocity scale applied when holding grabbed object. Only applies when PID Held Dynamics is disabled.")
+                    ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabEnableToggle,

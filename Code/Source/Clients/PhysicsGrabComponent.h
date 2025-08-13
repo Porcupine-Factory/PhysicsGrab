@@ -492,7 +492,7 @@ namespace PhysicsGrab
         bool m_massIndependentTidalLock = true;
         bool m_scaleIndependentTidalLock = true;
         bool m_offsetGrab = false;
-        bool m_gravityAppliesToPointRotation = true;
+        bool m_gravityAppliesToPointRotation = false;
 
         PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
         PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;
