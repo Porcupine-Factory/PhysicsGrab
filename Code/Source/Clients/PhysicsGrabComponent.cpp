@@ -3238,6 +3238,9 @@ namespace PhysicsGrab
     {
         const AZ::EntityId prevGrabbedObjectEntityId = m_grabbedObjectEntityId;
         m_grabbedObjectEntityId = new_objectId;
+        AZ::Transform objectTM;
+        AZ::TransformBus::EventResult(objectTM, new_objectId, &AZ::TransformInterface::GetWorldTM);
+        m_hitPosition = objectTM.GetTranslation()
         // Check if the entity ID that was given is on a layer which the m_grabbedCollisionGroup has set.
         // Otherwise, don't change m_grabbedObjectEntityId and bail on doing the force grab.
         if (not m_grabbedCollisionGroup.IsSet(GetCurrentGrabbedCollisionLayer()))
