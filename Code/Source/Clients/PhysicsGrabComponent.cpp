@@ -148,22 +148,22 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_grabbedCollisionGroupId,
                         "Sphere Cast Collision Group",
-                        "The collision group which will be used for detecting grabbable objects.")
+                        "Collision group for detecting grabbable objects via sphere cast. Only objects in this group can be grabbed.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tempGrabbedCollisionLayer,
                         "Grabbed Object Temporary Collision Layer",
-                        "The temporary collision layer assigned to the grabbed object while it is being grabbed/held.")
+                        "Temporary collision layer for held objects (e.g., to prevent jumping on held objects). Restored on release.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_sphereCastRadius,
                         "Sphere Cast Radius",
-                        "Sphere Cast radius used for grabbing objects")
+                        "Radius of detection sphere for grabbing (higher = larger grab area).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_sphereCastDistance,
                         "Sphere Cast Distance",
-                        "Sphere Cast distance along m_sphereCastDirection")
+                        "Maximum reach for grabbing (higher = farther grabs).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Hold Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -171,7 +171,7 @@ namespace PhysicsGrab
                         0,
                         &PhysicsGrabComponent::m_grabbingEntityId,
                         "Grab Entity",
-                        "Reference entity that interacts with objects. If left blank, Camera entity will be used by default.")
+                        "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab origin/direction.")
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
@@ -186,63 +186,60 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_meshSmoothing,
                         "Mesh Smoothing",
-                        "Enables smooth interpolation of the mesh transform for dynamic objects to reduce stuttering.")
+                        "Smooths visual mesh for dynamic objects to reduce physics jitter (enable recommended if physics timesteps are less than "
+                        "render framerate.)")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_meshTagName,
                         "Mesh Tag",
-                        "Tag name for the child entity to use for mesh interpolation (e.g., 'GrabMesh').")
+                        "Tag for child entity used in mesh smoothing (e.g., 'GrabMesh'). Allows visual separation from physics body.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetMeshSmoothing)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabResponse,
                         "Grab Response",
-                        "Linear velocity scale applied when holding grabbed object. Only applies when PID Held Dynamics is disabled.")
+                        "Velocity scale for pulling held objects (higher = quicker snap to position, more rigid feel). Used when PID disabled.")
                     ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabEnableToggle,
                         "Grab Enable Toggle",
-                        "Determines whether pressing Grab Key toggles Grab mode. Disabling this requires the Grab key to be held to "
-                        "maintain Grab mode.")
+                        "Toggles grab on press (enable for click-to-hold; disable to require holding key).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabMaintained,
                         "Maintain Grab",
-                        "Grabbed Object remains held even if sphere cast no longer intersects it. This prevents the Grabbed Object from "
-                        "flying off when quickly changing directions.")
+                        "Keeps holding object even if sphere cast misses (enable to prevent drops during fast turns).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicWhileHeld,
                         "Kinematic While Grabbing",
-                        "Sets the grabbed object to kinematic.")
+                        "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions and collisions).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_disableGravityWhileHeld,
                         "Disable Gravity While Holding",
-                        "Disables gravity for dynamic objects while being held.")
+                        "Turns off gravity for dynamic held objects (enable for weightless feel; disable for natural sag under gravity).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_offsetGrab,
                         "Offset Grab",
-                        "When enabled for dynamic objects, applies forces at an offset point causing natural tilting. "
-                        "Disable to apply at center of mass.")
+                        "Applies force at hit point for dynamic objects (enable for realistic tilt/rotation; disable "
+                        "to use center-of-mass).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLock,
-                        "Tidal Lock Grabbed Object",
-                        "Determines whether a Grabbed Object is tidal locked while being held. This means that the object will always "
-                        "face the Grabbing Entity in it's current relative rotation.")
+                        "Tidal Lock",
+                        "Locks object rotation to face grab entity (enable for consistent orientation; disable for free spin during hold).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_fullTidalLockForFPC,
                         "Full Tidal Lock For First Person Controller",
-                        "When enabled with First Person Controller, uses full camera rotation for tidal lock instead of character yaw "
-                        "only.")
+                        "Uses full camera rotation for tidal lock in FPC (enable for head-tracking lock; disable for body yaw only).")
                     ->Attribute(
                         AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetTidalLockAndUseFPCController)
                     #endif
@@ -250,26 +247,25 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_velocityCompensation,
                         "Velocity Compensation",
-                        "Determines whether to compensate for velocity changes in grabbing entity. Enabling this will keep grab distance "
+                        "Adjusts object distance for velocity changes in grabbing entity. Enabling this will keep grab distance "
                         "the same whether you are walking, sprinting, or standing still.")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_velocityCompDampRate,
                         "Velocity Compensation Damp Rate",
-                        "Gradually increase velocity compensation for dynamic object. Velocity compensation must be enabled for this to "
-                        "take effect.")
+                        "Smoothing rate for velocity adjustment (higher = quicker adaptation to speed changes, less lag).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetVelocityCompensation)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tempObjectLinearDamping,
                         "Linear Damping",
-                        "Linear Damping of Grabbed Object while Grabbing")
+                        "Damps linear motion while held (higher = quicker stop, less drift; low = more momentum preservation).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tempObjectAngularDamping,
                         "Angular Damping",
-                        "Angular Damping of Grabbed Object while Holding or Rotating")
+                        "Damps angular motion while held/rotated (higher = less wobble/spin; low = more natural rotation decay).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Distance Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -277,17 +273,17 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_minGrabDistance,
                         "Min Grab Distance",
-                        "Minimum allowable grab distance. Grabbed object cannot get closer than this distance.")
+                        "Closest allowable hold distance (higher = prevents clipping into entity; too high limits close inspection).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_maxGrabDistance,
                         "Max Grab Distance",
-                        "Maximum allowable grab distance. Grabbed object cannot get further than this distance.")
+                        "Farthest allowable hold distance (higher = more reach; too high may feel unstable at distance).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
-                        "The speed at which you move the grabbed object closer or away.")
+                        "Speed of distance adjustment (higher = quicker push/pull; balance for smooth control without jerk).")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Rotate Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -295,104 +291,100 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicYawRotateScale,
                         "Dynamic Horizontal Rotate Scale",
-                        "Angular velocity scale for horizontal (yaw) rotation of dynamic objects")
+                        "Yaw (horizontal) angular velocity scale for dynamic objects (higher = faster turn).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicPitchRotateScale,
                         "Dynamic Vertical Rotate Scale",
-                        "Angular velocity scale for vertical (pitch) rotation of dynamic objects")
+                        "Pitch (vertical) angular velocity scale for dynamic objects (higher = faster turn).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicRollRotateScale,
                         "Dynamic Roll Rotate Scale",
-                        "Angular velocity scale for roll rotation of dynamic objects")
+                        "Roll angular velocity scale for dynamic objects (higher = faster turn).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicYawRotateScale,
                         "Kinematic Horizontal Rotate Scale",
-                        "Rotation speed scale for horizontal (yaw) rotation of kinematic objects")
+                        "Yaw (horizontal) rotation speed scale for kinematic objects (higher = faster turn).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicPitchRotateScale,
                         "Kinematic Vertical Rotate Scale",
-                        "Rotation speed scale for vertical (pitch) rotation of kinematic objects")
+                        "Pitch (vertical) rotation speed scale for kinematic objects (higher = faster turn).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicRollRotateScale,
                         "Kinematic Roll Rotate Scale",
-                        "Rotation speed scale for roll rotation of kinematic objects")
+                        "Roll rotation speed scale for kinematic objects (higher = faster turn).")
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
-                        "Enables character controller rotation while in Rotate State.")
+                        "Locks FPC rotation during rotate mode (enable to focus on object; disable for simultaneous movement).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetUseFPCControllerForGrab)
                     #endif
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_rotateEnableToggle,
                         "Rotate Enable Toggle",
-                        "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
-                        "maintain Rotate mode.")
+                        "Toggles rotate mode on press (enable for click-to-rotate; disable to require holding for mode).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_smoothDynamicRotation,
                         "Smooth Dynamic Rotation",
-                        "Enables smooth rotation for dynamic objects. Angular velocity is dampened and interpolated for smooth rotations.")
+                        "Gradually applies angular velocity for dynamic objects in rotate mode (enable for fluid turns; disable for instant response).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_angularVelocityDampRate,
                         "Angular Velocity Damp Rate",
-                        "Gradually increase angular velocity for dynamic object. Smooth dynamic rotation must be enabled for this to take "
-                        "effect.")
+                        "Smoothing rate for rotation buildup (higher = faster ramp-up, more responsive; low = gradual acceleration).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetSmoothDynamicRotation)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_gravityAppliesToPointRotation,
                         "Gravity Applies To Point Rotation",
-                        "Enables gravity when rotating objects if Offset Grab enabled. "
-                        "Only applies to when PID Tidal Lock Dynamics is enabled.")
+                        "Allows gravity at offset point during rotation (enable for natural droop; disable for uniform behavior). "
+                        "Requires Offset Grab and PID Tidal Lock.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetOffsetGrab)
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Throw Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Throwing strength. The linear impulse scale applied when throwing grabbed "
-                        "object. Used when Chargeable Throw is disabled.")
+                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", 
+                        "Base throw strength for non-charged throws (higher = farther/faster throws; scales velocity if mass-independent).")
                     ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnableChargeThrow)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_massIndependentThrow,
                         "Enable Mass Independent Throw",
-                        "When enabled, throw impulse is scaled by object mass for consistent throw velocity regardless of mass "
-                        "(mass-independent). Disable for realistic mass-dependent throws where heavier objects fly slower/shorter.")
+                        "Scales throw strength by mass for consistent velocity (enable for uniform throws; "
+                        "disable for heavier objects to throw shorter/slower). ")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_throwStateMaxTime,
                         "Throw State Max Time",
-                        "Maximum time (seconds) the grabbed object remains in throw state before returning to idle. Controls how long "
-                        "you must wait before picking up another object.")
+                        "Cooldown after throw before next grab (higher = longer wait, prevents instant re-grab).")
                     ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_enableChargeThrow,
                         "Enable Chargeable Throw",
-                        "If true, hold throw key to charge impulse from min to max.")
+                        "Allows holding throw key to build power (enable for variable strength; disable for fixed impulse throws).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_enableChargeWhileRotating,
                         "Enable Charge While Rotating",
-                        "If true, allow charging throw in rotate state; if false, only in hold state. Relevant when Chargeable Throw is "
-                        "enabled.")
+                        "Permits charging during rotation mode.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_minThrowImpulse,
                         "Min Throw Impulse",
-                        "Minimum throw impulse for quick release. Used when Chargeable Throw is enabled.")
+                        "Lowest strength for instant throws (higher = stronger quick throws; sets charge start point).")
                     ->Attribute(
                         AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
@@ -400,7 +392,7 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_maxThrowImpulse,
                         "Max Throw Impulse",
-                        "Maximum throw impulse after full charge. Used when Chargeable Throw is enabled.")
+                        "Highest strength after full charge (higher = more powerful max throws; sets charge ceiling).")
                     ->Attribute(
                         AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
@@ -408,7 +400,7 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_chargeTime,
                         "Charge Time",
-                        "Time (seconds) to reach max impulse while holding. Used when Chargeable Throw is enabled.")
+                        "Duration to reach max impulse (higher = slower charge buildup, more control over strength).")
                     ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
 
@@ -425,39 +417,41 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_massIndependentHeldPID,
                         "Enable Mass Independent PID",
-                        "When enabled, PID controller scales forces by object mass for consistent behavior regardless of mass "
-                        "(mass-independent). "
-                        "Disable for realistic mass-dependent motion where heavier objects feel slower and harder to move.")
+                        "Scales PID by mass for uniform behavior (enable for consistent feel across masses; "
+                        "disable for heavier objects to move slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_heldProportionalGain,
                         "Held PID P Gain",
-                        "Proportional gain when holding objects. Controls stiffness/pull strength (higher = stronger spring).")
+                        "Proportional gain for holding objects. Controls stiffness/pull strength (higher = stronger spring, "
+                        "quicker return but more oscillations).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_heldIntegralGain,
                         "Held PID I Gain",
-                        "Integral gain when holding objects. Corrects persistent errors (e.g., gravity offset; usually low or 0).")
+                        "Integral gain for holding. Reduces steady errors like gravity (higher = better offset correction, "
+                        "but risk of windup/overshoot; often low/zero).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_heldDerivativeGain,
                         "Held PID D Gain",
-                        "Derivative gain when holding objects. Controls damping (low = underdamped/oscillatory; high = overdamped/slow).")
+                        "Derivative gain for holding. Adds damping (higher = smoother motion, less oscillation; too high = sluggish "
+                        "response).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_heldIntegralWindupLimit,
                         "Held PID Integral Limit",
-                        "Anti-windup limit for integral accumulation (higher = stronger I but riskier).")
+                        "Caps integral buildup to prevent overshoot (higher = more correction allowance; prevents excessive windup).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_heldDerivativeFilterAlpha,
                         "Held PID Derivative Filter Alpha",
-                        "Derivative filter strength (0=raw, 1=heavy smoothing; 0.7 for responsive with light noise reduction).")
+                        "Filters derivative noise (higher = more smoothing, less jitter but delayed response).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Tidal Lock Dynamics")
@@ -466,52 +460,53 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_enablePIDTidalLockDynamics,
                         "Enable PID Tidal Lock Dynamics",
-                        "Enables PID controller for dynamic tidal lock rotation, creating spring-like motion. Disabling "
-                        "uses simple angular velocity.")
+                        "Uses PID for spring-like tidal lock (enable for tunable rotation; disable for direct angular velocity).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_massIndependentTidalLock,
                         "Enable Mass Independent Tidal Lock",
-                        "When enabled and PID is active, scales torque by object mass for consistent rotation regardless of mass. "
-                        "Disable for realistic mass-dependent rotation where heavier objects rotate slower.")
+                        "Scales PID by mass for uniform rotation (enable for consistent feel; disable for heavier objects to rotate "
+                        "slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_scaleIndependentTidalLock,
                         "Enable Scale Independent Tidal Lock",
-                        "When enabled and PID is active, scales torque by approximate inertia factor (based on grab offset) for consistent "
-                        "rotation oscillations regardless of object scale/size.")
+                        "Scales PID by size-derived inertia (enable for consistent oscillations across scales; disable for larger objects "
+                        "to feel slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockProportionalGain,
                         "Tidal Lock PID P Gain",
-                        "Proportional gain for tidal lock. Controls rotational stiffness (higher = faster facing).")
+                        "Proportional gain for tidal lock. Controls rotational stiffness (higher = quicker alignment, more oscillations).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockIntegralGain,
                         "Tidal Lock PID I Gain",
-                        "Integral gain for tidal lock. Corrects persistent rotational errors (usually low or 0).")
+                        "Integral gain for tidal lock. Fixes persistent rotation errors (higher = better correction, but risk of "
+                        "overshoot; often low/zero).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockDerivativeGain,
                         "Tidal Lock PID D Gain",
-                        "Derivative gain for tidal lock. Controls rotational damping (higher = less oscillation).")
+                        "Derivative gain for tidal lock. Adds rotational damping (higher = less wobble, smoother stop; too high = slow "
+                        "response).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockIntegralWindupLimit,
                         "Tidal Lock PID Integral Limit",
-                        "Anti-windup limit for integral (higher = stronger I).")
+                        "Limits integral buildup for stability (higher = more correction allowance; prevents excessive windup).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tidalLockDerivativeFilterAlpha,
                         "Tidal Lock PID Derivative Filter Alpha",
-                        "Derivative filter (0=raw, 1=heavy smoothing).")
+                        "Filters derivative noise in tidal lock (higher = smoother but delayed).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics);
             }
         }
