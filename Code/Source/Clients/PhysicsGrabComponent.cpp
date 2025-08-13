@@ -61,7 +61,7 @@ namespace PhysicsGrab
                 ->Field("Linear Damping", &PhysicsGrabComponent::m_tempObjectLinearDamping)
                 ->Field("Velocity Compensation", &PhysicsGrabComponent::m_velocityCompensation)
                 ->Field("Velocity Compensation Damp Rate", &PhysicsGrabComponent::m_velocityCompDampRate)
-                
+
                 ->Field("Min Grab Distance", &PhysicsGrabComponent::m_minGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Max Grab Distance", &PhysicsGrabComponent::m_maxGrabDistance)
@@ -333,7 +333,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_rotateEnableToggle,
                         "Rotate Enable Toggle",
                         "Determines whether pressing Rotate Key toggles Rotate mode. Disabling this requires the Rotate key to be held to "
-                        "maintain Rotate mode.") 
+                        "maintain Rotate mode.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_smoothDynamicRotation,
@@ -358,7 +358,7 @@ namespace PhysicsGrab
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Throw Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Throwing strength. The linear impulse scale applied when throwing grabbed " 
+                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", "Throwing strength. The linear impulse scale applied when throwing grabbed "
                         "object. Used when Chargeable Throw is disabled.")
                     ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnableChargeThrow)
                     ->DataElement(
@@ -408,9 +408,9 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_chargeTime,
                         "Charge Time",
                         "Time (seconds) to reach max impulse while holding. Used when Chargeable Throw is enabled.")
-                    ->Attribute(AZ::Edit::Attributes::Suffix, " s")  
+                    ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
-                        
+
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Hold Dynamics")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
@@ -580,7 +580,7 @@ namespace PhysicsGrab
                 ->Event("Get Roll Key Value", &PhysicsGrabComponentRequests::GetRollKeyValue)
                 ->Event("Set Roll Key Value", &PhysicsGrabComponentRequests::SetRollKeyValue)
                 ->Event("Get Grab Distance Key Value", &PhysicsGrabComponentRequests::GetGrabbedDistanceKeyValue)
-                ->Event("Set Grab Distance Key Value", &PhysicsGrabComponentRequests::SetGrabbedDistanceKeyValue)         
+                ->Event("Set Grab Distance Key Value", &PhysicsGrabComponentRequests::SetGrabbedDistanceKeyValue)
                 ->Event("Get Grabbed Object Distance", &PhysicsGrabComponentRequests::GetGrabbedObjectDistance)
                 ->Event("Set Grabbed Object Distance", &PhysicsGrabComponentRequests::SetGrabbedObjectDistance)
                 ->Event("Get Minimum Grabbed Object Distance", &PhysicsGrabComponentRequests::GetMinGrabbedObjectDistance)
@@ -768,7 +768,7 @@ namespace PhysicsGrab
             return;
         }
 
-        // Register m_sceneSimulationStartHandler to listen for the OnSceneSimulationStart event, which 
+        // Register m_sceneSimulationStartHandler to listen for the OnSceneSimulationStart event, which
         // is triggered at the start of each physics simulation step
         m_sceneSimulationStartHandler = AzPhysics::SceneEvents::OnSceneSimulationStartHandler(
             [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
@@ -882,7 +882,7 @@ namespace PhysicsGrab
                 m_grabbingEntityId = activeEntityId;
                 Camera::CameraNotificationBus::Handler::BusDisconnect();
                 m_needsCameraFallback = false;
-                // AZ_Printf("PhysicsGrabComponent", 
+                // AZ_Printf("PhysicsGrabComponent",
                 // "Assigned active camera %s as grabbing entity.", m_grabbingEntityId.ToString().c_str());
             }
             else
@@ -903,7 +903,7 @@ namespace PhysicsGrab
         m_sceneSimulationFinishHandler.Disconnect();
         m_meshEntityPtr = nullptr;
 
-        // Disconnect camera bus if flagged (from m_grabbingEntityPtr fallback handling) 
+        // Disconnect camera bus if flagged (from m_grabbingEntityPtr fallback handling)
         if (m_needsCameraFallback)
         {
             Camera::CameraNotificationBus::Handler::BusDisconnect();
@@ -1055,7 +1055,7 @@ namespace PhysicsGrab
             m_throwKeyValue = value;
             // AZ_Printf("Player", "Throw held value %f", value);
         }
-        
+
         if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
@@ -1132,7 +1132,7 @@ namespace PhysicsGrab
             InterpolateMeshTransform(deltaTime);
         }
     }
-    
+
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void PhysicsGrabComponent::InterpolateMeshTransform(float deltaTime)
     {
@@ -1161,12 +1161,12 @@ namespace PhysicsGrab
 
         // Compose interpolated parent transform with original local mesh TM to preserve offsets, rotation, and scale
         AZ::Transform interpolatedParent = AZ::Transform::CreateFromQuaternionAndTranslation(interpolatedRotation, interpolatedPosition);
-        
+
         // Set the interpolated uniform scale on the parent transform
         interpolatedParent.SetUniformScale(interpolatedScale);
-        
+
         AZ::Transform interpolatedMesh = interpolatedParent * m_originalMeshLocalTM;
-        
+
         // Update mesh entity transform
         AZ::TransformBus::Event(m_meshEntityPtr->GetId(), &AZ::TransformInterface::SetWorldTM, interpolatedMesh);
 
@@ -1190,28 +1190,29 @@ namespace PhysicsGrab
             (!m_isStateLocked && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f && !m_stayInIdleState))
         {
             m_state = PhysicsGrabStates::checkState;
-            m_forceTransition = false;
+            if (m_continueToHoldState)
+                m_continueToHoldState = false;
+            else
+                m_forceTransition = false;
         }
     }
 
     void PhysicsGrabComponent::CheckForObjectsState()
     {
-        if (!m_bypassSphereCast)
-        {
-            CheckForObjects();
-        }
+        CheckForObjects();
+
         // Check if sphere cast hits a valid object before transitioning to holdState.
-        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::holdState && m_objectSphereCastHit) ||
             (!m_isStateLocked && m_objectSphereCastHit))
         {
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
             m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
-            
+
             // Store initial collision layer
             m_prevGrabbedCollisionLayer = GetCurrentGrabbedCollisionLayer();
-            
+
             // Set Object Current Layer variable to Temp Layer
             SetCurrentGrabbedCollisionLayer(m_tempGrabbedCollisionLayer);
 
@@ -1227,7 +1228,7 @@ namespace PhysicsGrab
                 SetGrabbedObjectKinematicElseDynamic(false);
                 m_isObjectKinematic = false;
             }
-           
+
             // Store object's original Linear Damping value, and set new value for hold/rotate.
             m_prevObjectLinearDamping = GetCurrentGrabbedObjectLinearDamping();
             SetCurrentGrabbedObjectLinearDamping(m_tempObjectLinearDamping);
@@ -1269,7 +1270,7 @@ namespace PhysicsGrab
                 grabbedObjectInertiaTensor, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
 
             // Compute average inertia from diagonal elements as scalar approximation
-            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) + 
+            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) +
                 grabbedObjectInertiaTensor.GetElement(1, 1) +
                 grabbedObjectInertiaTensor.GetElement(2, 2)) / 3.0f;
 
@@ -1343,7 +1344,7 @@ namespace PhysicsGrab
                     GetEntityPtr(m_grabbedObjectEntityId)->GetName().c_str());
             }
 
-            // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current 
+            // Reset m_prevGrabbingEntityTranslation and m_currentGrabEntityTranslation to the current
             // position at the exact moment of transition to holdState, ensuring the first physics velocity is ~zero.
             // Prevents initial object flinging off screen due to large m_grabbingEntityVelocity
             if (m_velocityCompensation)
@@ -1401,12 +1402,9 @@ namespace PhysicsGrab
                 SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
             }
             m_forceTransition = false;
-
-            // Reset bypass after successful transition
-            m_bypassSphereCast = false;
         }
         // Go back to idleState if grab key is not pressed
-        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
@@ -1439,9 +1437,9 @@ namespace PhysicsGrab
         }
 
         // Drop the object and go back to idle state if sphere cast doesn't hit
-        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or 
+        // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || 
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
             ReleaseGrabbedObject(true, false);
@@ -1458,8 +1456,8 @@ namespace PhysicsGrab
             HoldObject(deltaTime);
         }
 
-        // Go back to idle state if grab key is pressed again because we want to stop holding the 
-        // object on the second key press. Other conditionals allow forced state transition to 
+        // Go back to idle state if grab key is pressed again because we want to stop holding the
+        // object on the second key press. Other conditionals allow forced state transition to
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked &&
@@ -1470,7 +1468,7 @@ namespace PhysicsGrab
             m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
         }
-        // Enter Rotate State if rotate key is pressed. Other conditionals allow forced state transition 
+        // Enter Rotate State if rotate key is pressed. Other conditionals allow forced state transition
         // to bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == PhysicsGrabStates::rotateState) ||
@@ -1518,10 +1516,10 @@ namespace PhysicsGrab
             return;
         }
 
-        // Drop the object and go back to idle state if sphere cast doesn't hit. Other 
-        // conditionals allow forced state transition to bypass inputs with 
+        // Drop the object and go back to idle state if sphere cast doesn't hit. Other
+        // conditionals allow forced state transition to bypass inputs with
         // m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || 
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked && !m_objectSphereCastHit))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
@@ -1556,7 +1554,7 @@ namespace PhysicsGrab
         }
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the
-        // object on the second key press. Other conditionals allow forced state transition to 
+        // object on the second key press. Other conditionals allow forced state transition to
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
             (!m_isStateLocked &&
@@ -1569,8 +1567,8 @@ namespace PhysicsGrab
             m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
         }
-        // Go back to hold state if rotate key is pressed again because we want to stop rotating the 
-        // object on the second key press. Other conditionals allow forced state transition to 
+        // Go back to hold state if rotate key is pressed again because we want to stop rotating the
+        // object on the second key press. Other conditionals allow forced state transition to
         // bypass inputs with m_forceTransition, or prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == PhysicsGrabStates::holdState) ||
@@ -1615,7 +1613,7 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::ThrowObjectState(const float &deltaTime)
     {
-        // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it 
+        // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it
         // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
         if (m_throwStateCounter == m_throwStateMaxTime)
         {
@@ -1648,7 +1646,7 @@ namespace PhysicsGrab
         }
     }
 
-    // Perform a spherecast query to check if colliding with a grabbable object, then assign the 
+    // Perform a spherecast query to check if colliding with a grabbable object, then assign the
     // first returned hit to m_detectedObjectEntityId
     void PhysicsGrabComponent::CheckForObjects()
     {
@@ -1726,6 +1724,11 @@ namespace PhysicsGrab
                     break;
                 }
             }
+            if (m_forceTransition)
+            {
+                m_objectSphereCastHit = true;
+                m_detectedObjectEntityId = m_grabbedObjectEntityId;
+            }
         }
         else if (hits)
         {
@@ -1737,10 +1740,10 @@ namespace PhysicsGrab
         }
     }
 
-    // Hold and move object using physics or translation, based on object's 
+    // Hold and move object using physics or translation, based on object's
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void PhysicsGrabComponent::HoldObject(float deltaTime)
-    {        
+    {
         // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
         #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
@@ -1783,7 +1786,7 @@ namespace PhysicsGrab
         // Get object transform once (center of mass transform)
         AZ::Transform objectTM = AZ::Transform::CreateIdentity();
         AZ::TransformBus::EventResult(objectTM, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
-        
+
         // Center of mass translation
         m_grabbedObjectTranslation = objectTM.GetTranslation();
 
@@ -1802,8 +1805,8 @@ namespace PhysicsGrab
             // Move object by setting its Translation
             AZ::TransformBus::Event(
                 m_grabbedObjectEntityId, &AZ::TransformInterface::SetWorldTranslation, m_grabReference.GetTranslation());
-            
-            // If object is NOT in rotate state, couple the grabbed entity's rotation to 
+
+            // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation (causing object to face controlling entity)
             if (m_state != PhysicsGrabStates::rotateState && m_kinematicTidalLock && (m_tidalLock || m_fullTidalLockForFPC))
             {
@@ -1905,7 +1908,7 @@ namespace PhysicsGrab
         }
     }
 
-    // Rotate object using physics or transforms, based on object's starting 
+    // Rotate object using physics or transforms, based on object's starting
     // Rigid Body type, or if KinematicWhileHeld is enabled.
     void PhysicsGrabComponent::RotateObject(float deltaTime)
     {
@@ -2193,12 +2196,12 @@ namespace PhysicsGrab
         AZ::TransformBus::EventResult(
             currentGrabbedObjectRotation, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
 
-        // Compute error quaternion which represents the minimal rotation needed to align the 
-        // current orientation to the target. Normalizing ensures numerical stability 
+        // Compute error quaternion which represents the minimal rotation needed to align the
+        // current orientation to the target. Normalizing ensures numerical stability
         // and prevents drift in quaternion operations.
         AZ::Quaternion errorQuat = targetGrabbedObjectRotation * currentGrabbedObjectRotation.GetInverseFull();
         errorQuat.Normalize();
-        
+
         // Convert the error quaternion to axis-angle representation for easier use in PID calculations.
         // The axis-angle form provides a vector (errorAxis * errorAngle) that can be scaled by time for angular velocity.
         float errorAngle = 2.0f * acosf(AZ::GetClamp(errorQuat.GetW(), -1.0f, 1.0f));
@@ -2206,7 +2209,7 @@ namespace PhysicsGrab
             errorAngle = AZ::Constants::TwoPi - errorAngle;
 
         AZ::Vector3 errorAxis = errorQuat.GetImaginary().GetNormalizedSafe();
-        
+
         // Ensure shortest rotation arc by flipping the quaternion if necessary
         if (errorQuat.GetW() < 0.0f)
             errorAxis = -errorAxis;
@@ -2308,7 +2311,7 @@ namespace PhysicsGrab
                 m_currentGrabEntityTranslation = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation();
             }
             m_grabbingEntityVelocity = (m_currentGrabEntityTranslation - m_prevGrabbingEntityTranslation) / deltaTime;
-            
+
             // Update previous position after velocity calculation
             m_prevGrabbingEntityTranslation = m_currentGrabEntityTranslation;
         }
@@ -2390,7 +2393,7 @@ namespace PhysicsGrab
         return m_detectedObjectEntityId;
     }
 
-    void PhysicsGrabComponent::SetDetectedObjectEntityId(const AZ::EntityId new_detectedObjectEntityId)
+    void PhysicsGrabComponent::SetDetectedObjectEntityId(const AZ::EntityId& new_detectedObjectEntityId)
     {
         m_detectedObjectEntityId = new_detectedObjectEntityId;
     }
@@ -2400,7 +2403,7 @@ namespace PhysicsGrab
         return m_grabbedObjectEntityId;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId)
+    void PhysicsGrabComponent::SetGrabbedObjectEntityId(const AZ::EntityId& new_grabbedObjectEntityId)
     {
         m_grabbedObjectEntityId = new_grabbedObjectEntityId;
     }
@@ -2410,12 +2413,12 @@ namespace PhysicsGrab
         return m_thrownGrabbedObjectEntityId;
     }
 
-    void PhysicsGrabComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId)
+    void PhysicsGrabComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId& new_thrownGrabbedObjectEntityId)
     {
         m_thrownGrabbedObjectEntityId = new_thrownGrabbedObjectEntityId;
     }
 
-    void PhysicsGrabComponent::SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId)
+    void PhysicsGrabComponent::SetGrabbingEntity(const AZ::EntityId& new_grabbingEntityId)
     {
         m_grabbingEntityPtr = GetEntityPtr(new_grabbingEntityId);
     }
@@ -2459,7 +2462,7 @@ namespace PhysicsGrab
     {
         return m_stayInIdleState;
     }
-    
+
     void PhysicsGrabComponent::SetStayInIdleState(const bool& new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
@@ -2848,7 +2851,7 @@ namespace PhysicsGrab
     {
         return m_throwStateCounter;
     }
-    
+
     void PhysicsGrabComponent::SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter)
     {
         m_throwStateCounter = new_throwStateCounter;
@@ -3214,38 +3217,31 @@ namespace PhysicsGrab
     {
         m_initialAngularVelocityZero = new_initialAngularVelocityZero;
     }
-    
+
     // 0 == idleState
     // 1 == checkState
     // 2 == holdState
     // 3 == rotateState
     // 4 == throwState
-    void PhysicsGrabComponent::ForceTransition(const PhysicsGrabStates& targetState)
+    void PhysicsGrabComponent::ForceTransition(const PhysicsGrabStates& new_targetState)
     {
-        // Ignore non-hold if using ForceGrab
-        if (m_bypassSphereCast && targetState != PhysicsGrabStates::holdState)
-        {
-            return;
-        }
         m_forceTransition = true;
-        m_targetState = targetState;
+        m_targetState = new_targetState;
     }
 
-    void PhysicsGrabComponent::ForceGrab(const AZ::EntityId& objectId)
+    void PhysicsGrabComponent::ForceGrab(const AZ::EntityId& new_objectId)
     {
-        if (!objectId.IsValid())
+        SetGrabbedObjectEntityId(new_objectId);
+        if (m_state == PhysicsGrabStates::idleState)
         {
-            return;
+            // Go to the checkState but set a flag that makes sure m_forceTransition stays true until it gets to holdState
+            m_continueToHoldState = true;
+            ForceTransition(PhysicsGrabStates::checkState);
         }
-        m_detectedObjectEntityId = objectId;
-        m_grabbedObjectEntityId = objectId;
-        m_objectSphereCastHit = true;
-        AZ::Transform objectTM;
-        AZ::TransformBus::EventResult(objectTM, objectId, &AZ::TransformInterface::GetWorldTM);
-        // Use center of object (no offset)
-        m_hitPosition = objectTM.GetTranslation();
-        m_bypassSphereCast = true;
-        ForceTransition(PhysicsGrabStates::holdState);
+        else
+        {
+            ForceTransition(PhysicsGrabStates::holdState);
+        }
     }
 
     void PhysicsGrabComponent::SetStateLocked(const bool& isLocked)

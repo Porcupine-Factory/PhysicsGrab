@@ -19,11 +19,11 @@ namespace PhysicsGrab
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
         virtual AZ::EntityId GetDetectedObjectEntityId() const = 0;
-        virtual void SetDetectedObjectEntityId(const AZ::EntityId) = 0;
+        virtual void SetDetectedObjectEntityId(const AZ::EntityId&) = 0;
         virtual AZ::EntityId GetGrabbedObjectEntityId() const = 0;
-        virtual void SetGrabbedObjectEntityId(const AZ::EntityId) = 0;
+        virtual void SetGrabbedObjectEntityId(const AZ::EntityId&) = 0;
         virtual AZ::EntityId GetThrownGrabbedObjectEntityId() const = 0;
-        virtual void SetThrownGrabbedObjectEntityId(const AZ::EntityId) = 0;
+        virtual void SetThrownGrabbedObjectEntityId(const AZ::EntityId&) = 0;
         virtual AZStd::string GetGrabbedCollisionGroup() const = 0;
         virtual void SetGrabbedCollisionGroup(const AZStd::string&) = 0;
         virtual AZStd::string GetCurrentGrabbedCollisionLayerName() const = 0;
@@ -38,7 +38,7 @@ namespace PhysicsGrab
         virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
-        virtual void SetGrabbingEntity(const AZ::EntityId) = 0;
+        virtual void SetGrabbingEntity(const AZ::EntityId&) = 0;
         virtual bool GetGrabEnableToggle() const = 0;
         virtual void SetGrabEnableToggle(const bool&) = 0;
         virtual bool GetRotateEnableToggle() const = 0;
@@ -137,7 +137,7 @@ namespace PhysicsGrab
         virtual void SetInitialAngularVelocityZero(const bool&) = 0;
         virtual AZStd::string GetStateString() const = 0;
         virtual void ForceTransition(const PhysicsGrabStates&) = 0;
-        virtual void ForceGrab(const AZ::EntityId& objectId) = 0;
+        virtual void ForceGrab(const AZ::EntityId&) = 0;
         virtual void SetStateLocked(const bool&) = 0;
         virtual bool GetStateLocked() const = 0;
         virtual bool GetDisableGravityWhileHeld() const = 0;

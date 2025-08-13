@@ -74,11 +74,11 @@ namespace PhysicsGrab
         AZ::EntityId GetGrabbingEntityId() const override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetDetectedObjectEntityId() const override;
-        void SetDetectedObjectEntityId(const AZ::EntityId new_detectedObjectEntityId) override;
+        void SetDetectedObjectEntityId(const AZ::EntityId& new_detectedObjectEntityId) override;
         AZ::EntityId GetGrabbedObjectEntityId() const override;
-        void SetGrabbedObjectEntityId(const AZ::EntityId new_grabbedObjectEntityId) override;
+        void SetGrabbedObjectEntityId(const AZ::EntityId& new_grabbedObjectEntityId) override;
         AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
-        void SetThrownGrabbedObjectEntityId(const AZ::EntityId new_thrownGrabbedObjectEntityId) override;
+        void SetThrownGrabbedObjectEntityId(const AZ::EntityId& new_thrownGrabbedObjectEntityId) override;
         AZStd::string GetGrabbedCollisionGroup() const override;
         void SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupId) override;
         AZStd::string GetCurrentGrabbedCollisionLayerName() const override;
@@ -93,7 +93,7 @@ namespace PhysicsGrab
         void SetTempGrabbedCollisionLayerByName(const AZStd::string& new_tempGrabbedCollisionLayerName) override;
         AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& new_tempGrabbedCollisionLayer) override;
-        void SetGrabbingEntity(const AZ::EntityId new_grabbingEntityId) override;
+        void SetGrabbingEntity(const AZ::EntityId& new_grabbingEntityId) override;
         AZ::EntityId GetMeshEntityId() const override;
         void SetMeshEntityId(const AZ::EntityId& new_meshEntityId) override;
         AZStd::string GetMeshTagName() const override;
@@ -210,8 +210,8 @@ namespace PhysicsGrab
         void SetGrabbedObjectAngularVelocity(const AZ::Vector3& new_grabbedObjectAngularVelocity) override;
         bool GetInitialAngularVelocityZero() const override;
         void SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero) override;
-        void ForceTransition(const PhysicsGrabStates& targetState) override;
-        void ForceGrab(const AZ::EntityId& objectId);
+        void ForceTransition(const PhysicsGrabStates& new_targetState) override;
+        void ForceGrab(const AZ::EntityId& new_objectId);
         void SetStateLocked(const bool& isLocked) override;
         bool GetStateLocked() const override;
         bool GetDisableGravityWhileHeld() const override;
@@ -256,7 +256,7 @@ namespace PhysicsGrab
         void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode) override;
         PidController<AZ::Vector3>::DerivativeCalculationMode GetTidalLockDerivativeMode() const override;
         void SetTidalLockDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode) override;
-     
+
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;
         void SetGrabInputKey(const AZStd::string& keyName) override;
@@ -276,7 +276,7 @@ namespace PhysicsGrab
     private:
         AZ::Entity* m_grabbingEntityPtr = nullptr;
         AZ::Entity* m_meshEntityPtr = nullptr;
-  
+
         AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler;
         AzPhysics::SceneEvents::OnSceneSimulationFinishHandler m_sceneSimulationFinishHandler;
@@ -337,7 +337,7 @@ namespace PhysicsGrab
         void OnMaxThrowDistance();
         void OnThrowStateCounterZero();
         void OnChargeComplete();
-        
+
         // State machine functions
         void ProcessStates(const float& deltaTime, bool isPhysicsUpdate = false);
         void IdleState();
@@ -481,7 +481,7 @@ namespace PhysicsGrab
         bool m_ignorePitchKeyInputValue = true;
         bool m_ignoreRollKeyInputValue = true;
         bool m_forceTransition = false;
-        bool m_bypassSphereCast = false;
+        bool m_continueToHoldState = false;
         bool m_isStateLocked = false;
         bool m_enablePIDHeldDynamics = true;
         bool m_massIndependentThrow = true;
