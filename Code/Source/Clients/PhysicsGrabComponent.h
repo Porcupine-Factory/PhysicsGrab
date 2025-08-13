@@ -392,6 +392,7 @@ namespace PhysicsGrab
         float m_rotateKeyValue = 0.f;
         float m_prevGrabKeyValue = 0.f;
         float m_prevRotateKeyValue = 0.f;
+        float m_prevThrowKeyValue = 0.f;
         float m_grabDistanceKeyValue = 0.f;
         float m_pitchKeyValue = 0.f;
         float m_yawKeyValue = 0.f;
@@ -424,7 +425,6 @@ namespace PhysicsGrab
         float m_chargeTime = 3.0f;
         float m_currentChargeTime = 0.0f;
         float m_currentThrowImpulse = 0.0f;
-        float m_prevThrowKeyValue = 0.0f;
         float m_grabbedObjectMass = 1.0f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 4.5f;
