@@ -563,6 +563,8 @@ namespace PhysicsGrab
                 ->Event("Get Object Sphere Cast Hit", &PhysicsGrabComponentRequests::GetObjectSphereCastHit)
                 ->Event("Get Stay In Idle State", &PhysicsGrabComponentRequests::GetStayInIdleState)
                 ->Event("Set Stay In Idle State", &PhysicsGrabComponentRequests::SetStayInIdleState)
+                ->Event("Get Hold Key To Check Until Hit", &PhysicsGrabComponentRequests::GetHoldKeyToCheckUntilHit)
+                ->Event("Set Hold Key To Check Until Hit", &PhysicsGrabComponentRequests::SetHoldKeyToCheckUntilHit)
                 ->Event("Get Grab Enable Toggle", &PhysicsGrabComponentRequests::GetGrabEnableToggle)
                 ->Event("Set Grab Enable Toggle", &PhysicsGrabComponentRequests::SetGrabEnableToggle)
                 ->Event("Get Rotate Enable Toggle", &PhysicsGrabComponentRequests::GetRotateEnableToggle)
@@ -1403,12 +1405,13 @@ namespace PhysicsGrab
             }
             m_forceTransition = false;
         }
-        // Go back to idleState if grab key is not pressed
+        // Go back to idleState if grab key is not pressed or held (depending on new bool)
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
         else if (
             (m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && !(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f)))
+            (!m_isStateLocked &&
+             !(m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f || (m_holdKeyToCheckUntilHit && m_grabKeyValue != 0.f))))
         {
             m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
@@ -3270,6 +3273,16 @@ namespace PhysicsGrab
     bool PhysicsGrabComponent::GetStateLocked() const
     {
         return m_isStateLocked;
+    }
+
+    bool PhysicsGrabComponent::GetHoldKeyToCheckUntilHit() const
+    {
+        return m_holdKeyToCheckUntilHit;
+    }
+
+    void PhysicsGrabComponent::SetHoldKeyToCheckUntilHit(const bool& new_holdKeyToCheckUntilHit)
+    {
+        m_holdKeyToCheckUntilHit = new_holdKeyToCheckUntilHit;
     }
 
     bool PhysicsGrabComponent::GetDisableGravityWhileHeld() const

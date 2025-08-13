@@ -107,6 +107,8 @@ namespace PhysicsGrab
         bool GetObjectSphereCastHit() const override;
         bool GetStayInIdleState() const override;
         void SetStayInIdleState(const bool& new_stayInIdleState) override;
+        bool GetHoldKeyToCheckUntilHit() const override;
+        void SetHoldKeyToCheckUntilHit(const bool& new_holdKeyToCheckUntilHit) override;
         bool GetGrabEnableToggle() const override;
         void SetGrabEnableToggle(const bool& new_grabEnableToggle) override;
         bool GetRotateEnableToggle() const override;
@@ -475,6 +477,7 @@ namespace PhysicsGrab
         bool m_isObjectKinematic = false;
         bool m_objectSphereCastHit = false;
         bool m_stayInIdleState = false;
+        bool m_holdKeyToCheckUntilHit = false;
         bool m_initialAngularVelocityZero = true;
         bool m_ignoreGrabDistanceKeyInputValue = true;
         bool m_ignoreYawKeyInputValue = true;

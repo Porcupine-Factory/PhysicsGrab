@@ -73,6 +73,8 @@ namespace PhysicsGrab
         virtual void SetGrabResponse(const float&) = 0;
         virtual bool GetStayInIdleState() const = 0;
         virtual void SetStayInIdleState(const bool&) = 0;
+        virtual bool GetHoldKeyToCheckUntilHit() const = 0;
+        virtual void SetHoldKeyToCheckUntilHit(const bool&) = 0;
         virtual bool GetDynamicTidalLock() const = 0;
         virtual void SetDynamicTidalLock(const bool&) = 0;
         virtual bool GetKinematicTidalLock() const = 0;
