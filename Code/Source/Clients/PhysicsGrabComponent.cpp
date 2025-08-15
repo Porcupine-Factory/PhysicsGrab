@@ -152,7 +152,7 @@ namespace PhysicsGrab
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_tempGrabbedCollisionLayer,
-                        "Grabbed Object Temporary Collision Layer",
+                        "Temp Grabbed Object Collision Layer",
                         "Temporary collision layer for held objects (e.g., to prevent jumping on held objects). Restored on release.")
                     ->DataElement(
                         nullptr,
@@ -214,12 +214,12 @@ namespace PhysicsGrab
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicWhileHeld,
-                        "Kinematic While Grabbing",
+                        "Kinematic While Held",
                         "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions and collisions).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_disableGravityWhileHeld,
-                        "Disable Gravity While Holding",
+                        "Disable Gravity While Held",
                         "Turns off gravity for dynamic held objects (enable for weightless feel; disable for natural sag under gravity).")
                     ->DataElement(
                         nullptr,
@@ -409,14 +409,14 @@ namespace PhysicsGrab
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_enablePIDHeldDynamics,
-                        "Enable PID Held Dynamics",
+                        "PID Held Dynamics",
                         "Enables PID controller for dynamic held objects, creating spring-like (underdamped/overdamped) motion. Disabling "
                         "uses simple linear velocity.")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_massIndependentHeldPID,
-                        "Enable Mass Independent PID",
+                        "Mass Independent PID",
                         "Scales PID by mass for uniform behavior (enable for consistent feel across masses; "
                         "disable for heavier objects to move slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
@@ -459,20 +459,20 @@ namespace PhysicsGrab
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_enablePIDTidalLockDynamics,
-                        "Enable PID Tidal Lock Dynamics",
+                        "PID Tidal Lock Dynamics",
                         "Uses PID for spring-like tidal lock (enable for tunable rotation; disable for direct angular velocity).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_massIndependentTidalLock,
-                        "Enable Mass Independent Tidal Lock",
+                        "Mass Independent Tidal Lock",
                         "Scales PID by mass for uniform rotation (enable for consistent feel; disable for heavier objects to rotate "
                         "slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_scaleIndependentTidalLock,
-                        "Enable Scale Independent Tidal Lock",
+                        "Scale Independent Tidal Lock",
                         "Scales PID by size-derived inertia (enable for consistent oscillations across scales; disable for larger objects "
                         "to feel slower).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDTidalLockDynamics)
