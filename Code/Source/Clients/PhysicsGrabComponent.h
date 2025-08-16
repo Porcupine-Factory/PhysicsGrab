@@ -258,6 +258,12 @@ namespace PhysicsGrab
         void SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode) override;
         PidController<AZ::Vector3>::DerivativeCalculationMode GetTidalLockDerivativeMode() const override;
         void SetTidalLockDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_tidalLockDerivativeMode) override;
+        AZ::Vector3 GetHeldLastProportional() const override;
+        AZ::Vector3 GetHeldLastIntegral() const override;
+        AZ::Vector3 GetHeldLastDerivative() const override;
+        AZ::Vector3 GetTidalLockLastProportional() const override;
+        AZ::Vector3 GetTidalLockLastIntegral() const override;
+        AZ::Vector3 GetTidalLockLastDerivative() const override;
 
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;

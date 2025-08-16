@@ -135,6 +135,21 @@ namespace PhysicsGrab
             m_isInitialized = false;
         }
 
+        T GetLastProportional() const
+        {
+            return m_previousError * m_proportionalGain;
+        }
+
+        T GetLastIntegral() const
+        {
+            return m_integralAccumulator;
+        }
+
+        T GetLastDerivative() const
+        {
+            return m_previousDerivative;
+        }
+
     private:
         float m_proportionalGain;
         float m_integralGain;

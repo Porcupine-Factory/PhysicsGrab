@@ -211,6 +211,12 @@ namespace PhysicsGrab
         virtual void SetRotateRollInputKey(const AZStd::string&) = 0;
         virtual AZStd::string GetGrabDistanceInputKey() const = 0;
         virtual void SetGrabDistanceInputKey(const AZStd::string&) = 0;
+        virtual AZ::Vector3 GetHeldLastProportional() const = 0;
+        virtual AZ::Vector3 GetHeldLastIntegral() const = 0;
+        virtual AZ::Vector3 GetHeldLastDerivative() const = 0;
+        virtual AZ::Vector3 GetTidalLockLastProportional() const = 0;
+        virtual AZ::Vector3 GetTidalLockLastIntegral() const = 0;
+        virtual AZ::Vector3 GetTidalLockLastDerivative() const = 0;
         virtual bool GetIsInIdleState() const = 0;
         virtual bool GetIsInCheckState() const = 0;
         virtual bool GetIsInHeldState() const = 0;

@@ -724,7 +724,13 @@ namespace PhysicsGrab
                 ->Event("GetMeshEntityId", &PhysicsGrabComponentRequests::GetMeshEntityId)
                 ->Event("SetMeshEntityId", &PhysicsGrabComponentRequests::SetMeshEntityId)
                 ->Event("GetMeshTagName", &PhysicsGrabComponentRequests::GetMeshTagName)
-                ->Event("SetMeshTagName", &PhysicsGrabComponentRequests::SetMeshTagName);
+                ->Event("SetMeshTagName", &PhysicsGrabComponentRequests::SetMeshTagName)
+                ->Event("Get Held Last Proportional", &PhysicsGrabComponentRequests::GetHeldLastProportional)
+                ->Event("Get Held Last Integral", &PhysicsGrabComponentRequests::GetHeldLastIntegral)
+                ->Event("Get Held Last Derivative", &PhysicsGrabComponentRequests::GetHeldLastDerivative)
+                ->Event("Get Tidal Lock Last Proportional", &PhysicsGrabComponentRequests::GetTidalLockLastProportional)
+                ->Event("Get Tidal Lock Last Integral", &PhysicsGrabComponentRequests::GetTidalLockLastIntegral)
+                ->Event("Get Tidal Lock Last Derivative", &PhysicsGrabComponentRequests::GetTidalLockLastDerivative);
 
             bc->Class<PhysicsGrabComponent>()->RequestBus("PhysicsGrabComponentRequestBus");
         }
@@ -3569,4 +3575,35 @@ namespace PhysicsGrab
     {
         UpdateInputBinding(m_grabDistanceEventId, m_strGrabDistance, keyName);
     }
+
+    AZ::Vector3 PhysicsGrabComponent::GetHeldLastProportional() const
+    {
+        return m_pidController.GetLastProportional();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetHeldLastIntegral() const
+    {
+        return m_pidController.GetLastIntegral();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetHeldLastDerivative() const
+    {
+        return m_pidController.GetLastDerivative();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetTidalLockLastProportional() const
+    {
+        return m_tidalLockPidController.GetLastProportional();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetTidalLockLastIntegral() const
+    {
+        return m_tidalLockPidController.GetLastIntegral();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetTidalLockLastDerivative() const
+    {
+        return m_tidalLockPidController.GetLastDerivative();
+    }
+
 } // namespace PhysicsGrab
