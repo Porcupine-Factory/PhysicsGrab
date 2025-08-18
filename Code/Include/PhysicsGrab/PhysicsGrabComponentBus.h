@@ -150,6 +150,9 @@ namespace PhysicsGrab
         virtual void SetGravityAppliesToPointRotation(const bool&) = 0;
         virtual bool GetMassIndependentThrow() const = 0;
         virtual void SetMassIndependentThrow(const bool&) = 0;
+        virtual bool GetIsObjectGrabbable() const = 0;
+        virtual bool GetDetectInIdle() const = 0;
+        virtual void SetDetectInIdle(const bool&) = 0;
         virtual bool GetEnablePIDHeldDynamics() const = 0;
         virtual void SetEnablePIDHeldDynamics(const bool&) = 0;
         virtual bool GetMassIndependentHeldPID() const = 0;

@@ -68,6 +68,7 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
+                ->Field("Detect In Idle", &PhysicsGrabComponent::m_detectInIdle)
 
                 ->Field("Throw Impulse", &PhysicsGrabComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
@@ -132,7 +133,7 @@ namespace PhysicsGrab
                     ->Attribute(AZ::Edit::Attributes::Category, "Physics Grab")
 
                     // Input Binding Keys
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Input Configuration")
+                    ->ClassElement(AZ::Edit::ClassElements::Group, "Input Bindings")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrab, "Grab Key", "Grab interaction input binding")
                     ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
@@ -284,6 +285,11 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
                         "Speed of distance adjustment (higher = quicker push/pull; balance for smooth control without jerk).")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_detectInIdle,
+                        "Detect In Idle",
+                        "If enabled, performs sphere cast in idle state to detect potential grabbable objects without grabbing.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Rotate Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -673,6 +679,9 @@ namespace PhysicsGrab
                 ->Event("Set Gravity Applies To Point Rotation", &PhysicsGrabComponentRequests::SetGravityAppliesToPointRotation)
                 ->Event("Get Mass Independent Throw", &PhysicsGrabComponentRequests::GetMassIndependentThrow)
                 ->Event("Set Mass Independent Throw", &PhysicsGrabComponentRequests::SetMassIndependentThrow)
+                ->Event("Get Is Object Grabbable", &PhysicsGrabComponentRequests::GetIsObjectGrabbable)
+                ->Event("Get Detect In Idle", &PhysicsGrabComponentRequests::GetDetectInIdle)
+                ->Event("Set Detect In Idle", &PhysicsGrabComponentRequests::SetDetectInIdle)
                 ->Event("Get Enable PID Held Dynamics", &PhysicsGrabComponentRequests::GetEnablePIDHeldDynamics)
                 ->Event("Set Enable PID Held Dynamics", &PhysicsGrabComponentRequests::SetEnablePIDHeldDynamics)
                 ->Event("Get Mass Independent Held PID", &PhysicsGrabComponentRequests::GetMassIndependentHeldPID)
@@ -1190,6 +1199,18 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::IdleState()
     {
+        // Perform spherecast in idle if detection enabled, updating detection state without state change
+        // Allows user to check if entity can be grabbed before grabbing
+        if (m_detectInIdle)
+        {
+            CheckForObjects(true);
+        }
+        else
+        {
+            m_detectedObjectEntityId = AZ::EntityId();
+            m_objectSphereCastHit = false;
+        }
+
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::checkState) ||
             (!m_isStateLocked && m_prevGrabKeyValue == 0.f && m_grabKeyValue != 0.f && !m_stayInIdleState))
         {
@@ -1653,13 +1674,20 @@ namespace PhysicsGrab
 
     // Perform a spherecast query to check if colliding with a grabbable object, then assign the
     // first returned hit to m_detectedObjectEntityId
-    void PhysicsGrabComponent::CheckForObjects()
+    void PhysicsGrabComponent::CheckForObjects(bool detectionOnly)
     {
         // Early exit if no valid grabbing entity to prevent null dereference
         if (m_grabbingEntityPtr == nullptr)
         {
             AZ_Error("PhysicsGrabComponent", false, "Grabbing entity is null. Skipping object check.");
             return;
+        }
+
+        // Reset detection state at the start
+        m_objectSphereCastHit = false;
+        if (detectionOnly)
+        {
+            m_detectedObjectEntityId = AZ::EntityId();
         }
 
         #ifdef FIRST_PERSON_CONTROLLER
@@ -1717,8 +1745,8 @@ namespace PhysicsGrab
 
         m_objectSphereCastHit = false;
 
-        // Prioritize hit matching m_grabbedObjectEntityId if grabbing (maintain initial hit position/offset)
-        if (m_grabbedObjectEntityId.IsValid())
+        // If grabbed object is valid and not detection-only, prioritize hit matching m_grabbedObjectEntityId
+        if (m_grabbedObjectEntityId.IsValid() && !detectionOnly)
         {
             for (const AzPhysics::SceneQueryHit& hit : hits.m_hits)
             {
@@ -1726,7 +1754,7 @@ namespace PhysicsGrab
                 {
                     m_objectSphereCastHit = true;
                     m_detectedObjectEntityId = hit.m_entityId;
-                    break;
+                    return;
                 }
             }
             if (m_forceTransition)
@@ -1734,14 +1762,19 @@ namespace PhysicsGrab
                 m_objectSphereCastHit = true;
                 m_detectedObjectEntityId = m_grabbedObjectEntityId;
             }
+            return;
         }
-        else if (hits)
+
+        // General case: take the first hit for initial grab or detection-only
+        if (hits)
         {
-            // Take the first hit for initial grab and store hit position
             m_objectSphereCastHit = true;
             m_detectedObjectEntityId = hits.m_hits.at(0).m_entityId;
-            m_grabbedObjectEntityId = m_detectedObjectEntityId;
-            m_hitPosition = hits.m_hits.at(0).m_position;
+            if (!detectionOnly)
+            {
+                m_grabbedObjectEntityId = m_detectedObjectEntityId;
+                m_hitPosition = hits.m_hits.at(0).m_position;
+            }
         }
     }
 
@@ -3325,6 +3358,26 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetMassIndependentThrow(const bool& new_massIndependentThrow)
     {
         m_massIndependentThrow = new_massIndependentThrow;
+    }
+
+    bool PhysicsGrabComponent::GetIsObjectGrabbable() const
+    {
+        return m_objectSphereCastHit && m_detectedObjectEntityId.IsValid();
+    }
+
+    bool PhysicsGrabComponent::GetDetectInIdle() const
+    {
+        return m_detectInIdle;
+    }
+
+    void PhysicsGrabComponent::SetDetectInIdle(const bool& new_detectInIdle)
+    {
+        m_detectInIdle = new_detectInIdle;
+        if (!m_detectInIdle)
+        {
+            m_detectedObjectEntityId = AZ::EntityId();
+            m_objectSphereCastHit = false;
+        }
     }
 
     bool PhysicsGrabComponent::GetEnablePIDHeldDynamics() const

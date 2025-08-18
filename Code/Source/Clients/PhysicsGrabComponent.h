@@ -224,6 +224,9 @@ namespace PhysicsGrab
         void SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation) override;
         bool GetMassIndependentThrow() const override;
         void SetMassIndependentThrow(const bool& new_massIndependentThrow) override;
+        bool GetIsObjectGrabbable() const override;
+        bool GetDetectInIdle() const override;
+        void SetDetectInIdle(const bool& new_detectInIdle);
         bool GetEnablePIDHeldDynamics() const override;
         void SetEnablePIDHeldDynamics(const bool& new_enablePIDHeldDynamics) override;
         bool GetMassIndependentHeldPID() const override;
@@ -242,7 +245,7 @@ namespace PhysicsGrab
         void SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics) override;
         bool GetMassIndependentTidalLock() const override;
         void SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock) override;
-        bool GetScaleIndependentTidalLock() const;
+        bool GetScaleIndependentTidalLock() const override;
         void SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock);
         float GetTidalLockProportionalGain() const override;
         void SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain) override;
@@ -312,7 +315,7 @@ namespace PhysicsGrab
 
         AZStd::string m_meshTagName = "GrabMesh";
 
-        void CheckForObjects();
+        void CheckForObjects(bool detectionOnly = false);
         void HoldObject(float deltaTime);
         void RotateObject(float deltaTime);
         void ThrowObject();
@@ -443,10 +446,10 @@ namespace PhysicsGrab
         float m_heldDerivativeGain = 11.f;
         float m_heldIntegralWindupLimit = 100.0f;
         float m_heldDerivativeFilterAlpha = 0.8f;
-        float m_tidalLockProportionalGain = 100.0f;
+        float m_tidalLockProportionalGain = 90.0f;
         float m_tidalLockIntegralGain = 0.0f;
         float m_tidalLockDerivativeGain = 9.0f;
-        float m_tidalLockIntegralWindupLimit = 200.0f;
+        float m_tidalLockIntegralWindupLimit = 100.0f;
         float m_tidalLockDerivativeFilterAlpha = 0.8f;
         float m_effectiveInertiaFactor = 0.0f;
         float m_pitch = 0.0f;
@@ -499,6 +502,7 @@ namespace PhysicsGrab
         bool m_scaleIndependentTidalLock = true;
         bool m_offsetGrab = false;
         bool m_gravityAppliesToPointRotation = false;
+        bool m_detectInIdle = false;
 
         PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
         PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;
