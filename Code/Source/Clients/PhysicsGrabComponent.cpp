@@ -34,6 +34,7 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grabbed Object Collision Group", &PhysicsGrabComponent::m_grabbedCollisionGroupId)
                 ->Field("Grabbed Object Temporary Collision Layer", &PhysicsGrabComponent::m_tempGrabbedCollisionLayer)
+                ->Field("Detect In Idle", &PhysicsGrabComponent::m_detectInIdle)
 
                 ->Field("Grab Entity", &PhysicsGrabComponent::m_grabbingEntityId)
                 #ifdef FIRST_PERSON_CONTROLLER
@@ -68,7 +69,6 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
-                ->Field("Detect In Idle", &PhysicsGrabComponent::m_detectInIdle)
 
                 ->Field("Throw Impulse", &PhysicsGrabComponent::m_throwImpulse)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss", Physics::NameConstants::GetInterpunct().c_str()))
@@ -165,6 +165,11 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_sphereCastDistance,
                         "Sphere Cast Distance",
                         "Maximum reach for grabbing (higher = farther grabs).")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_detectInIdle,
+                        "Detect In Idle",
+                        "If enabled, performs sphere cast in idle state to detect potential grabbable objects without grabbing.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Hold Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -285,11 +290,6 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_grabDistanceSpeed,
                         "Grab Distance Speed",
                         "Speed of distance adjustment (higher = quicker push/pull; balance for smooth control without jerk).")
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_detectInIdle,
-                        "Detect In Idle",
-                        "If enabled, performs sphere cast in idle state to detect potential grabbable objects without grabbing.")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Rotate Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
