@@ -3293,6 +3293,23 @@ namespace PhysicsGrab
                 m_continueToHoldState = true;
                 ForceTransition(PhysicsGrabStates::checkState);
             }
+            else if (m_state == PhysicsGrabStates::holdState)
+            {
+                // Temporary set the grabbed object EntityId back to reset some of its physics attributes
+                m_grabbedObjectEntityId = prevGrabbedObjectEntityId;
+                // If gravity is being disabled while held, set it back to its original value
+                if (m_disableGravityWhileHeld)
+                {
+                    Physics::RigidBodyRequestBus::Event(
+                        m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, m_prevGravityEnabled);
+                }
+                // Set Object Angular Damping back to original value
+                SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
+                // Set Object Linear Damping back to original value
+                SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+                // Set the grabbed object EntityId back to the EntityId that was passed in
+                m_grabbedObjectEntityId = new_objectId;
+            }
             else
             {
                 ForceTransition(PhysicsGrabStates::holdState);
