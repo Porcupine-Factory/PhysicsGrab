@@ -3307,6 +3307,10 @@ namespace PhysicsGrab
                 SetCurrentGrabbedObjectAngularDamping(m_prevObjectAngularDamping);
                 // Set Object Linear Damping back to original value
                 SetCurrentGrabbedObjectLinearDamping(m_prevObjectLinearDamping);
+                // Set Object Current Layer variable back to initial layer
+                SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
+                // Set Object back to kinematic if it originally was
+                SetGrabbedObjectKinematicElseDynamic(m_isInitialObjectKinematic);
                 // Set the grabbed object EntityId back to the EntityId that was passed in
                 m_grabbedObjectEntityId = new_objectId;
             }
