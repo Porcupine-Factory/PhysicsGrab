@@ -24,8 +24,12 @@ namespace PhysicsGrab
         virtual void SetGrabbedObjectEntityId(const AZ::EntityId&) = 0;
         virtual AZ::EntityId GetThrownGrabbedObjectEntityId() const = 0;
         virtual void SetThrownGrabbedObjectEntityId(const AZ::EntityId&) = 0;
-        virtual AZStd::string GetGrabbedCollisionGroup() const = 0;
-        virtual void SetGrabbedCollisionGroup(const AZStd::string&) = 0;
+        virtual AZStd::string GetGrabbedCollisionGroupName() const = 0;
+        virtual void SetGrabbedCollisionGroupByName(const AZStd::string&) = 0;
+        virtual AzPhysics::CollisionGroup GetGrabbedCollisionGroup() const = 0;
+        virtual void SetGrabbedCollisionGroup(const AzPhysics::CollisionGroup&) = 0;
+        virtual bool GetCollisionLayerIsInGrabbedGroup(const AzPhysics::CollisionLayer&) const = 0;
+        virtual bool GetCollisionLayerNameIsInGrabbedGroup(const AZStd::string&) const = 0;
         virtual AZStd::string GetCurrentGrabbedCollisionLayerName() const = 0;
         virtual void SetCurrentGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetCurrentGrabbedCollisionLayer() const = 0;

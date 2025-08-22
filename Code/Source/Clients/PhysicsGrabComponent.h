@@ -79,8 +79,12 @@ namespace PhysicsGrab
         void SetGrabbedObjectEntityId(const AZ::EntityId& new_grabbedObjectEntityId) override;
         AZ::EntityId GetThrownGrabbedObjectEntityId() const override;
         void SetThrownGrabbedObjectEntityId(const AZ::EntityId& new_thrownGrabbedObjectEntityId) override;
-        AZStd::string GetGrabbedCollisionGroup() const override;
-        void SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupId) override;
+        AZStd::string GetGrabbedCollisionGroupName() const override;
+        void SetGrabbedCollisionGroupByName(const AZStd::string& new_grabbedCollisionGroupName) override;
+        AzPhysics::CollisionGroup GetGrabbedCollisionGroup() const override;
+        void SetGrabbedCollisionGroup(const AzPhysics::CollisionGroup& new_grabbedCollisionGroup) override;
+        bool GetCollisionLayerIsInGrabbedGroup(const AzPhysics::CollisionLayer& collisionLayerToCheck) const override;
+        bool GetCollisionLayerNameIsInGrabbedGroup(const AZStd::string& collisionLayerNameToCheck) const override;
         AZStd::string GetCurrentGrabbedCollisionLayerName() const override;
         void SetCurrentGrabbedCollisionLayerByName(const AZStd::string& new_currentGrabbedCollisionLayerName) override;
         AzPhysics::CollisionLayer GetCurrentGrabbedCollisionLayer() const override;

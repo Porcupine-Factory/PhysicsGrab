@@ -544,8 +544,12 @@ namespace PhysicsGrab
                 ->Event("Get Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetThrownGrabbedObjectEntityId)
                 ->Event("Set Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetThrownGrabbedObjectEntityId)
                 ->Event("Set Grabbing Entity", &PhysicsGrabComponentRequests::SetGrabbingEntity)
+                ->Event("Get Grabbed Collision Group Name", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroupName)
+                ->Event("Set Grabbed Collision Group By Name", &PhysicsGrabComponentRequests::SetGrabbedCollisionGroupByName)
                 ->Event("Get Grabbed Collision Group", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroup)
                 ->Event("Set Grabbed Collision Group", &PhysicsGrabComponentRequests::SetGrabbedCollisionGroup)
+                ->Event("Get Collision Layer Is In Grabbed Group", &PhysicsGrabComponentRequests::GetCollisionLayerIsInGrabbedGroup)
+                ->Event("Get Collision Layer Name Is In Grabbed Group", &PhysicsGrabComponentRequests::GetCollisionLayerNameIsInGrabbedGroup)
                 ->Event("Get Current Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayerName)
                 ->Event("Set Current Grabbed Collision Layer By Name", &PhysicsGrabComponentRequests::SetCurrentGrabbedCollisionLayerByName)
                 ->Event("Get Current Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayer)
@@ -2994,7 +2998,7 @@ namespace PhysicsGrab
 
     bool PhysicsGrabComponent::GetIsChargingThrow() const
     {
-            return m_isChargingThrow;
+        return m_isChargingThrow;
     }
 
     float PhysicsGrabComponent::GetSphereCastRadius() const
@@ -3017,7 +3021,7 @@ namespace PhysicsGrab
         m_sphereCastDistance = new_sphereCastDistance;
     }
 
-    AZStd::string PhysicsGrabComponent::GetGrabbedCollisionGroup() const
+    AZStd::string PhysicsGrabComponent::GetGrabbedCollisionGroupName() const
     {
         AZStd::string groupName;
         Physics::CollisionRequestBus::BroadcastResult(
@@ -3025,7 +3029,7 @@ namespace PhysicsGrab
         return groupName;
     }
 
-    void PhysicsGrabComponent::SetGrabbedCollisionGroup(const AZStd::string& new_grabbedCollisionGroupName)
+    void PhysicsGrabComponent::SetGrabbedCollisionGroupByName(const AZStd::string& new_grabbedCollisionGroupName)
     {
         bool success = false;
         AzPhysics::CollisionGroup collisionGroup;
@@ -3037,6 +3041,42 @@ namespace PhysicsGrab
             const AzPhysics::CollisionConfiguration& configuration =
                 AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
             m_grabbedCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabbedCollisionGroupName);
+        }
+    }
+
+    AzPhysics::CollisionGroup PhysicsGrabComponent::GetGrabbedCollisionGroup() const
+    {
+        return m_grabbedCollisionGroup;
+    }
+
+    void PhysicsGrabComponent::SetGrabbedCollisionGroup(const AzPhysics::CollisionGroup& new_grabbedCollisionGroup)
+    {
+        m_grabbedCollisionGroup = new_grabbedCollisionGroup;
+        AZStd::string new_grabbedCollisionGroupName;
+        Physics::CollisionRequestBus::BroadcastResult(
+            new_grabbedCollisionGroupName, &Physics::CollisionRequests::GetCollisionGroupName, m_grabbedCollisionGroup);
+        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        m_grabbedCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabbedCollisionGroupName);
+    }
+
+    bool PhysicsGrabComponent::GetCollisionLayerIsInGrabbedGroup(const AzPhysics::CollisionLayer& collisionLayerToCheck) const
+    {
+        return m_grabbedCollisionGroup.IsSet(collisionLayerToCheck);
+    }
+
+    bool PhysicsGrabComponent::GetCollisionLayerNameIsInGrabbedGroup(const AZStd::string& collisionLayerNameToCheck) const
+    {
+        bool success = false;
+        AzPhysics::CollisionLayer collisionLayerToCheck;
+        Physics::CollisionRequestBus::BroadcastResult(
+            success, &Physics::CollisionRequests::TryGetCollisionLayerByName, collisionLayerNameToCheck, collisionLayerToCheck);
+        if (success)
+        {
+            return m_grabbedCollisionGroup.IsSet(collisionLayerToCheck);
+        }
+        else
+        {
+            return false;
         }
     }
 
