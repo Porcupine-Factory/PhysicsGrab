@@ -409,6 +409,8 @@ namespace PhysicsGrab
 
         float m_physicsTimeAccumulator = 0.0f;
         float m_physicsTimestep = 1.0f / 60.0f;
+        float m_prevTimestep = 1.0f / 60.f;
+        float m_prevDeltaTime = 1.0f / 60.f;
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;
         float m_grabDistance = 0.0f;

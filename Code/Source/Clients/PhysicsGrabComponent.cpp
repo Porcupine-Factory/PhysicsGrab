@@ -867,11 +867,14 @@ namespace PhysicsGrab
 
         if (!m_isObjectKinematic && (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
-            ProcessStates(physicsTimestep, true);
+            ProcessStates((physicsTimestep + m_prevTimestep) / 2.f, true);
         }
 
         // Reset time accumulator
         m_physicsTimeAccumulator = 0.0f;
+
+        // Track the current physics timestep to average with the next one
+        m_prevTimestep = physicsTimestep;
     }
 
     void PhysicsGrabComponent::OnSceneSimulationFinish(
@@ -1158,8 +1161,11 @@ namespace PhysicsGrab
         ProcessStates(deltaTime);
         if (m_meshSmoothing)
         {
-            InterpolateMeshTransform(deltaTime);
+            InterpolateMeshTransform((deltaTime + m_prevDeltaTime) / 2.f);
         }
+
+        // Track the current deltaTime to average with the next one
+        m_prevDeltaTime = deltaTime;
     }
 
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
