@@ -8,6 +8,8 @@
 #include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
+#include <Atom/RPI.Public/ViewportContext.h>
+#include <Atom/RPI.Public/ViewportContextBus.h>
 
 namespace PhysicsGrab
 {
@@ -807,6 +809,20 @@ namespace PhysicsGrab
         }
         // Connect the handler to the request bus
         PhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
+
+        AzFramework::NativeWindowHandle windowHandle = nullptr;
+        windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
+        if(windowHandle)
+        {
+            float refreshRate = 60.f;
+            AzFramework::WindowRequestBus::EventResult(refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
+
+            const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
+
+            // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
+            if(config->m_fixedTimestep <= 1.f/refreshRate)
+                m_meshSmoothing = false;
+        }
 
         // Initialize Held Object PID controller
         m_pidController = PidController<AZ::Vector3>(

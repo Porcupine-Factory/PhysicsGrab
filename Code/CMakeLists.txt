@@ -51,11 +51,11 @@ ly_add_target(
         PUBLIC
             AZ::AzCore
             AZ::AzFramework
-	    Gem::StartingPointInput.Static
-	    Gem::PhysX.Static
-	    Gem::FirstPersonController
-	    Gem::LmbrCentral.Static
-
+	          Gem::StartingPointInput.Static
+	          Gem::PhysX.Static
+	          Gem::FirstPersonController
+	          Gem::LmbrCentral.Static
+            Gem::Atom_RPI.Public
 )
 else()
 ly_add_target(
@@ -74,9 +74,10 @@ ly_add_target(
         PUBLIC
             AZ::AzCore
             AZ::AzFramework
-	    Gem::StartingPointInput.Static
-	    Gem::PhysX.Static
-	    Gem::LmbrCentral.Static
+	          Gem::StartingPointInput.Static
+	          Gem::PhysX.Static
+	          Gem::LmbrCentral.Static
+            Gem::Atom_RPI.Public
 )
 endif()
 
@@ -164,10 +165,10 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
             PUBLIC
                 AZ::AzToolsFramework
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
-		Gem::StartingPointInput.Static
-		Gem::FirstPersonController
-		Gem::LmbrCentral.Static
-
+		            Gem::StartingPointInput.Static
+		            Gem::FirstPersonController
+		            Gem::LmbrCentral.Static
+                Gem::Atom_RPI.Public
     )
     else()
     ly_add_target(
@@ -185,8 +186,9 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
             PUBLIC
                 AZ::AzToolsFramework
                 $<TARGET_OBJECTS:Gem::${gem_name}.Private.Object>
-		Gem::StartingPointInput.Static
-		Gem::LmbrCentral.Static
+		            Gem::StartingPointInput.Static
+		            Gem::LmbrCentral.Static
+                Gem::Atom_RPI.Public
     )
     endif()
 
