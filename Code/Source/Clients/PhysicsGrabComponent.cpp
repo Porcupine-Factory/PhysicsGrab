@@ -1386,7 +1386,7 @@ namespace PhysicsGrab
                 AZ::TransformBus::EventResult(m_originalMeshLocalTM, m_meshEntityPtr->GetId(), &AZ::TransformInterface::GetLocalTM);
             }
             // Warn if no mesh found but smoothing expected
-            else
+            else if (m_meshSmoothing)
             {
                 AZ_Warning(
                     "PhysicsGrabComponent",
