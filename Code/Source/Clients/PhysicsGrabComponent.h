@@ -117,6 +117,10 @@ namespace PhysicsGrab
         void SetGrabEnableToggle(const bool& new_grabEnableToggle) override;
         bool GetRotateEnableToggle() const override;
         void SetRotateEnableToggle(const bool& new_rotateEnableToggle) override;
+        bool GetGrabMaintained() const override;
+        void SetGrabMaintained(const bool& new_grabMaintained) override;
+        bool GetKinematicWhileHeld() const override;
+        void SetKinematicWhileHeld(const bool& new_kinematicWhileHeld) override;
         float GetGrabKeyValue() const override;
         void SetGrabKeyValue(const float& new_grabKeyValue) override;
         float GetThrowKeyValue() const override;

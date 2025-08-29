@@ -577,6 +577,10 @@ namespace PhysicsGrab
                 ->Event("Set Grab Enable Toggle", &PhysicsGrabComponentRequests::SetGrabEnableToggle)
                 ->Event("Get Rotate Enable Toggle", &PhysicsGrabComponentRequests::GetRotateEnableToggle)
                 ->Event("Set Rotate Enable Toggle", &PhysicsGrabComponentRequests::SetRotateEnableToggle)
+                ->Event("Get Grab Maintained", &PhysicsGrabComponentRequests::GetGrabMaintained)
+                ->Event("Set Grab Maintained", &PhysicsGrabComponentRequests::SetGrabMaintained)
+                ->Event("Get Kinematic While Held", &PhysicsGrabComponentRequests::GetKinematicWhileHeld)
+                ->Event("Set Kinematic While Held", &PhysicsGrabComponentRequests::SetKinematicWhileHeld)
                 ->Event("Get Grab Key Value", &PhysicsGrabComponentRequests::GetGrabKeyValue)
                 ->Event("Set Grab Key Value", &PhysicsGrabComponentRequests::SetGrabKeyValue)
                 ->Event("Get Throw Key Value", &PhysicsGrabComponentRequests::GetThrowKeyValue)
@@ -2555,6 +2559,26 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetRotateEnableToggle(const bool& new_rotateEnableToggle)
     {
         m_rotateEnableToggle = new_rotateEnableToggle;
+    }
+
+    bool PhysicsGrabComponent::GetGrabMaintained() const
+    {
+        return m_grabMaintained;
+    }
+
+    void PhysicsGrabComponent::SetGrabMaintained(const bool& new_grabMaintained)
+    {
+        m_grabMaintained = new_grabMaintained;
+    }
+
+    bool PhysicsGrabComponent::GetKinematicWhileHeld() const
+    {
+        return m_kinematicWhileHeld;
+    }
+
+    void PhysicsGrabComponent::SetKinematicWhileHeld(const bool& new_kinematicWhileHeld)
+    {
+        m_kinematicWhileHeld = new_kinematicWhileHeld;
     }
 
     float PhysicsGrabComponent::GetGrabKeyValue() const

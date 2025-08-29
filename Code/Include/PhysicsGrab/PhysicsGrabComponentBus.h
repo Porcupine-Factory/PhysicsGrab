@@ -47,6 +47,10 @@ namespace PhysicsGrab
         virtual void SetGrabEnableToggle(const bool&) = 0;
         virtual bool GetRotateEnableToggle() const = 0;
         virtual void SetRotateEnableToggle(const bool&) = 0;
+        virtual bool GetGrabMaintained() const = 0;
+        virtual void SetGrabMaintained(const bool&) = 0;
+        virtual bool GetKinematicWhileHeld() const = 0;
+        virtual void SetKinematicWhileHeld(const bool&) = 0;
         virtual float GetGrabKeyValue() const = 0;
         virtual void SetGrabKeyValue(const float&) = 0;
         virtual float GetThrowKeyValue() const = 0;
