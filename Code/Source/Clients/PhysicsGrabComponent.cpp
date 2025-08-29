@@ -1,4 +1,4 @@
-#include "PhysicsGrabComponent.h"
+#include <Clients/PhysicsGrabComponent.h>
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
