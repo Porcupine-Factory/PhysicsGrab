@@ -129,7 +129,7 @@ namespace PhysicsGrab
             if (AZ::EditContext* ec = sc->GetEditContext())
             {
                 using namespace AZ::Edit;
-                ec->Class<PhysicsGrabComponent>("Physics Grab", "[Enables grabbing, holding, rotating, and throwing physics objects.]")
+                ec->Class<PhysicsGrabComponent>("Physics Grab", "Enables grabbing, holding, rotating, and throwing physics objects")
                     ->ClassElement(ClassElements::EditorData, "")
                     ->Attribute(Attributes::AppearsInAddComponentMenu, AZ_CRC_CE("Game"))
                     ->Attribute(AZ::Edit::Attributes::Category, "Physics Grab")
