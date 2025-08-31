@@ -749,7 +749,9 @@ namespace PhysicsGrab
                 ->Event("Get Held Last Derivative", &PhysicsGrabComponentRequests::GetHeldLastDerivative)
                 ->Event("Get Tidal Lock Last Proportional", &PhysicsGrabComponentRequests::GetTidalLockLastProportional)
                 ->Event("Get Tidal Lock Last Integral", &PhysicsGrabComponentRequests::GetTidalLockLastIntegral)
-                ->Event("Get Tidal Lock Last Derivative", &PhysicsGrabComponentRequests::GetTidalLockLastDerivative);
+                ->Event("Get Tidal Lock Last Derivative", &PhysicsGrabComponentRequests::GetTidalLockLastDerivative)
+                ->Event("Get Target Translation", &PhysicsGrabComponentRequests::GetTargetTranslation)
+                ->Event("Get Target Rotation", &PhysicsGrabComponentRequests::GetTargetRotation);
 
             bc->Class<PhysicsGrabComponent>()->RequestBus("PhysicsGrabComponentRequestBus");
         }
@@ -3766,4 +3768,22 @@ namespace PhysicsGrab
         return m_tidalLockPidController.GetLastDerivative();
     }
 
+    AZ::Vector3 PhysicsGrabComponent::GetTargetTranslation() const
+    {
+        // Target translation based on m_grabReference's position
+        return m_grabReference.GetTranslation();
+    }
+
+    AZ::Vector3 PhysicsGrabComponent::GetTargetRotation() const
+    {
+        // Target rotation for tidal lock
+        if (!m_tidalLock || !m_grabbedObjectEntityId.IsValid() ||
+            (m_state != PhysicsGrabStates::holdState && m_state != PhysicsGrabStates::rotateState))
+        {
+            return AZ::Vector3::CreateZero();
+        }
+        AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
+        AZ::Quaternion targetQuat = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
+        return targetQuat.GetEulerRadians();
+    }
 } // namespace PhysicsGrab

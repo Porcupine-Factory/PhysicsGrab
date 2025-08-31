@@ -275,6 +275,8 @@ namespace PhysicsGrab
         AZ::Vector3 GetTidalLockLastProportional() const override;
         AZ::Vector3 GetTidalLockLastIntegral() const override;
         AZ::Vector3 GetTidalLockLastDerivative() const override;
+        AZ::Vector3 GetTargetTranslation() const override;
+        AZ::Vector3 GetTargetRotation() const override;
 
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;

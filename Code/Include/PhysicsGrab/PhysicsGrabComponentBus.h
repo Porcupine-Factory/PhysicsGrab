@@ -228,6 +228,8 @@ namespace PhysicsGrab
         virtual AZ::Vector3 GetTidalLockLastProportional() const = 0;
         virtual AZ::Vector3 GetTidalLockLastIntegral() const = 0;
         virtual AZ::Vector3 GetTidalLockLastDerivative() const = 0;
+        virtual AZ::Vector3 GetTargetTranslation() const = 0;
+        virtual AZ::Vector3 GetTargetRotation() const = 0;
         virtual bool GetIsInIdleState() const = 0;
         virtual bool GetIsInCheckState() const = 0;
         virtual bool GetIsInHeldState() const = 0;
