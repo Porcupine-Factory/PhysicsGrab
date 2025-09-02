@@ -9,5 +9,4 @@ set(FILES
     Include/PhysicsGrab/PhysicsGrabComponentBus.h
     Include/PhysicsGrab/PhysicsGrabBus.h
     Include/PhysicsGrab/PhysicsGrabTypeIds.h
-    ${FPC_INCLUDE_DIR}/FirstPersonController/FirstPersonControllerComponentBus.h
 )
