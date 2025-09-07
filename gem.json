@@ -12,11 +12,11 @@
         "Gem"
     ],
     "user_tags": [
-    "Input",
-    "Gameplay",
-    "Simulation",
-    "Physics",
-    "Interaction"
+        "Input",
+        "Gameplay",
+        "Simulation",
+        "Physics",
+        "Interaction"
     ],
     "platforms": [
         "Linux",
@@ -26,9 +26,9 @@
     "requirements": "This gem requires the PhysX5, Starting Point Input, and LmbrCentral gems.",
     "documentation_url": "",
     "dependencies": [
-    "PhysX5",
-    "StartingPointInput",
-    "LmbrCentral"
+        "PhysX5",
+        "StartingPointInput",
+        "LmbrCentral"
     ],
     "repo_uri": "https://github.com/Porcupine-Factory/PhysicsGrab.git",
     "compatible_engines": [],
