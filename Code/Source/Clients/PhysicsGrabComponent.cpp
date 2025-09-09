@@ -224,6 +224,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_kinematicWhileHeld,
                         "Kinematic While Held",
                         "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions and collisions).")
+                    ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_disableGravityWhileHeld,
@@ -315,16 +316,19 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_kinematicYawRotateScale,
                         "Kinematic Horizontal Rotate Scale",
                         "Yaw (horizontal) rotation speed scale for kinematic objects (higher = faster turn).")
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicPitchRotateScale,
                         "Kinematic Vertical Rotate Scale",
                         "Pitch (vertical) rotation speed scale for kinematic objects (higher = faster turn).")
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicRollRotateScale,
                         "Kinematic Roll Rotate Scale",
                         "Roll rotation speed scale for kinematic objects (higher = faster turn).")
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
                     #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
