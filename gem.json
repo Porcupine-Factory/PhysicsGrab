@@ -28,7 +28,8 @@
     "dependencies": [
         "PhysX5",
         "StartingPointInput",
-        "LmbrCentral"
+        "LmbrCentral",
+        "Atom_RPI"
     ],
     "repo_uri": "https://github.com/Porcupine-Factory/PhysicsGrab.git",
     "compatible_engines": [],
