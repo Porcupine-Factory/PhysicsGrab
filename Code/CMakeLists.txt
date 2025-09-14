@@ -52,7 +52,7 @@ ly_add_target(
             AZ::AzCore
             AZ::AzFramework
             Gem::StartingPointInput.Static
-            Gem::PhysX.Static
+            Gem::PhysX5.Static
             Gem::FirstPersonController
             Gem::LmbrCentral.Static
             Gem::Atom_RPI.Public
@@ -75,7 +75,7 @@ ly_add_target(
             AZ::AzCore
             AZ::AzFramework
             Gem::StartingPointInput.Static
-            Gem::PhysX.Static
+            Gem::PhysX5.Static
             Gem::LmbrCentral.Static
             Gem::Atom_RPI.Public
 )
