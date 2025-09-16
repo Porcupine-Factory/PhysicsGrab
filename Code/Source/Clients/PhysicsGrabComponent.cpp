@@ -2364,10 +2364,21 @@ namespace PhysicsGrab
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
 
+        float grabDistanceChange = 0.0f;
+        // Discrete input condition (mouse wheel)
+        if (fabs(grabDistanceValue) > 1.0f)
+        {
+            grabDistanceChange = grabDistanceValue * m_grabDistanceWheelSensitivity * m_grabDistanceSpeed;
+        }
+        // Continuous/held condition (keyboard or analog)
+        else
+        {
+            grabDistanceChange = grabDistanceValue * m_grabDistanceSpeed * deltaTime;
+        }
+
         // Changes distance between Grabbing Entity and Grabbed object. Minimum and
         // maximum grab distances determined by m_minGrabDistance and m_maxGrabDistance, respectively
-        m_grabDistance =
-            AZ::GetClamp(m_grabDistance + (grabDistanceValue * m_grabDistanceSpeed * deltaTime), m_minGrabDistance, m_maxGrabDistance);
+        m_grabDistance = AZ::GetClamp(m_grabDistance + grabDistanceChange, m_minGrabDistance, m_maxGrabDistance);
     }
 
     void PhysicsGrabComponent::ComputeGrabbingEntityVelocity(float deltaTime)
