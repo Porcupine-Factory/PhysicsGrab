@@ -1172,7 +1172,7 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
-        ProcessStates(deltaTime);
+        ProcessStates((deltaTime + m_prevDeltaTime) / 2.f);
         if (m_meshSmoothing)
         {
             InterpolateMeshTransform((deltaTime + m_prevDeltaTime) / 2.f);
