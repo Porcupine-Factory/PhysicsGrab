@@ -13,6 +13,7 @@ namespace PhysicsGrab
         , protected AzToolsFramework::EditorEvents::Bus::Handler
     {
         using BaseSystemComponent = PhysicsGrabSystemComponent;
+
     public:
         AZ_COMPONENT_DECL(PhysicsGrabEditorSystemComponent);
 

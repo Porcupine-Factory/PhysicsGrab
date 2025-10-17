@@ -7,16 +7,13 @@
 
 namespace PhysicsGrab
 {
-    AZ_COMPONENT_IMPL(PhysicsGrabSystemComponent, "PhysicsGrabSystemComponent",
-        PhysicsGrabSystemComponentTypeId);
+    AZ_COMPONENT_IMPL(PhysicsGrabSystemComponent, "PhysicsGrabSystemComponent", PhysicsGrabSystemComponentTypeId);
 
     void PhysicsGrabSystemComponent::Reflect(AZ::ReflectContext* context)
     {
         if (auto serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
         {
-            serializeContext->Class<PhysicsGrabSystemComponent, AZ::Component>()
-                ->Version(0)
-                ;
+            serializeContext->Class<PhysicsGrabSystemComponent, AZ::Component>()->Version(0);
         }
     }
 

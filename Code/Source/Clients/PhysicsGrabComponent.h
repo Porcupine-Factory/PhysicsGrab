@@ -1,20 +1,20 @@
 #pragma once
 
-#include <PhysicsGrab/PhysicsGrabTypeIds.h>
+#include "PidController.h"
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/TickBus.h>
+#include <AzCore/Math/Matrix3x3.h>
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Vector3.h>
-#include <AzCore/Math/Matrix3x3.h>
 #include <AzCore/std/containers/map.h>
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <AzFramework/Physics/PhysicsScene.h>
-#include <StartingPointInput/InputEventNotificationBus.h>
-#include "PidController.h"
 #include <LmbrCentral/Scripting/TagComponentBus.h>
 #include <PhysicsGrab/PhysicsGrabComponentBus.h>
+#include <PhysicsGrab/PhysicsGrabTypeIds.h>
+#include <StartingPointInput/InputEventNotificationBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
 #include <FirstPersonController/FirstPersonControllerComponentBus.h>
@@ -340,9 +340,9 @@ namespace PhysicsGrab
         void ComputeGrabbingEntityVelocity(float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
         void OnSceneSimulationFinish([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime);
-        #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
         void FreezeCharacterRotation();
-        #endif
+#endif
         // Method to update input bindings
         void UpdateInputBinding(
             StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue);
@@ -365,7 +365,7 @@ namespace PhysicsGrab
         void CheckForObjectsState();
         void HoldObjectState(float deltaTime, bool isPhysicsUpdate = false);
         void RotateObjectState(float deltaTime, bool isPhysicsUpdate = false);
-        void ThrowObjectState(const float &deltaTime);
+        void ThrowObjectState(const float& deltaTime);
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -526,12 +526,10 @@ namespace PhysicsGrab
         PidController<AZ::Vector3>::DerivativeCalculationMode m_heldDerivativeMode = PidController<AZ::Vector3>::Velocity;
         PidController<AZ::Vector3>::DerivativeCalculationMode m_tidalLockDerivativeMode = PidController<AZ::Vector3>::ErrorRate;
 
-        AZStd::map<PhysicsGrabStates, AZStd::string> m_statesMap = {
-          {PhysicsGrabStates::idleState,   "idleState"},
-          {PhysicsGrabStates::checkState,  "checkState"},
-          {PhysicsGrabStates::holdState,   "holdState"},
-          {PhysicsGrabStates::rotateState, "rotateState"},
-          {PhysicsGrabStates::throwState,  "throwState"}
-        };
+        AZStd::map<PhysicsGrabStates, AZStd::string> m_statesMap = { { PhysicsGrabStates::idleState, "idleState" },
+                                                                     { PhysicsGrabStates::checkState, "checkState" },
+                                                                     { PhysicsGrabStates::holdState, "holdState" },
+                                                                     { PhysicsGrabStates::rotateState, "rotateState" },
+                                                                     { PhysicsGrabStates::throwState, "throwState" } };
     };
 } // namespace PhysicsGrab

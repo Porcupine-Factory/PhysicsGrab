@@ -1,20 +1,19 @@
 
-#include <AzCore/Serialization/SerializeContext.h>
 #include "PhysicsGrabEditorSystemComponent.h"
+#include <AzCore/Serialization/SerializeContext.h>
 
 #include <PhysicsGrab/PhysicsGrabTypeIds.h>
 
 namespace PhysicsGrab
 {
-    AZ_COMPONENT_IMPL(PhysicsGrabEditorSystemComponent, "PhysicsGrabEditorSystemComponent",
-        PhysicsGrabEditorSystemComponentTypeId, BaseSystemComponent);
+    AZ_COMPONENT_IMPL(
+        PhysicsGrabEditorSystemComponent, "PhysicsGrabEditorSystemComponent", PhysicsGrabEditorSystemComponentTypeId, BaseSystemComponent);
 
     void PhysicsGrabEditorSystemComponent::Reflect(AZ::ReflectContext* context)
     {
         if (auto serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
         {
-            serializeContext->Class<PhysicsGrabEditorSystemComponent, PhysicsGrabSystemComponent>()
-                ->Version(0);
+            serializeContext->Class<PhysicsGrabEditorSystemComponent, PhysicsGrabSystemComponent>()->Version(0);
         }
     }
 

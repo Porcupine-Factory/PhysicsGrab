@@ -16,8 +16,7 @@ namespace PhysicsGrab
         // Put your public methods here
     };
 
-    class PhysicsGrabBusTraits
-        : public AZ::EBusTraits
+    class PhysicsGrabBusTraits : public AZ::EBusTraits
     {
     public:
         //////////////////////////////////////////////////////////////////////////

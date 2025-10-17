@@ -99,7 +99,7 @@ namespace PhysicsGrab
             m_integralAccumulator = Clamp(m_integralAccumulator, -m_integralWindupLimit, m_integralWindupLimit);
 
             // Derivative term: rate of change
-            // Helps prevent derivative kick caused by changes in error. 
+            // Helps prevent derivative kick caused by changes in error.
             // Useful for velocity-based applications where target values often change.
             T rawDerivative;
             if (m_derivativeMode == Velocity)

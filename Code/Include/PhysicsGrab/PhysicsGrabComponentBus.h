@@ -1,10 +1,10 @@
 #pragma once
 
-#include <PhysicsGrab/PhysicsGrabTypeIds.h>
 #include <AzCore/Component/ComponentBus.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzFramework/Physics/Collision/CollisionLayers.h>
+#include <PhysicsGrab/PhysicsGrabTypeIds.h>
 
 namespace PhysicsGrab
 {

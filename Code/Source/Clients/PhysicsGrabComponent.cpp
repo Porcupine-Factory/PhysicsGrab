@@ -1,5 +1,7 @@
 #include <Clients/PhysicsGrabComponent.h>
 
+#include <Atom/RPI.Public/ViewportContext.h>
+#include <Atom/RPI.Public/ViewportContextBus.h>
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Serialization/EditContext.h>
@@ -8,8 +10,6 @@
 #include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/SystemBus.h>
 #include <System/PhysXSystem.h>
-#include <Atom/RPI.Public/ViewportContext.h>
-#include <Atom/RPI.Public/ViewportContextBus.h>
 
 namespace PhysicsGrab
 {
@@ -39,9 +39,9 @@ namespace PhysicsGrab
                 ->Field("Detect In Idle", &PhysicsGrabComponent::m_detectInIdle)
 
                 ->Field("Grab Entity", &PhysicsGrabComponent::m_grabbingEntityId)
-                #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Use First Person Controller For Grab", &PhysicsGrabComponent::m_useFPControllerForGrab)
-                #endif
+#endif
                 ->Field("Mesh Smoothing", &PhysicsGrabComponent::m_meshSmoothing)
                 ->Field("Mesh Tag", &PhysicsGrabComponent::m_meshTagName)
                 ->Field("Grab Response", &PhysicsGrabComponent::m_grabResponse)
@@ -57,9 +57,9 @@ namespace PhysicsGrab
                 ->Field("Disable Gravity", &PhysicsGrabComponent::m_disableGravityWhileHeld)
                 ->Field("Offset Grab", &PhysicsGrabComponent::m_offsetGrab)
                 ->Field("Tidal Lock Grabbed Object", &PhysicsGrabComponent::m_tidalLock)
-                #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Full Tidal Lock For First Person Controller", &PhysicsGrabComponent::m_fullTidalLockForFPC)
-                #endif
+#endif
                 ->Field("Angular Damping", &PhysicsGrabComponent::m_tempObjectAngularDamping)
                 ->Field("Linear Damping", &PhysicsGrabComponent::m_tempObjectLinearDamping)
                 ->Field("Velocity Compensation", &PhysicsGrabComponent::m_velocityCompensation)
@@ -86,9 +86,9 @@ namespace PhysicsGrab
                 ->Field("Charge Time", &PhysicsGrabComponent::m_chargeTime)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " s")
 
-                #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
                 ->Field("Freeze Character Rotation", &PhysicsGrabComponent::m_freezeCharacterRotation)
-                #endif
+#endif
                 ->Field("Dynamic Horizontal Rotate Scale", &PhysicsGrabComponent::m_dynamicYawRotateScale)
                 ->Field("Dynamic Vertical Rotate Scale", &PhysicsGrabComponent::m_dynamicPitchRotateScale)
                 ->Field("Dynamic Roll Rotate Scale", &PhysicsGrabComponent::m_dynamicRollRotateScale)
@@ -105,7 +105,8 @@ namespace PhysicsGrab
                 ->Field("PID P Gain", &PhysicsGrabComponent::m_heldProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
                 ->Field("PID I Gain", &PhysicsGrabComponent::m_heldIntegralGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N/(m%ss)", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Attribute(
+                    AZ::Edit::Attributes::Suffix, AZStd::string::format(" N/(m%ss)", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("PID D Gain", &PhysicsGrabComponent::m_heldDerivativeGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%ss/m", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("PID Integral Limit", &PhysicsGrabComponent::m_heldIntegralWindupLimit)
@@ -116,11 +117,18 @@ namespace PhysicsGrab
                 ->Field("Mass Independent Tidal Lock", &PhysicsGrabComponent::m_massIndependentTidalLock)
                 ->Field("Scale Independent Tidal Lock", &PhysicsGrabComponent::m_scaleIndependentTidalLock)
                 ->Field("Tidal Lock PID P Gain", &PhysicsGrabComponent::m_tidalLockProportionalGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/rad", Physics::NameConstants::GetInterpunct().c_str()))
+                ->Attribute(
+                    AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/rad", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID I Gain", &PhysicsGrabComponent::m_tidalLockIntegralGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm/(rad%ss)", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
+                ->Attribute(
+                    AZ::Edit::Attributes::Suffix,
+                    AZStd::string::format(
+                        " N%sm/(rad%ss)", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID D Gain", &PhysicsGrabComponent::m_tidalLockDerivativeGain)
-                ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm%ss/rad", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
+                ->Attribute(
+                    AZ::Edit::Attributes::Suffix,
+                    AZStd::string::format(
+                        " N%sm%ss/rad", Physics::NameConstants::GetInterpunct().c_str(), Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID Integral Limit", &PhysicsGrabComponent::m_tidalLockIntegralWindupLimit)
                 ->Attribute(AZ::Edit::Attributes::Suffix, AZStd::string::format(" N%sm", Physics::NameConstants::GetInterpunct().c_str()))
                 ->Field("Tidal Lock PID Deriv Filter Alpha", &PhysicsGrabComponent::m_tidalLockDerivativeFilterAlpha)
@@ -141,9 +149,12 @@ namespace PhysicsGrab
                     ->DataElement(nullptr, &PhysicsGrabComponent::m_strGrabDistance, "Grab Distance Key", "Grab distance input binding")
                     ->DataElement(nullptr, &PhysicsGrabComponent::m_strThrow, "Throw Input Key", "Throw object input binding")
                     ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotate, "Rotate Enable Key", "Enable rotate object input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
-                    ->DataElement(nullptr, &PhysicsGrabComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
+                    ->DataElement(
+                        nullptr, &PhysicsGrabComponent::m_strRotatePitch, "Rotate Pitch Key", "Rotate object about X axis input binding")
+                    ->DataElement(
+                        nullptr, &PhysicsGrabComponent::m_strRotateYaw, "Rotate Yaw Key", "Rotate object about Z axis input binding")
+                    ->DataElement(
+                        nullptr, &PhysicsGrabComponent::m_strRotateRoll, "Rotate Roll Key", "Rotate object about Y axis input binding")
 
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Detection Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
@@ -179,8 +190,9 @@ namespace PhysicsGrab
                         0,
                         &PhysicsGrabComponent::m_grabbingEntityId,
                         "Grab Entity",
-                        "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab origin/direction.")
-                    #ifdef FIRST_PERSON_CONTROLLER
+                        "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab "
+                        "origin/direction.")
+#ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_useFPControllerForGrab,
@@ -189,12 +201,13 @@ namespace PhysicsGrab
                         "bypassing "
                         "potential camera interpolation lag.")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
-                    #endif
+#endif
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_meshSmoothing,
                         "Mesh Smoothing",
-                        "Smooths visual mesh for dynamic objects to reduce physics jitter (enable recommended if physics timesteps are less than "
+                        "Smooths visual mesh for dynamic objects to reduce physics jitter (enable recommended if physics timesteps are "
+                        "less than "
                         "render framerate.)")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
@@ -207,7 +220,8 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_grabResponse,
                         "Grab Response",
-                        "Velocity scale for pulling held objects (higher = quicker snap to position, more rigid feel). Used when PID disabled.")
+                        "Velocity scale for pulling held objects (higher = quicker snap to position, more rigid feel). Used when PID "
+                        "disabled.")
                     ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
                     ->DataElement(
                         nullptr,
@@ -223,7 +237,8 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicWhileHeld,
                         "Kinematic While Held",
-                        "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions and collisions).")
+                        "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions "
+                        "and collisions).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
@@ -243,15 +258,14 @@ namespace PhysicsGrab
                         "Tidal Lock",
                         "Locks object rotation to face grab entity (enable for consistent orientation; disable for free spin during hold).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
-                    #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_fullTidalLockForFPC,
                         "Full Tidal Lock For First Person Controller",
                         "Uses full camera rotation for tidal lock in FPC (enable for head-tracking lock; disable for body yaw only).")
-                    ->Attribute(
-                        AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetTidalLockAndUseFPCController)
-                    #endif
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetTidalLockAndUseFPCController)
+#endif
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_velocityCompensation,
@@ -329,14 +343,14 @@ namespace PhysicsGrab
                         "Kinematic Roll Rotate Scale",
                         "Roll rotation speed scale for kinematic objects (higher = faster turn).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
-                    #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Locks FPC rotation during rotate mode (enable to focus on object; disable for simultaneous movement).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetUseFPCControllerForGrab)
-                    #endif
+#endif
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_rotateEnableToggle,
@@ -346,7 +360,8 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_smoothDynamicRotation,
                         "Smooth Dynamic Rotation",
-                        "Gradually applies angular velocity for dynamic objects in rotate mode (enable for fluid turns; disable for instant response).")
+                        "Gradually applies angular velocity for dynamic objects in rotate mode (enable for fluid turns; disable for "
+                        "instant response).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
@@ -365,7 +380,9 @@ namespace PhysicsGrab
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Throw Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
-                        nullptr, &PhysicsGrabComponent::m_throwImpulse, "Throw Impulse", 
+                        nullptr,
+                        &PhysicsGrabComponent::m_throwImpulse,
+                        "Throw Impulse",
                         "Base throw strength for non-charged throws (higher = farther/faster throws; scales velocity if mass-independent).")
                     ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetEnableChargeThrow)
                     ->DataElement(
@@ -525,7 +542,8 @@ namespace PhysicsGrab
 
         if (auto bc = azrtti_cast<AZ::BehaviorContext*>(rc))
         {
-            bc->EBus<PhysicsGrabNotificationBus>("PhysicsGrabNotificationBus", "PhysicsGrabComponentNotificationBus", "Notifications for Physics Grab Component")
+            bc->EBus<PhysicsGrabNotificationBus>(
+                  "PhysicsGrabNotificationBus", "PhysicsGrabComponentNotificationBus", "Notifications for Physics Grab Component")
                 ->Handler<PhysicsGrabNotificationHandler>();
 
             // Reflect the enum
@@ -553,13 +571,15 @@ namespace PhysicsGrab
                 ->Event("Get Grabbed Collision Group", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroup)
                 ->Event("Set Grabbed Collision Group", &PhysicsGrabComponentRequests::SetGrabbedCollisionGroup)
                 ->Event("Get Collision Layer Is In Grabbed Group", &PhysicsGrabComponentRequests::GetCollisionLayerIsInGrabbedGroup)
-                ->Event("Get Collision Layer Name Is In Grabbed Group", &PhysicsGrabComponentRequests::GetCollisionLayerNameIsInGrabbedGroup)
+                ->Event(
+                    "Get Collision Layer Name Is In Grabbed Group", &PhysicsGrabComponentRequests::GetCollisionLayerNameIsInGrabbedGroup)
                 ->Event("Get Current Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayerName)
                 ->Event("Set Current Grabbed Collision Layer By Name", &PhysicsGrabComponentRequests::SetCurrentGrabbedCollisionLayerByName)
                 ->Event("Get Current Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetCurrentGrabbedCollisionLayer)
                 ->Event("Set Current Grabbed Collision Layer", &PhysicsGrabComponentRequests::SetCurrentGrabbedCollisionLayer)
                 ->Event("Get Previous Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetPrevGrabbedCollisionLayerName)
-                ->Event("Set Previous Grabbed Collision Layer Name By Name", &PhysicsGrabComponentRequests::SetPrevGrabbedCollisionLayerByName)
+                ->Event(
+                    "Set Previous Grabbed Collision Layer Name By Name", &PhysicsGrabComponentRequests::SetPrevGrabbedCollisionLayerByName)
                 ->Event("Get Previous Grabbed Collision Layer", &PhysicsGrabComponentRequests::GetPrevGrabbedCollisionLayer)
                 ->Event("Set Previous Grabbed Collision Layer", &PhysicsGrabComponentRequests::SetPrevGrabbedCollisionLayer)
                 ->Event("Get Temporary Grabbed Collision Layer Name", &PhysicsGrabComponentRequests::GetTempGrabbedCollisionLayerName)
@@ -803,7 +823,8 @@ namespace PhysicsGrab
             [this]([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
             {
                 OnSceneSimulationStart(fixedDeltaTime);
-            }, aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
+            },
+            aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
 
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
         if (sceneInterface != nullptr)
@@ -815,7 +836,8 @@ namespace PhysicsGrab
             [this](AzPhysics::SceneHandle sceneHandle, float fixedDeltaTime)
             {
                 OnSceneSimulationFinish(sceneHandle, fixedDeltaTime);
-            }, aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
+            },
+            aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
 
         if (sceneInterface != nullptr)
         {
@@ -826,15 +848,16 @@ namespace PhysicsGrab
 
         AzFramework::NativeWindowHandle windowHandle = nullptr;
         windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
-        if(windowHandle)
+        if (windowHandle)
         {
             float refreshRate = 60.f;
-            AzFramework::WindowRequestBus::EventResult(refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
+            AzFramework::WindowRequestBus::EventResult(
+                refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
 
             const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
 
             // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
-            if(config->m_fixedTimestep <= 1.f/refreshRate)
+            if (config->m_fixedTimestep <= 1.f / refreshRate)
                 m_meshSmoothing = false;
         }
 
@@ -1143,26 +1166,26 @@ namespace PhysicsGrab
             return;
         }
 
-        switch(m_state)
+        switch (m_state)
         {
-            case PhysicsGrabStates::idleState:
-                IdleState();
-                break;
-            case PhysicsGrabStates::checkState:
-                CheckForObjectsState();
-                break;
-            case PhysicsGrabStates::holdState:
-                HoldObjectState(deltaTime);
-                break;
-            case PhysicsGrabStates::rotateState:
-                RotateObjectState(deltaTime);
-                break;
-            case PhysicsGrabStates::throwState:
-                ThrowObjectState(deltaTime);
-                break;
-            default:
-                m_state = PhysicsGrabStates::idleState;
-                IdleState();
+        case PhysicsGrabStates::idleState:
+            IdleState();
+            break;
+        case PhysicsGrabStates::checkState:
+            CheckForObjectsState();
+            break;
+        case PhysicsGrabStates::holdState:
+            HoldObjectState(deltaTime);
+            break;
+        case PhysicsGrabStates::rotateState:
+            RotateObjectState(deltaTime);
+            break;
+        case PhysicsGrabStates::throwState:
+            ThrowObjectState(deltaTime);
+            break;
+        default:
+            m_state = PhysicsGrabStates::idleState;
+            IdleState();
         }
 
         m_prevGrabKeyValue = m_grabKeyValue;
@@ -1331,9 +1354,9 @@ namespace PhysicsGrab
                 grabbedObjectInertiaTensor, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
 
             // Compute average inertia from diagonal elements as scalar approximation
-            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) +
-                grabbedObjectInertiaTensor.GetElement(1, 1) +
-                grabbedObjectInertiaTensor.GetElement(2, 2)) / 3.0f;
+            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) + grabbedObjectInertiaTensor.GetElement(1, 1) +
+                                                 grabbedObjectInertiaTensor.GetElement(2, 2)) /
+                3.0f;
 
             // If average inertia is valid (non-zero, assuming compute inertia enabled), compute factor (~ s^2)
             if (averageGrabbedObjectInertia > AZ::Constants::FloatEpsilon)
@@ -1446,13 +1469,13 @@ namespace PhysicsGrab
             // Broadcast a grab start notification event
             PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStart);
 
-            #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
             {
                 m_lastEntityRotationQuat = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
             }
             else
-            #endif
+#endif
             {
                 m_lastEntityRotationQuat = m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
             }
@@ -1501,8 +1524,7 @@ namespace PhysicsGrab
         // Drop the object and go back to idle state if sphere cast doesn't hit
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && !m_objectSphereCastHit))
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
         {
             ReleaseGrabbedObject(true, false);
             m_state = PhysicsGrabStates::idleState;
@@ -1581,8 +1603,7 @@ namespace PhysicsGrab
         // Drop the object and go back to idle state if sphere cast doesn't hit. Other
         // conditionals allow forced state transition to bypass inputs with
         // m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && !m_objectSphereCastHit))
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
@@ -1603,16 +1624,16 @@ namespace PhysicsGrab
         if (m_isObjectKinematic)
         {
             HoldObject(deltaTime);
-            #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
             FreezeCharacterRotation();
-            #endif
+#endif
             RotateObject(deltaTime);
         }
         else
         {
-            #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
             FreezeCharacterRotation();
-            #endif
+#endif
         }
 
         // Go back to idle state if grab key is pressed again because we want to stop holding the
@@ -1673,7 +1694,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::ThrowObjectState(const float &deltaTime)
+    void PhysicsGrabComponent::ThrowObjectState(const float& deltaTime)
     {
         // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it
         // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
@@ -1726,7 +1747,7 @@ namespace PhysicsGrab
             m_detectedObjectEntityId = AZ::EntityId();
         }
 
-        #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
@@ -1737,7 +1758,7 @@ namespace PhysicsGrab
             m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
         }
         else
-        #endif
+#endif
         {
             // Get forward vector relative to the grabbing entity's transform
             m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -1818,8 +1839,8 @@ namespace PhysicsGrab
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void PhysicsGrabComponent::HoldObject(float deltaTime)
     {
-        // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
-        #ifdef FIRST_PERSON_CONTROLLER
+// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+#ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
             AZ::Vector3 characterPosition;
@@ -1847,7 +1868,7 @@ namespace PhysicsGrab
         }
         // Use user-specified grab entity for Grab Reference
         else
-        #endif
+#endif
         {
             // Get forward vector relative to the grabbing entity's transform
             m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
@@ -1986,8 +2007,8 @@ namespace PhysicsGrab
     // Rigid Body type, or if KinematicWhileHeld is enabled.
     void PhysicsGrabComponent::RotateObject(float deltaTime)
     {
-        // Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
-        #ifdef FIRST_PERSON_CONTROLLER
+// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+#ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
@@ -1998,7 +2019,7 @@ namespace PhysicsGrab
             m_upVector = m_cameraRotationTransform->GetWorldTM().GetBasisZ();
         }
         else
-        #endif
+#endif
         {
             // Get right vector relative to the grabbing entity's transform
             m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
@@ -2016,8 +2037,7 @@ namespace PhysicsGrab
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic)
         {
-            AZ::Quaternion rotation =
-                AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
+            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
                 AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * 0.01f) +
                 AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * 0.01f);
 
@@ -2043,8 +2063,7 @@ namespace PhysicsGrab
             float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
 
             AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
-                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01) +
-                (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
+                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01) + (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
 
             // Lerp toward target rotation for gradual damping
             if (m_smoothDynamicRotation)
@@ -2232,9 +2251,9 @@ namespace PhysicsGrab
 
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
-        // Determine the effective rotation based on First Person Controller usage if enabled
-        // Use camera rotation for full tidal lock, or character rotation otherwise
-        #ifdef FIRST_PERSON_CONTROLLER
+// Determine the effective rotation based on First Person Controller usage if enabled
+// Use camera rotation for full tidal lock, or character rotation otherwise
+#ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
             if (m_fullTidalLockForFPC)
@@ -2248,7 +2267,7 @@ namespace PhysicsGrab
             }
         }
         else
-        #endif
+#endif
         {
             return m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
         }
@@ -2306,8 +2325,7 @@ namespace PhysicsGrab
             if (m_enablePIDTidalLockDynamics)
             {
                 // Use PID controller to compute torque output based on the angular error.
-                AZ::Vector3 angularPidOutput =
-                    m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
+                AZ::Vector3 angularPidOutput = m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
 
                 // Initialize angular torque from PID output
                 AZ::Vector3 angularTorque = angularPidOutput;
@@ -2339,25 +2357,26 @@ namespace PhysicsGrab
         }
     }
 
-    #ifdef FIRST_PERSON_CONTROLLER
+#ifdef FIRST_PERSON_CONTROLLER
     void PhysicsGrabComponent::FreezeCharacterRotation()
     {
         if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
-                GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCharacterAndCameraYaw, 0.f, false);
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCharacterAndCameraYaw,
+                0.f,
+                false);
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequestBus::Events::UpdateCameraPitch, 0.f, false);
         }
         else if (m_freezeCharacterRotation)
         {
             AZ_Warning(
-                "Physics Grab Component",
-                false,
-                "No First Person Controller Component handler available to freeze character rotation.")
+                "Physics Grab Component", false, "No First Person Controller Component handler available to freeze character rotation.")
         }
     }
-    #endif
+#endif
 
     void PhysicsGrabComponent::UpdateGrabDistance(float deltaTime)
     {
@@ -2630,7 +2649,7 @@ namespace PhysicsGrab
 
     float PhysicsGrabComponent::GetPitchKeyValue() const
     {
-         return m_pitchKeyValue;
+        return m_pitchKeyValue;
     }
 
     void PhysicsGrabComponent::SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue)
@@ -2717,7 +2736,8 @@ namespace PhysicsGrab
         return m_grabDistanceKeyValue;
     }
 
-    void PhysicsGrabComponent::SetGrabbedDistanceKeyValue(const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
+    void PhysicsGrabComponent::SetGrabbedDistanceKeyValue(
+        const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
     {
         if (new_ignoreGrabDistanceKeyInputValue)
         {
@@ -2897,7 +2917,7 @@ namespace PhysicsGrab
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
     }
 
-        float PhysicsGrabComponent::GetKinematicRollRotateScale() const
+    float PhysicsGrabComponent::GetKinematicRollRotateScale() const
     {
         return m_kinematicRollRotateScale;
     }
@@ -3096,7 +3116,8 @@ namespace PhysicsGrab
         AZStd::string new_grabbedCollisionGroupName;
         Physics::CollisionRequestBus::BroadcastResult(
             new_grabbedCollisionGroupName, &Physics::CollisionRequests::GetCollisionGroupName, m_grabbedCollisionGroup);
-        const AzPhysics::CollisionConfiguration& configuration = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
+        const AzPhysics::CollisionConfiguration& configuration =
+            AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration()->m_collisionConfig;
         m_grabbedCollisionGroupId = configuration.m_collisionGroups.FindGroupIdByName(new_grabbedCollisionGroupName);
     }
 
@@ -3584,8 +3605,7 @@ namespace PhysicsGrab
         return m_heldDerivativeMode;
     }
 
-    void PhysicsGrabComponent::SetHeldDerivativeMode(
-        const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode)
+    void PhysicsGrabComponent::SetHeldDerivativeMode(const PidController<AZ::Vector3>::DerivativeCalculationMode& new_heldDerivativeMode)
     {
         m_heldDerivativeMode = new_heldDerivativeMode;
         m_pidController.SetDerivativeMode(new_heldDerivativeMode);

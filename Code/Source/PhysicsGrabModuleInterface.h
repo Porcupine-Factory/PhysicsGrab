@@ -6,8 +6,7 @@
 
 namespace PhysicsGrab
 {
-    class PhysicsGrabModuleInterface
-        : public AZ::Module
+    class PhysicsGrabModuleInterface : public AZ::Module
     {
     public:
         AZ_TYPE_INFO_WITH_NAME_DECL(PhysicsGrabModuleInterface)
@@ -21,4 +20,4 @@ namespace PhysicsGrab
          */
         AZ::ComponentTypeList GetRequiredSystemComponents() const override;
     };
-}// namespace PhysicsGrab
+} // namespace PhysicsGrab
