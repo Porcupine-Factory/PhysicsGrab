@@ -423,6 +423,7 @@ namespace PhysicsGrab
         float m_prevDeltaTime = 1.0f / 60.f;
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;
+        float m_maxDropDistance = 4.5f;
         float m_grabDistance = 0.0f;
         float m_grabDistanceWheelSensitivity = 0.01f;
         float m_velocityCompDampRate = 9.f;

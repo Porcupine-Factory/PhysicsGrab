@@ -69,6 +69,8 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Max Grab Distance", &PhysicsGrabComponent::m_maxGrabDistance)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
+                ->Field("Max Drop Distance", &PhysicsGrabComponent::m_maxDropDistance)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetLengthUnit())
                 ->Field("Grab Distance Speed", &PhysicsGrabComponent::m_grabDistanceSpeed)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetSpeedUnit())
 
@@ -302,6 +304,11 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_maxGrabDistance,
                         "Max Grab Distance",
                         "Farthest allowable hold distance (higher = more reach; too high may feel unstable at distance).")
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_maxDropDistance,
+                        "Max Drop Distance",
+                        "Absolute distance threshold between grabber and object; drops if exceeded (independent of Sphere Cast Distance).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabDistanceSpeed,
@@ -1521,10 +1528,17 @@ namespace PhysicsGrab
             return;
         }
 
+        // Compute current absolute distance and check against threshold
+        AZ::Vector3 grabbingTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbedTranslation = AZ::Vector3::CreateZero();
+        AZ::TransformBus::EventResult(grabbedTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
+        float currentDist = grabbedTranslation.GetDistance(grabbingTranslation);
+
         // Drop the object and go back to idle state if sphere cast doesn't hit
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
+            (!m_isStateLocked && (!m_objectSphereCastHit || currentDist > m_maxDropDistance)))
         {
             ReleaseGrabbedObject(true, false);
             m_state = PhysicsGrabStates::idleState;
@@ -1600,10 +1614,17 @@ namespace PhysicsGrab
             return;
         }
 
+        // Compute current absolute distance and check against threshold
+        AZ::Vector3 grabbingTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbedTranslation = AZ::Vector3::CreateZero();
+        AZ::TransformBus::EventResult(grabbedTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
+        float currentDist = grabbedTranslation.GetDistance(grabbingTranslation);
+
         // Drop the object and go back to idle state if sphere cast doesn't hit. Other
         // conditionals allow forced state transition to bypass inputs with
         // m_forceTransition, or prevent state transition with m_isStateLocked
-        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) || (!m_isStateLocked && !m_objectSphereCastHit))
+        if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
+            (!m_isStateLocked && (!m_objectSphereCastHit || currentDist > m_maxDropDistance)))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
