@@ -1540,17 +1540,33 @@ namespace PhysicsGrab
             return;
         }
 
+#ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                m_cameraRotationTransform,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+        }
+        else
+#endif
+        {
+            // Get our grabbing entity's world transform
+            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+        }
+
         // Compute current absolute distance and check against threshold
-        AZ::Vector3 grabbingTranslation = m_grabbingEntityTransform.GetTranslation();
-        AZ::Vector3 grabbedTranslation = AZ::Vector3::CreateZero();
-        AZ::TransformBus::EventResult(grabbedTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
-        float currentDist = grabbedTranslation.GetDistance(grabbingTranslation);
+        const AZ::Vector3 grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
+        AZ::TransformBus::EventResult(grabbedEntityTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
+        const float currentGrabDistance = grabbedEntityTranslation.GetDistance(grabbingEntityTranslation);
 
         // Drop the object and go back to idle state if sphere cast doesn't hit
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && (!m_objectSphereCastHit || currentDist > m_maxDropDistance)))
+            (!m_isStateLocked && (!m_objectSphereCastHit || currentGrabDistance > m_maxDropDistance)))
         {
             ReleaseGrabbedObject(true, false);
             m_state = PhysicsGrabStates::idleState;
@@ -1626,17 +1642,33 @@ namespace PhysicsGrab
             return;
         }
 
+#ifdef FIRST_PERSON_CONTROLLER
+        if (m_useFPControllerForGrab)
+        {
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                m_cameraRotationTransform,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+        }
+        else
+#endif
+        {
+            // Get our grabbing entity's world transform
+            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+        }
+
         // Compute current absolute distance and check against threshold
-        AZ::Vector3 grabbingTranslation = m_grabbingEntityTransform.GetTranslation();
-        AZ::Vector3 grabbedTranslation = AZ::Vector3::CreateZero();
-        AZ::TransformBus::EventResult(grabbedTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
-        float currentDist = grabbedTranslation.GetDistance(grabbingTranslation);
+        const AZ::Vector3 grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
+        AZ::TransformBus::EventResult(grabbedEntityTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
+        const float currentGrabDistance = grabbedEntityTranslation.GetDistance(grabbingEntityTranslation);
 
         // Drop the object and go back to idle state if sphere cast doesn't hit. Other
         // conditionals allow forced state transition to bypass inputs with
         // m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && (!m_objectSphereCastHit || currentDist > m_maxDropDistance)))
+            (!m_isStateLocked && (!m_objectSphereCastHit || currentGrabDistance > m_maxDropDistance)))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
