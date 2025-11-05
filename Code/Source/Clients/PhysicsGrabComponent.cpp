@@ -853,19 +853,31 @@ namespace PhysicsGrab
         // Connect the handler to the request bus
         PhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
 
-        AzFramework::NativeWindowHandle windowHandle = nullptr;
-        windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
-        if (windowHandle)
+        // Check whether the game is being ran in the O3DE editor
+        AZ::ApplicationTypeQuery applicationType;
+        if (auto componentApplicationRequests = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
+            componentApplicationRequests != nullptr)
         {
-            float refreshRate = 60.f;
-            AzFramework::WindowRequestBus::EventResult(
-                refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
+            componentApplicationRequests->QueryApplicationType(applicationType);
+        }
 
-            const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
+        // If not running in the editor and the timestep is less than or equal to 1/(refresh rate) then disable mesh smoothing
+        if (!applicationType.IsEditor())
+        {
+            AzFramework::NativeWindowHandle windowHandle = nullptr;
+            windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
+            if (windowHandle)
+            {
+                float refreshRate = 60.f;
+                AzFramework::WindowRequestBus::EventResult(
+                    refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
 
-            // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
-            if (config->m_fixedTimestep <= 1.f / refreshRate)
-                m_meshSmoothing = false;
+                const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
+
+                // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
+                if (config->m_fixedTimestep <= 1.f / refreshRate)
+                    m_meshSmoothing = false;
+            }
         }
 
         // Initialize Held Object PID controller
