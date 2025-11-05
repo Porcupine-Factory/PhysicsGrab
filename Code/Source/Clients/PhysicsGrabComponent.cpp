@@ -1540,20 +1540,25 @@ namespace PhysicsGrab
             return;
         }
 
+        // Update m_grabbingEntityTransform to ensure it's current
+        if (m_grabMaintained)
+        {
 #ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
-        {
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                m_cameraRotationTransform,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
-        }
-        else
+            if (m_useFPControllerForGrab)
+            {
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    m_cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                // Get FPC camera world transform
+                m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+            }
+            else
 #endif
-        {
-            // Get our grabbing entity's world transform
-            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            {
+                // Get our grabbing entity's world transform
+                m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            }
         }
 
         // Compute current absolute distance and check against threshold
@@ -1642,22 +1647,27 @@ namespace PhysicsGrab
             return;
         }
 
+        // Update m_grabbingEntityTransform to ensure it's current
+        if (m_grabMaintained)
+        {
 #ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
-        {
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                m_cameraRotationTransform,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
-        }
-        else
+            if (m_useFPControllerForGrab)
+            {
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    m_cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                // Get FPC camera world transform
+                m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+                m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+            }
+            else
 #endif
-        {
-            // Get our grabbing entity's world transform
-            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            {
+                // Get our grabbing entity's world transform
+                m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            }
         }
-
         // Compute current absolute distance and check against threshold
         const AZ::Vector3 grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
         AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
