@@ -1891,6 +1891,19 @@ namespace PhysicsGrab
             {
                 if (hit.m_entityId == m_grabbedObjectEntityId)
                 {
+                    if (!m_offsetGrab)
+                    {
+                        // Compute projected distance to object center and skip if exceeds m_sphereCastDistance (only for center grabs)
+                        AZ::Transform objectTM = AZ::Transform::CreateIdentity();
+                        AZ::TransformBus::EventResult(objectTM, hit.m_entityId, &AZ::TransformInterface::GetWorldTM);
+                        float centerProjected =
+                            (objectTM.GetTranslation() - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+                        if (centerProjected > m_sphereCastDistance)
+                        {
+                            // Skip this hit if center is beyond sphere cast distance
+                            continue;
+                        }
+                    }
                     m_objectSphereCastHit = true;
                     m_detectedObjectEntityId = hit.m_entityId;
                     return;
@@ -1907,12 +1920,33 @@ namespace PhysicsGrab
         // General case: take the first hit for initial grab or detection-only
         if (hits)
         {
-            m_objectSphereCastHit = true;
-            m_detectedObjectEntityId = hits.m_hits.at(0).m_entityId;
-            if (!detectionOnly)
+            if (!m_offsetGrab)
             {
-                m_grabbedObjectEntityId = m_detectedObjectEntityId;
-                m_hitPosition = hits.m_hits.at(0).m_position;
+                // Compute projected distance to object center for the first hit (only for center grabs)
+                AZ::Transform objectTM = AZ::Transform::CreateIdentity();
+                AZ::TransformBus::EventResult(objectTM, hits.m_hits.at(0).m_entityId, &AZ::TransformInterface::GetWorldTM);
+                float centerProjected = (objectTM.GetTranslation() - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+                if (centerProjected <= m_sphereCastDistance)
+                {
+                    m_objectSphereCastHit = true;
+                    m_detectedObjectEntityId = hits.m_hits.at(0).m_entityId;
+                    if (!detectionOnly)
+                    {
+                        m_grabbedObjectEntityId = m_detectedObjectEntityId;
+                        m_hitPosition = hits.m_hits.at(0).m_position;
+                    }
+                }
+            }
+            else
+            {
+                // When offset grab is true, use raw hit without center filter
+                m_objectSphereCastHit = true;
+                m_detectedObjectEntityId = hits.m_hits.at(0).m_entityId;
+                if (!detectionOnly)
+                {
+                    m_grabbedObjectEntityId = m_detectedObjectEntityId;
+                    m_hitPosition = hits.m_hits.at(0).m_position;
+                }
             }
         }
     }
