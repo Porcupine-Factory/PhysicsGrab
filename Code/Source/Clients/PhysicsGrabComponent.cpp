@@ -1382,8 +1382,9 @@ namespace PhysicsGrab
                 grabbedObjectInertiaTensor, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetInertiaLocal);
 
             // Compute average inertia from diagonal elements as scalar approximation
-            float averageGrabbedObjectInertia = (grabbedObjectInertiaTensor.GetElement(0, 0) + grabbedObjectInertiaTensor.GetElement(1, 1) +
-                                                 grabbedObjectInertiaTensor.GetElement(2, 2)) /
+            const float averageGrabbedObjectInertia =
+                (grabbedObjectInertiaTensor.GetElement(0, 0) + grabbedObjectInertiaTensor.GetElement(1, 1) +
+                 grabbedObjectInertiaTensor.GetElement(2, 2)) /
                 3.0f;
 
             // If average inertia is valid (non-zero, assuming compute inertia enabled), compute factor (~ s^2)
@@ -1406,8 +1407,8 @@ namespace PhysicsGrab
             m_localGrabOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
 
             // Compute dynamic initial grab distance as projected distance along forward to effective point
-            AZ::Vector3 initialEffectivePoint = m_offsetGrab ? m_hitPosition : objectTM.GetTranslation();
-            float projectedGrabDistance = (initialEffectivePoint - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+            const AZ::Vector3 initialEffectivePoint = m_offsetGrab ? m_hitPosition : objectTM.GetTranslation();
+            const float projectedGrabDistance = (initialEffectivePoint - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
             m_grabDistance = AZ::GetClamp(projectedGrabDistance, m_minGrabDistance, m_maxGrabDistance);
 
             m_meshEntityPtr = nullptr;
@@ -1486,7 +1487,7 @@ namespace PhysicsGrab
             m_tidalLockPidController.Reset();
 
             // Compute the effective grabbing entity rotation quaternion, handling First Person Controller cases if enabled
-            AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
+            const AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
             AZ::Quaternion grabbedObjectRotationQuat;
 
             AZ::TransformBus::EventResult(
@@ -1746,7 +1747,7 @@ namespace PhysicsGrab
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
 
             // Recompute relative quaternion after rotation changes (to lock new orientation)
-            AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
+            const AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
             AZ::Quaternion grabbedObjectRotationQuat;
 
             AZ::TransformBus::EventResult(
@@ -1898,7 +1899,7 @@ namespace PhysicsGrab
                         // Compute projected distance to object center and skip if exceeds m_sphereCastDistance (only for center grabs)
                         AZ::Transform objectTM = AZ::Transform::CreateIdentity();
                         AZ::TransformBus::EventResult(objectTM, hit.m_entityId, &AZ::TransformInterface::GetWorldTM);
-                        float centerProjected =
+                        const float centerProjected =
                             (objectTM.GetTranslation() - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
                         if (centerProjected > m_sphereCastDistance)
                         {
@@ -1927,7 +1928,7 @@ namespace PhysicsGrab
                 // Compute projected distance to object center for the first hit (only for center grabs)
                 AZ::Transform objectTM = AZ::Transform::CreateIdentity();
                 AZ::TransformBus::EventResult(objectTM, hits.m_hits.at(0).m_entityId, &AZ::TransformInterface::GetWorldTM);
-                float centerProjected = (objectTM.GetTranslation() - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+                const float centerProjected = (objectTM.GetTranslation() - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
                 if (centerProjected <= m_sphereCastDistance)
                 {
                     m_objectSphereCastHit = true;
