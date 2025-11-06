@@ -235,6 +235,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_grabMaintained,
                         "Maintain Grab",
                         "Keeps holding object even if sphere cast misses (enable to prevent drops during fast turns).")
+                    ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicWhileHeld,
@@ -311,6 +312,7 @@ namespace PhysicsGrab
                         "Max Drop Distance",
                         "Absolute distance threshold between grabber and object; drops if exceeded (independent of Sphere Cast Distance). "
                         "Cannot be less than Max Grab Distance.")
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetGrabMaintained)
                     ->Attribute(AZ::Edit::Attributes::Min, &PhysicsGrabComponent::m_maxGrabDistance)
                     ->DataElement(
                         nullptr,
