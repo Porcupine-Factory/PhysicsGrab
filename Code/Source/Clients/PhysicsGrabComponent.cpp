@@ -641,6 +641,8 @@ namespace PhysicsGrab
                 ->Event("Set Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::SetGrabbedObjectDistanceSpeed)
                 ->Event("Get Max Drop Distance", &PhysicsGrabComponentRequests::GetMaxDropDistance)
                 ->Event("Set Max Drop Distance", &PhysicsGrabComponentRequests::SetMaxDropDistance)
+                ->Event("Get Enable Max Drop Distance", &PhysicsGrabComponentRequests::GetEnableMaxDropDistance)
+                ->Event("Set Enable Max Drop Distance", &PhysicsGrabComponentRequests::SetEnableMaxDropDistance)
                 ->Event("Get Grab Response", &PhysicsGrabComponentRequests::GetGrabResponse)
                 ->Event("Set Grab Response", &PhysicsGrabComponentRequests::SetGrabResponse)
                 ->Event("Get Dynamic Object Tidal Lock", &PhysicsGrabComponentRequests::GetDynamicTidalLock)
@@ -1548,7 +1550,7 @@ namespace PhysicsGrab
         }
 
         // Update m_grabbingEntityTransform to ensure it's current
-        if (m_grabMaintained)
+        if (m_grabMaintained && m_enableMaxDropDistance)
         {
 #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
@@ -1578,7 +1580,7 @@ namespace PhysicsGrab
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
         // prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && (!m_objectSphereCastHit || currentGrabDistance > m_maxDropDistance)))
+            (!m_isStateLocked && (!m_objectSphereCastHit || (m_enableMaxDropDistance && currentGrabDistance > m_maxDropDistance))))
         {
             ReleaseGrabbedObject(true, false);
             m_state = PhysicsGrabStates::idleState;
@@ -1655,7 +1657,7 @@ namespace PhysicsGrab
         }
 
         // Update m_grabbingEntityTransform to ensure it's current
-        if (m_grabMaintained)
+        if (m_grabMaintained && m_enableMaxDropDistance)
         {
 #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
@@ -1685,7 +1687,7 @@ namespace PhysicsGrab
         // conditionals allow forced state transition to bypass inputs with
         // m_forceTransition, or prevent state transition with m_isStateLocked
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::idleState) ||
-            (!m_isStateLocked && (!m_objectSphereCastHit || currentGrabDistance > m_maxDropDistance)))
+            (!m_isStateLocked && (!m_objectSphereCastHit || (m_enableMaxDropDistance && currentGrabDistance > m_maxDropDistance))))
         {
             // Set Angular Velocity back to zero if sphere cast doesn't hit
             SetGrabbedObjectAngularVelocity(AZ::Vector3::CreateZero());
@@ -2921,6 +2923,16 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetMaxDropDistance(const float& new_maxDropDistance)
     {
         m_maxDropDistance = AZ::GetMax(new_maxDropDistance, m_maxGrabDistance);
+    }
+
+    bool PhysicsGrabComponent::GetEnableMaxDropDistance() const
+    {
+        return m_enableMaxDropDistance;
+    }
+
+    void PhysicsGrabComponent::SetEnableMaxDropDistance(const bool& new_enableMaxDropDistance)
+    {
+        m_enableMaxDropDistance = new_enableMaxDropDistance;
     }
 
     void PhysicsGrabComponent::SetGrabResponse(const float& new_grabResponse)

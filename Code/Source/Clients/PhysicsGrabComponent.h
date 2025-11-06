@@ -145,6 +145,8 @@ namespace PhysicsGrab
         void SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
         float GetMaxDropDistance() const override;
         void SetMaxDropDistance(const float& new_maxDropDistance) override;
+        bool GetEnableMaxDropDistance() const override;
+        void SetEnableMaxDropDistance(const bool& new_enableMaxDropDistance) override;
         float GetGrabResponse() const override;
         void SetGrabResponse(const float& new_grabStrength) override;
         bool GetDynamicTidalLock() const override;
@@ -519,6 +521,7 @@ namespace PhysicsGrab
         bool m_offsetGrab = false;
         bool m_gravityAppliesToPointRotation = false;
         bool m_detectInIdle = false;
+        bool m_enableMaxDropDistance = true;
 
         PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
         PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;
