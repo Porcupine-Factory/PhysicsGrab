@@ -304,11 +304,14 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_maxGrabDistance,
                         "Max Grab Distance",
                         "Farthest allowable hold distance (higher = more reach; too high may feel unstable at distance).")
+                    ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_maxDropDistance,
                         "Max Drop Distance",
-                        "Absolute distance threshold between grabber and object; drops if exceeded (independent of Sphere Cast Distance).")
+                        "Absolute distance threshold between grabber and object; drops if exceeded (independent of Sphere Cast Distance). "
+                        "Cannot be less than Max Grab Distance.")
+                    ->Attribute(AZ::Edit::Attributes::Min, &PhysicsGrabComponent::m_maxGrabDistance)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_grabDistanceSpeed,
@@ -634,6 +637,8 @@ namespace PhysicsGrab
                 ->Event("Set Maximum Grabbed Object Distance", &PhysicsGrabComponentRequests::SetMaxGrabbedObjectDistance)
                 ->Event("Get Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::GetGrabbedObjectDistanceSpeed)
                 ->Event("Set Grabbed Object Distance Speed", &PhysicsGrabComponentRequests::SetGrabbedObjectDistanceSpeed)
+                ->Event("Get Max Drop Distance", &PhysicsGrabComponentRequests::GetMaxDropDistance)
+                ->Event("Set Max Drop Distance", &PhysicsGrabComponentRequests::SetMaxDropDistance)
                 ->Event("Get Grab Response", &PhysicsGrabComponentRequests::GetGrabResponse)
                 ->Event("Set Grab Response", &PhysicsGrabComponentRequests::SetGrabResponse)
                 ->Event("Get Dynamic Object Tidal Lock", &PhysicsGrabComponentRequests::GetDynamicTidalLock)
@@ -2870,6 +2875,16 @@ namespace PhysicsGrab
     float PhysicsGrabComponent::GetGrabResponse() const
     {
         return m_grabResponse;
+    }
+
+    float PhysicsGrabComponent::GetMaxDropDistance() const
+    {
+        return m_maxDropDistance;
+    }
+
+    void PhysicsGrabComponent::SetMaxDropDistance(const float& new_maxDropDistance)
+    {
+        m_maxDropDistance = AZ::GetMax(new_maxDropDistance, m_maxGrabDistance);
     }
 
     void PhysicsGrabComponent::SetGrabResponse(const float& new_grabResponse)

@@ -77,6 +77,8 @@ namespace PhysicsGrab
         virtual void SetMaxGrabbedObjectDistance(const float&) = 0;
         virtual float GetGrabbedObjectDistanceSpeed() const = 0;
         virtual void SetGrabbedObjectDistanceSpeed(const float&) = 0;
+        virtual float GetMaxDropDistance() const = 0;
+        virtual void SetMaxDropDistance(const float&) = 0;
         virtual float GetGrabResponse() const = 0;
         virtual void SetGrabResponse(const float&) = 0;
         virtual bool GetStayInIdleState() const = 0;

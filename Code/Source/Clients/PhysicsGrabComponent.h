@@ -143,6 +143,8 @@ namespace PhysicsGrab
         void SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance) override;
         float GetGrabbedObjectDistanceSpeed() const override;
         void SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed) override;
+        float GetMaxDropDistance() const override;
+        void SetMaxDropDistance(const float& new_maxDropDistance) override;
         float GetGrabResponse() const override;
         void SetGrabResponse(const float& new_grabStrength) override;
         bool GetDynamicTidalLock() const override;
