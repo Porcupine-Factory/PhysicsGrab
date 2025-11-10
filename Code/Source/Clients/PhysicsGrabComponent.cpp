@@ -189,7 +189,7 @@ namespace PhysicsGrab
                     ->ClassElement(AZ::Edit::ClassElements::Group, "Hold Parameters")
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
                     ->DataElement(
-                        0,
+                        nullptr,
                         &PhysicsGrabComponent::m_grabbingEntityId,
                         "Grab Entity",
                         "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab "
@@ -1981,7 +1981,15 @@ namespace PhysicsGrab
             AZ::Transform characterTM;
             AZ::TransformBus::EventResult(characterTM, GetEntityId(), &AZ::TransformInterface::GetWorldTM);
             m_grabReference = characterTM;
-            m_grabReference.SetTranslation(characterPosition + AZ::Vector3(0.f, 0.f, eyeHeight + cameraLocalZTravelDistance));
+
+            // Use the spherecasts axis direction pose as the virtual Z axis to align with in case the character is rotated on X or Y
+            AZ::Vector3 spherecastsAxisDirectionPose = AZ::Vector3::CreateAxisZ();
+            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                spherecastsAxisDirectionPose,
+                GetEntityId(),
+                &FirstPersonController::FirstPersonControllerComponentRequests::GetSphereCastsAxisDirectionPose);
+
+            m_grabReference.SetTranslation(characterPosition + spherecastsAxisDirectionPose * (eyeHeight + cameraLocalZTravelDistance));
             // Add forward offset to the height-adjusted position
             m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
         }
