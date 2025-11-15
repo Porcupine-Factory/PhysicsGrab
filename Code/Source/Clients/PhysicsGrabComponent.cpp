@@ -194,8 +194,8 @@ namespace PhysicsGrab
                         "Grab Entity",
                         "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab "
                         "origin/direction.")
-                    ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetUseFPCControllerForGrab)
 #ifdef FIRST_PERSON_CONTROLLER
+                    ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetUseFPControllerForGrab)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_useFPControllerForGrab,
@@ -268,7 +268,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_fullTidalLockForFPC,
                         "Full Tidal Lock For First Person Controller",
                         "Uses full camera rotation for tidal lock in FPC (enable for head-tracking lock; disable for body yaw only).")
-                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetTidalLockAndUseFPCController)
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetTidalLockAndUseFPController)
 #endif
                     ->DataElement(
                         nullptr,
@@ -362,7 +362,7 @@ namespace PhysicsGrab
                         &PhysicsGrabComponent::m_freezeCharacterRotation,
                         "Freeze Character Rotation",
                         "Locks FPC rotation during rotate mode (enable to focus on object; disable for simultaneous movement).")
-                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetUseFPCControllerForGrab)
+                    ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetUseFPControllerForGrab)
 #endif
                     ->DataElement(
                         nullptr,
@@ -654,9 +654,9 @@ namespace PhysicsGrab
                 ->Event("Set Object Tidal Lock", &PhysicsGrabComponentRequests::SetTidalLock)
                 ->Event("Get Full Tidal Lock For First Person Controller", &PhysicsGrabComponentRequests::GetFullTidalLockForFPC)
                 ->Event("Set Full Tidal Lock For First Person Controller", &PhysicsGrabComponentRequests::SetFullTidalLockForFPC)
-                ->Event("Get Use First Person Controller For Grab", &PhysicsGrabComponentRequests::GetUseFPCControllerForGrab)
-                ->Event("Set Use First Person Controller For Grab", &PhysicsGrabComponentRequests::SetUseFPCControllerForGrab)
-                ->Event("Get Tidal Lock And Use FPC Controller For Grab", &PhysicsGrabComponentRequests::GetTidalLockAndUseFPCController)
+                ->Event("Get Use First Person Controller For Grab", &PhysicsGrabComponentRequests::GetUseFPControllerForGrab)
+                ->Event("Set Use First Person Controller For Grab", &PhysicsGrabComponentRequests::SetUseFPControllerForGrab)
+                ->Event("Get Tidal Lock And Use FPC Controller For Grab", &PhysicsGrabComponentRequests::GetTidalLockAndUseFPController)
                 ->Event("Get Mesh Smoothing", &PhysicsGrabComponentRequests::GetMeshSmoothing)
                 ->Event("Set Mesh Smoothing", &PhysicsGrabComponentRequests::SetMeshSmoothing)
                 ->Event("Get Dynamic Yaw Rotate Scale", &PhysicsGrabComponentRequests::GetDynamicYawRotateScale)
@@ -2980,17 +2980,17 @@ namespace PhysicsGrab
         m_tidalLock = new_tidalLock;
     }
 
-    bool PhysicsGrabComponent::GetUseFPCControllerForGrab() const
+    bool PhysicsGrabComponent::GetUseFPControllerForGrab() const
     {
         return m_useFPControllerForGrab;
     }
 
-    void PhysicsGrabComponent::SetUseFPCControllerForGrab(const bool& new_useFPControllerForGrab)
+    void PhysicsGrabComponent::SetUseFPControllerForGrab(const bool& new_useFPControllerForGrab)
     {
         m_useFPControllerForGrab = new_useFPControllerForGrab;
     }
 
-    bool PhysicsGrabComponent::GetTidalLockAndUseFPCController() const
+    bool PhysicsGrabComponent::GetTidalLockAndUseFPController() const
     {
         return (m_tidalLock && m_useFPControllerForGrab);
     }

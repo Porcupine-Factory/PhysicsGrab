@@ -155,11 +155,11 @@ namespace PhysicsGrab
         void SetKinematicTidalLock(const bool& new_kinematicTidalLock) override;
         bool GetTidalLock() const override;
         void SetTidalLock(const bool& new_tidalLock) override;
-        bool GetUseFPCControllerForGrab() const override;
-        void SetUseFPCControllerForGrab(const bool& new_useFPControllerForGrab) override;
+        bool GetUseFPControllerForGrab() const override;
+        void SetUseFPControllerForGrab(const bool& new_useFPControllerForGrab) override;
         bool GetFullTidalLockForFPC() const override;
         void SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC) override;
-        bool GetTidalLockAndUseFPCController() const override;
+        bool GetTidalLockAndUseFPController() const override;
         bool GetMeshSmoothing() const override;
         void SetMeshSmoothing(const bool& new_meshSmoothing) override;
         float GetDynamicYawRotateScale() const;

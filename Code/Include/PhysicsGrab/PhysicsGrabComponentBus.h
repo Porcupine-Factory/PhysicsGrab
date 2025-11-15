@@ -93,11 +93,11 @@ namespace PhysicsGrab
         virtual void SetKinematicTidalLock(const bool&) = 0;
         virtual bool GetTidalLock() const = 0;
         virtual void SetTidalLock(const bool&) = 0;
-        virtual bool GetUseFPCControllerForGrab() const = 0;
-        virtual void SetUseFPCControllerForGrab(const bool&) = 0;
+        virtual bool GetUseFPControllerForGrab() const = 0;
+        virtual void SetUseFPControllerForGrab(const bool&) = 0;
         virtual bool GetFullTidalLockForFPC() const = 0;
         virtual void SetFullTidalLockForFPC(const bool&) = 0;
-        virtual bool GetTidalLockAndUseFPCController() const = 0;
+        virtual bool GetTidalLockAndUseFPController() const = 0;
         virtual bool GetMeshSmoothing() const = 0;
         virtual void SetMeshSmoothing(const bool&) = 0;
         virtual float GetDynamicYawRotateScale() const = 0;
