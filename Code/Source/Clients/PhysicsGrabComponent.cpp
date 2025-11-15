@@ -194,6 +194,7 @@ namespace PhysicsGrab
                         "Grab Entity",
                         "Entity performing grabs (e.g., player camera). Defaults to active camera if blank. Determines grab "
                         "origin/direction.")
+                    ->Attribute(AZ::Edit::Attributes::ReadOnly, &PhysicsGrabComponent::GetUseFPCControllerForGrab)
 #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
                         nullptr,
