@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PidController.h"
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/TickBus.h>
@@ -8,12 +7,17 @@
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzCore/std/containers/map.h>
+
 #include <AzFramework/Components/CameraBus.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
 #include <AzFramework/Physics/PhysicsScene.h>
-#include <LmbrCentral/Scripting/TagComponentBus.h>
+
+#include <PhysicsGrab/PidController.h>
 #include <PhysicsGrab/PhysicsGrabComponentBus.h>
 #include <PhysicsGrab/PhysicsGrabTypeIds.h>
+
+#include <LmbrCentral/Scripting/TagComponentBus.h>
+
 #include <StartingPointInput/InputEventNotificationBus.h>
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
