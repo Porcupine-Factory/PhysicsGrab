@@ -7,6 +7,8 @@
 #include <Clients/PhysicsGrabComponent.h>
 #include <Clients/PhysicsGrabSystemComponent.h>
 
+#include <Source/AutoGen/AutoComponentTypes.h>
+
 namespace PhysicsGrab
 {
     AZ_TYPE_INFO_WITH_NAME_IMPL(PhysicsGrabModuleInterface, "PhysicsGrabModuleInterface", PhysicsGrabModuleInterfaceTypeId);
@@ -21,6 +23,9 @@ namespace PhysicsGrab
         // This happens through the [MyComponent]::Reflect() function.
         m_descriptors.insert(
             m_descriptors.end(), { PhysicsGrabSystemComponent::CreateDescriptor(), PhysicsGrabComponent::CreateDescriptor() });
+
+        //< Register multiplayer components
+        CreateComponentDescriptors(m_descriptors);
     }
 
     AZ::ComponentTypeList PhysicsGrabModuleInterface::GetRequiredSystemComponents() const

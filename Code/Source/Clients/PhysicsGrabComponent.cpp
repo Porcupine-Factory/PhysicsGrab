@@ -5,7 +5,6 @@
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
-
 #include <AzCore/Serialization/EditContext.h>
 
 #include <AzFramework/Physics/CollisionBus.h>

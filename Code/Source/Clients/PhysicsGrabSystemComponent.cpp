@@ -5,6 +5,8 @@
 
 #include <AzCore/Serialization/SerializeContext.h>
 
+#include <Source/AutoGen/AutoComponentTypes.h>
+
 namespace PhysicsGrab
 {
     AZ_COMPONENT_IMPL(PhysicsGrabSystemComponent, "PhysicsGrabSystemComponent", PhysicsGrabSystemComponentTypeId);
@@ -59,6 +61,9 @@ namespace PhysicsGrab
     {
         PhysicsGrabRequestBus::Handler::BusConnect();
         AZ::TickBus::Handler::BusConnect();
+
+        // Register multiplayer components
+        RegisterMultiplayerComponents();
     }
 
     void PhysicsGrabSystemComponent::Deactivate()
