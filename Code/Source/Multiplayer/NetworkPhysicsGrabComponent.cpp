@@ -11,6 +11,9 @@ namespace PhysicsGrab
 
     void NetworkPhysicsGrabComponentController::OnActivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)
     {
+        // Get access to the PhysicsGrabComponent object and its members
+        const AZ::Entity* entity = GetParent().GetEntity();
+        m_physicsGrabObject = entity->FindComponent<PhysicsGrabComponent>();
     }
 
     void NetworkPhysicsGrabComponentController::OnDeactivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)

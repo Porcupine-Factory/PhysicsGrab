@@ -43,6 +43,8 @@ namespace PhysicsGrab
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public PhysicsGrabComponentRequestBus::Handler
     {
+        friend class NetworkPhysicsGrabComponentController;
+
     public:
         AZ_COMPONENT(PhysicsGrabComponent, PhysicsGrabComponentTypeId);
 

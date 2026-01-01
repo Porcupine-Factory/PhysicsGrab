@@ -2,11 +2,17 @@
 
 #include <Source/AutoGen/NetworkPhysicsGrabComponent.AutoComponent.h>
 
+#include <Clients/PhysicsGrabComponent.h>
+
 namespace PhysicsGrab
 {
 
-    class NetworkPhysicsGrabComponentController : public NetworkPhysicsGrabComponentControllerBase
+    class NetworkPhysicsGrabComponentController 
+        : public NetworkPhysicsGrabComponentControllerBase
+        , public StartingPointInput::InputEventNotificationBus::MultiHandler
     {
+        friend class PhysicsGrabComponent;
+
     public:
         explicit NetworkPhysicsGrabComponentController(NetworkPhysicsGrabComponent& parent);
 
@@ -25,6 +31,9 @@ namespace PhysicsGrab
         //! @param deltaTime amount of time to integrate the provided inputs over
         void ProcessInput(Multiplayer::NetworkInput& input, float deltaTime) override;
 
-    protected:
+    private:
+
+    // PhysicsGrabComponent object
+    PhysicsGrabComponent* m_physicsGrabObject = nullptr;
     };
 } // namespace PhysicsGrab

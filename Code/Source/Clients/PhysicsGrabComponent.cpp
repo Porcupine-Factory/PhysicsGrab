@@ -1,5 +1,7 @@
 #include <Clients/PhysicsGrabComponent.h>
 
+#include <Multiplayer/NetworkPhysicsGrabComponent.h>
+
 #include <Atom/RPI.Public/ViewportContext.h>
 #include <Atom/RPI.Public/ViewportContextBus.h>
 
