@@ -32,8 +32,35 @@ namespace PhysicsGrab
         void ProcessInput(Multiplayer::NetworkInput& input, float deltaTime) override;
 
     private:
-
     // PhysicsGrabComponent object
     PhysicsGrabComponent* m_physicsGrabObject = nullptr;
+
+    // Event value multipliers
+    float m_grabKeyValue = 0.f;
+    float m_throwKeyValue = 0.f;
+    float m_rotateKeyValue = 0.f;
+    float m_prevGrabKeyValue = 0.f;
+    float m_prevRotateKeyValue = 0.f;
+    float m_prevThrowKeyValue = 0.f;
+    float m_grabDistanceKeyValue = 0.f;
+    float m_pitchKeyValue = 0.f;
+    float m_yawKeyValue = 0.f;
+    float m_rollKeyValue = 0.f;
+
+    // Event IDs and action names
+    StartingPointInput::InputEventNotificationId m_grabEventId;
+    AZStd::string m_strGrab = "Grab";
+    StartingPointInput::InputEventNotificationId m_throwEventId;
+    AZStd::string m_strThrow = "Throw";
+    StartingPointInput::InputEventNotificationId m_rotateEventId;
+    AZStd::string m_strRotate = "Rotate Enable";
+    StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
+    AZStd::string m_strRotatePitch = "Rotate Pitch";
+    StartingPointInput::InputEventNotificationId m_rotateYawEventId;
+    AZStd::string m_strRotateYaw = "Rotate Yaw";
+    StartingPointInput::InputEventNotificationId m_rotateRollEventId;
+    AZStd::string m_strRotateRoll = "Rotate Roll";
+    StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
+    AZStd::string m_strGrabDistance = "Grab Distance";
     };
 } // namespace PhysicsGrab
