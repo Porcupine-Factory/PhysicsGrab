@@ -11,9 +11,9 @@
     <NetworkInput Type="float" Name="Grab" Init="0.f" />
     <NetworkInput Type="float" Name="Rotate" Init="0.f" />
     <NetworkInput Type="float" Name="Throw" Init="0.f" />
-    <NetworkInput Type="float" Name="RightEnable" Init="0.f" />
-    <NetworkInput Type="float" Name="RotatePitch" Init="0.f" />
-    <NetworkInput Type="float" Name="RotateYaw" Init="0.f" />
-    <NetworkInput Type="float" Name="RotateRoll" Init="0.f" />
+    <NetworkInput Type="float" Name="GrabDistance" Init="0.f" />
+    <NetworkInput Type="float" Name="Pitch" Init="0.f" />
+    <NetworkInput Type="float" Name="Yaw" Init="0.f" />
+    <NetworkInput Type="float" Name="Roll" Init="0.f" />
 
 </Component>
