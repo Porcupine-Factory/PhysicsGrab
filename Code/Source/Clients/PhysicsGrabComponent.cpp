@@ -805,29 +805,6 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::Activate()
     {
-        AZ_Printf("PhysicsGrabComponent", "Inside Activate!", "");
-        /*
-        m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
-
-        m_grabDistanceEventId = StartingPointInput::InputEventNotificationId(m_strGrabDistance.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_grabDistanceEventId);
-
-        m_throwEventId = StartingPointInput::InputEventNotificationId(m_strThrow.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_throwEventId);
-
-        m_rotateEventId = StartingPointInput::InputEventNotificationId(m_strRotate.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_rotateEventId);
-
-        m_rotatePitchEventId = StartingPointInput::InputEventNotificationId(m_strRotatePitch.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_rotatePitchEventId);
-
-        m_rotateYawEventId = StartingPointInput::InputEventNotificationId(m_strRotateYaw.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_rotateYawEventId);
-
-        m_rotateRollEventId = StartingPointInput::InputEventNotificationId(m_strRotateRoll.c_str());
-        InputEventNotificationBus::MultiHandler::BusConnect(m_rotateRollEventId);
-        */
         AssignConnectInputEvents();
 
         AZ::TickBus::Handler::BusConnect();
@@ -940,14 +917,11 @@ namespace PhysicsGrab
         // Determine if the NetworkPhysicsGrab is enabled
         if (m_networkPhysicsGrabObject != nullptr)
         {
-            AZ_Printf("PhysicsGrabComponent", "Network Physics Grab enabled! Disconnecting input!", "");
             InputEventNotificationBus::MultiHandler::BusDisconnect();
             m_networkPhysicsGrabComponentEnabled =
                 static_cast<NetworkPhysicsGrabComponentController*>(m_networkPhysicsGrabObject->GetController())
                     ->GetEnableNetworkPhysicsGrabComponent();
         }
-        else
-            AZ_Printf("PhysicsGrabComponent", "Network Physics Grab NOT enabled!", "");
     }
 
     // Called at the beginning of each physics tick
