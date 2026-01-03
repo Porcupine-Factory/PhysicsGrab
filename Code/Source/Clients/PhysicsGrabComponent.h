@@ -289,6 +289,14 @@ namespace PhysicsGrab
         AZ::Vector3 GetTidalLockLastDerivative() const override;
         AZ::Vector3 GetTargetTranslation() const override;
         AZ::Vector3 GetTargetRotation() const override;
+        bool GetIsAutonomousClient() const override;
+        bool GetIsServer() const override;
+        bool GetIsHost() const override;
+        bool GetLocallyEnableNetworkPhysicsGrabComponent() const override;
+        void SetLocallyEnableNetworkPhysicsGrabComponent(const bool& new_networkPhysicsGrabComponentEnabled) override;
+        void NetworkPhysicsGrabComponentEnabledIgnoreInputs() override;
+        void IsAutonomousSoConnect() override;
+        void NotAutonomousSoDisconnect() override;
 
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;
@@ -367,6 +375,9 @@ namespace PhysicsGrab
 
         // Networking related variables
         bool m_networkPhysicsGrabComponentEnabled = false;
+        bool m_isServer = false;
+        bool m_isHost = false;
+        bool m_isAutonomousClient = false;
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();

@@ -797,7 +797,15 @@ namespace PhysicsGrab
                 ->Event("Get Tidal Lock Last Integral", &PhysicsGrabComponentRequests::GetTidalLockLastIntegral)
                 ->Event("Get Tidal Lock Last Derivative", &PhysicsGrabComponentRequests::GetTidalLockLastDerivative)
                 ->Event("Get Target Translation", &PhysicsGrabComponentRequests::GetTargetTranslation)
-                ->Event("Get Target Rotation", &PhysicsGrabComponentRequests::GetTargetRotation);
+                ->Event("Get Target Rotation", &PhysicsGrabComponentRequests::GetTargetRotation)
+                ->Event("Get Is Autonomous Client", &PhysicsGrabComponentRequests::GetIsAutonomousClient)
+                ->Event("Get Is Server", &PhysicsGrabComponentRequests::GetIsServer)
+                ->Event("Get Is Host", &PhysicsGrabComponentRequests::GetIsHost)
+                ->Event("Get Locally Enable NetworkFPC", &PhysicsGrabComponentRequests::GetLocallyEnableNetworkPhysicsGrabComponent)
+                ->Event("Set Locally Enable NetworkFPC", &PhysicsGrabComponentRequests::SetLocallyEnableNetworkPhysicsGrabComponent)
+                ->Event("Network Physics Grab Component Enabled Ignore Inputs", &PhysicsGrabComponentRequests::NetworkPhysicsGrabComponentEnabledIgnoreInputs)
+                ->Event("Is Autonomous So Connect", &PhysicsGrabComponentRequests::IsAutonomousSoConnect)
+                ->Event("Not Autonomous So Disconnect", &PhysicsGrabComponentRequests::NotAutonomousSoDisconnect);
 
             bc->Class<PhysicsGrabComponent>()->RequestBus("PhysicsGrabComponentRequestBus");
         }
@@ -918,9 +926,6 @@ namespace PhysicsGrab
         if (m_networkPhysicsGrabObject != nullptr)
         {
             InputEventNotificationBus::MultiHandler::BusDisconnect();
-            m_networkPhysicsGrabComponentEnabled =
-                static_cast<NetworkPhysicsGrabComponentController*>(m_networkPhysicsGrabObject->GetController())
-                    ->GetEnableNetworkPhysicsGrabComponent();
         }
     }
 
@@ -3921,5 +3926,46 @@ namespace PhysicsGrab
         AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
         AZ::Quaternion targetQuat = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
         return targetQuat.GetEulerRadians();
+    }
+
+    bool PhysicsGrabComponent::GetIsAutonomousClient() const
+    {
+        return m_isAutonomousClient;
+    }
+
+    bool PhysicsGrabComponent::GetIsServer() const
+    {
+        return m_isServer;
+    }
+
+    bool PhysicsGrabComponent::GetIsHost() const
+    {
+        return m_isHost;
+    }
+
+    bool PhysicsGrabComponent::GetLocallyEnableNetworkPhysicsGrabComponent() const
+    {
+        return m_networkPhysicsGrabComponentEnabled;
+    }
+
+    void PhysicsGrabComponent::SetLocallyEnableNetworkPhysicsGrabComponent(const bool& new_networkPhysicsGrabComponentEnabled)
+    {
+        m_networkPhysicsGrabComponentEnabled = new_networkPhysicsGrabComponentEnabled;
+        // NetworkFPCControllerRequestBus::Event(GetEntityId(), &NetworkFPCControllerRequestBus::Events::SetEnabled, m_networkFPCEnabled);
+    }
+
+    void PhysicsGrabComponent::NetworkPhysicsGrabComponentEnabledIgnoreInputs()
+    {
+        InputEventNotificationBus::MultiHandler::BusDisconnect();
+    }
+
+    void PhysicsGrabComponent::IsAutonomousSoConnect()
+    {
+        AZ::TickBus::Handler::BusConnect();
+    }
+
+    void PhysicsGrabComponent::NotAutonomousSoDisconnect()
+    {
+        AZ::TickBus::Handler::BusDisconnect();
     }
 } // namespace PhysicsGrab

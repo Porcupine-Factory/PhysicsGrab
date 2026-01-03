@@ -240,6 +240,14 @@ namespace PhysicsGrab
         virtual bool GetIsInRotateState() const = 0;
         virtual bool GetIsInThrowState() const = 0;
         virtual bool GetObjectSphereCastHit() const = 0;
+        virtual bool GetIsAutonomousClient() const = 0;
+        virtual bool GetIsServer() const = 0;
+        virtual bool GetIsHost() const = 0;
+        virtual bool GetLocallyEnableNetworkPhysicsGrabComponent() const = 0;
+        virtual void SetLocallyEnableNetworkPhysicsGrabComponent(const bool&) = 0;
+        virtual void NetworkPhysicsGrabComponentEnabledIgnoreInputs() = 0;
+        virtual void IsAutonomousSoConnect() = 0;
+        virtual void NotAutonomousSoDisconnect() = 0;
     };
 
     using PhysicsGrabComponentRequestBus = AZ::EBus<PhysicsGrabComponentRequests>;
