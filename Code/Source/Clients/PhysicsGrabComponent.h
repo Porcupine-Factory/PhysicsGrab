@@ -35,6 +35,8 @@ namespace PhysicsGrab
         throwState
     };
 
+    class NetworkPhysicsGrabComponent;
+
     class PhysicsGrabComponent
         : public AZ::Component
         , public AZ::EntityBus::Handler
@@ -312,27 +314,6 @@ namespace PhysicsGrab
         AzPhysics::SceneEvents::OnSceneSimulationStartHandler m_sceneSimulationStartHandler;
         AzPhysics::SceneEvents::OnSceneSimulationFinishHandler m_sceneSimulationFinishHandler;
 
-        StartingPointInput::InputEventNotificationId m_grabEventId;
-        AZStd::string m_strGrab = "Grab";
-
-        StartingPointInput::InputEventNotificationId m_throwEventId;
-        AZStd::string m_strThrow = "Throw";
-
-        StartingPointInput::InputEventNotificationId m_rotateEventId;
-        AZStd::string m_strRotate = "Rotate Enable";
-
-        StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
-        AZStd::string m_strRotatePitch = "Rotate Pitch";
-
-        StartingPointInput::InputEventNotificationId m_rotateYawEventId;
-        AZStd::string m_strRotateYaw = "Rotate Yaw";
-
-        StartingPointInput::InputEventNotificationId m_rotateRollEventId;
-        AZStd::string m_strRotateRoll = "Rotate Roll";
-
-        StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
-        AZStd::string m_strGrabDistance = "Grab Distance";
-
         AZStd::string m_meshTagName = "GrabMesh";
 
         void CheckForObjects(bool detectionOnly = false);
@@ -357,6 +338,9 @@ namespace PhysicsGrab
         void UpdateInputBinding(
             StartingPointInput::InputEventNotificationId& eventId, AZStd::string& binding, const AZStd::string& newValue);
 
+        // Input event assignment and notification bus connection
+        void AssignConnectInputEvents();
+
         // PhysicsGrabNotificationBus
         void OnObjectSphereCastHit();
         void OnHoldStart();
@@ -376,6 +360,13 @@ namespace PhysicsGrab
         void HoldObjectState(float deltaTime, bool isPhysicsUpdate = false);
         void RotateObjectState(float deltaTime, bool isPhysicsUpdate = false);
         void ThrowObjectState(const float& deltaTime);
+
+        // NetworkPhysicsGrab object
+        NetworkPhysicsGrabComponent* m_networkPhysicsGrabObject = nullptr;
+        //NetworkPhysicsGrabComponentController* m_networkPhysicsGrabControllerObject = nullptr;
+
+        // Networking related variables
+        bool m_networkPhysicsGrabComponentEnabled = false;
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -414,18 +405,6 @@ namespace PhysicsGrab
         AzPhysics::CollisionLayer m_currentGrabbedCollisionLayer;
         AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
         AZStd::string m_currentGrabbedCollisionLayerName;
-
-        // Event value multipliers
-        float m_grabKeyValue = 0.f;
-        float m_throwKeyValue = 0.f;
-        float m_rotateKeyValue = 0.f;
-        float m_prevGrabKeyValue = 0.f;
-        float m_prevRotateKeyValue = 0.f;
-        float m_prevThrowKeyValue = 0.f;
-        float m_grabDistanceKeyValue = 0.f;
-        float m_pitchKeyValue = 0.f;
-        float m_yawKeyValue = 0.f;
-        float m_rollKeyValue = 0.f;
 
         float m_physicsTimeAccumulator = 0.0f;
         float m_physicsTimestep = 1.0f / 60.0f;
@@ -482,6 +461,9 @@ namespace PhysicsGrab
         float m_accumPitch = 0.0f;
         float m_accumYaw = 0.0f;
         float m_accumRoll = 0.0f;
+        float m_prevGrabKeyValue = 0.f;
+        float m_prevRotateKeyValue = 0.f;
+        float m_prevThrowKeyValue = 0.f;
 
         bool m_needsCameraFallback = false;
         bool m_enableChargeThrow = false;
@@ -543,5 +525,42 @@ namespace PhysicsGrab
                                                                      { PhysicsGrabStates::holdState, "holdState" },
                                                                      { PhysicsGrabStates::rotateState, "rotateState" },
                                                                      { PhysicsGrabStates::throwState, "throwState" } };
+        
+        // Event value multipliers
+        float m_grabKeyValue = 0.f;
+        float m_rotateKeyValue = 0.f;
+        float m_throwKeyValue = 0.f;
+        float m_grabDistanceKeyValue = 0.f;
+        float m_pitchKeyValue = 0.f;
+        float m_yawKeyValue = 0.f;
+        float m_rollKeyValue = 0.f;
+        
+        // Event IDs and action names
+        StartingPointInput::InputEventNotificationId m_grabEventId;
+        AZStd::string m_strGrab = "Grab";
+        StartingPointInput::InputEventNotificationId m_rotateEventId;
+        AZStd::string m_strRotate = "Rotate Enable";
+        StartingPointInput::InputEventNotificationId m_throwEventId;
+        AZStd::string m_strThrow = "Throw";
+        StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
+        AZStd::string m_strRotatePitch = "Rotate Pitch";
+        StartingPointInput::InputEventNotificationId m_rotateYawEventId;
+        AZStd::string m_strRotateYaw = "Rotate Yaw";
+        StartingPointInput::InputEventNotificationId m_rotateRollEventId;
+        AZStd::string m_strRotateRoll = "Rotate Roll";
+        StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
+        AZStd::string m_strGrabDistance = "Grab Distance";
+
+        // Array of action names
+        AZStd::string* m_inputNames[7] = { &m_strGrab, &m_strRotate, &m_strThrow, &m_strRotatePitch,
+                                           &m_strRotateYaw, &m_strRotateRoll, &m_strGrabDistance };
+
+        // Map of event IDs and event value multipliers
+        AZStd::map<StartingPointInput::InputEventNotificationId*, float*> m_controlMap = {
+            { &m_grabEventId, &m_grabKeyValue },         { &m_rotateEventId, &m_rotateKeyValue },
+            { &m_throwEventId, &m_throwKeyValue },       { &m_grabDistanceEventId, &m_grabDistanceKeyValue },
+            { &m_rotatePitchEventId, &m_pitchKeyValue }, { &m_rotateYawEventId, &m_yawKeyValue },
+            { &m_rotateRollEventId, &m_rollKeyValue }
+        };
     };
 } // namespace PhysicsGrab

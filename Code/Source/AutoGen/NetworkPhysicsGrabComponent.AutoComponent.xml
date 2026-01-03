@@ -6,8 +6,16 @@
     OverrideComponent="false" 
     OverrideController="true" 
     OverrideInclude="Multiplayer/NetworkPhysicsGrabComponent.h"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">    
-    
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<NetworkProperty Type="bool" Name="EnableNetworkPhysicsGrabComponent"
+				 Init="true" ReplicateFrom="Authority"
+				 ReplicateTo="Client" IsRewindable="false"
+				 IsPredictable="false" IsPublic="true"
+				 Container="Object" ExposeToEditor="false"
+				 ExposeToScript="true" GenerateEventBindings="true"
+				 Description="Determines whether NetworkNetworkPhysicsGrabComponent is enabled or disabled"/>
+	
     <NetworkInput Type="float" Name="Grab" Init="0.f" />
     <NetworkInput Type="float" Name="Rotate" Init="0.f" />
     <NetworkInput Type="float" Name="Throw" Init="0.f" />

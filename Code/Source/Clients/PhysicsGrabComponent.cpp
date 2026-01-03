@@ -805,6 +805,8 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::Activate()
     {
+        AZ_Printf("PhysicsGrabComponent", "Inside Activate!", "");
+        /*
         m_grabEventId = StartingPointInput::InputEventNotificationId(m_strGrab.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_grabEventId);
 
@@ -825,6 +827,8 @@ namespace PhysicsGrab
 
         m_rotateRollEventId = StartingPointInput::InputEventNotificationId(m_strRotateRoll.c_str());
         InputEventNotificationBus::MultiHandler::BusConnect(m_rotateRollEventId);
+        */
+        AssignConnectInputEvents();
 
         AZ::TickBus::Handler::BusConnect();
 
@@ -928,6 +932,22 @@ namespace PhysicsGrab
             // Connect EntityBus for valid ID (pointer set in OnEntityActivated)
             AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
         }
+
+        // Get access to the NetworkFPC object and its member
+        const AZ::Entity* entity = GetEntity();
+        m_networkPhysicsGrabObject = entity->FindComponent<NetworkPhysicsGrabComponent>();
+
+        // Determine if the NetworkPhysicsGrab is enabled
+        if (m_networkPhysicsGrabObject != nullptr)
+        {
+            AZ_Printf("PhysicsGrabComponent", "Network Physics Grab enabled! Disconnecting input!", "");
+            InputEventNotificationBus::MultiHandler::BusDisconnect();
+            m_networkPhysicsGrabComponentEnabled =
+                static_cast<NetworkPhysicsGrabComponentController*>(m_networkPhysicsGrabObject->GetController())
+                    ->GetEnableNetworkPhysicsGrabComponent();
+        }
+        else
+            AZ_Printf("PhysicsGrabComponent", "Network Physics Grab NOT enabled!", "");
     }
 
     // Called at the beginning of each physics tick
@@ -1046,103 +1066,58 @@ namespace PhysicsGrab
         return ca->FindEntity(activeCameraId);
     }
 
-    // Recieve the input event in OnPressed method
+    void PhysicsGrabComponent::AssignConnectInputEvents()
+    {
+        // Disconnect prior to connecting since this may be a reassignment
+        InputEventNotificationBus::MultiHandler::BusDisconnect();
+
+        if (m_controlMap.size() != (sizeof(m_inputNames) / sizeof(AZStd::string*)))
+        {
+            AZ_Error("Physics Grab Component", false, "Number of input IDs not equal to number of input names!");
+        }
+        else
+        {
+            for (auto& it_event : m_controlMap)
+            {
+                *(it_event.first) = StartingPointInput::InputEventNotificationId(
+                    (m_inputNames[std::distance(m_controlMap.begin(), m_controlMap.find(it_event.first))])->c_str());
+                if (!m_networkPhysicsGrabComponentEnabled)
+                    InputEventNotificationBus::MultiHandler::BusConnect(*(it_event.first));
+            }
+        }
+    }
+
     void PhysicsGrabComponent::OnPressed(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
-        {
             return;
-        }
 
-        if (*inputId == m_grabEventId)
+        for (auto& it_event : m_controlMap)
         {
-            m_grabKeyValue = value;
-            // AZ_Printf("Player", "Grab value %f", value);
-        }
-
-        if (*inputId == m_grabDistanceEventId)
-        {
-            m_grabDistanceKeyValue = value;
-            // AZ_Printf("Object", "Grab Distance value %f", value);
-        }
-
-        if (*inputId == m_throwEventId)
-        {
-            m_throwKeyValue = value;
-            // AZ_Printf("Player", "Throw value %f", value);
-        }
-
-        if (*inputId == m_rotateEventId)
-        {
-            m_rotateKeyValue = value;
-            // AZ_Printf("Player", "rotate value %f", value);
-        }
-
-        if (*inputId == m_rotatePitchEventId)
-        {
-            m_pitchKeyValue = value;
-            // AZ_Printf("Object", "Grab Object pitch value %f", value);
-        }
-
-        if (*inputId == m_rotateYawEventId)
-        {
-            m_yawKeyValue = value;
-            // AZ_Printf("Object", "Grab Object yaw value %f", value);
-        }
-
-        if (*inputId == m_rotateRollEventId)
-        {
-            m_rollKeyValue = value;
-            // AZ_Printf("Object", "Grab Object roll value %f", value);
+            if (*inputId == *(it_event.first))
+            {
+                *(it_event.second) = value;
+                // print the local user ID and the action name CRC
+                // AZ_Printf("Pressed", it_event.first->ToString().c_str());
+            }
         }
     }
 
-    // Recieve the input event in OnReleased method
     void PhysicsGrabComponent::OnReleased(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
-        {
             return;
-        }
-        if (*inputId == m_grabEventId)
-        {
-            m_grabKeyValue = value;
-            // AZ_Printf("Player", "Grab released value %f", value);
-        }
-        if (*inputId == m_grabDistanceEventId)
-        {
-            m_grabDistanceKeyValue = value;
-            // AZ_Printf("Player", "Grab Distance released value %f", value);
-        }
-        if (*inputId == m_throwEventId)
-        {
-            m_throwKeyValue = value;
-            // AZ_Printf("Player", "Throw released value %f", value);
-        }
-        if (*inputId == m_rotateEventId)
-        {
-            m_rotateKeyValue = value;
-            // AZ_Printf("Player", "Throw released value %f", value);
-        }
 
-        if (*inputId == m_rotatePitchEventId)
+        for (auto& it_event : m_controlMap)
         {
-            m_pitchKeyValue = value;
-            // AZ_Printf("Object", "Grab Object pitch released value %f", value);
-        }
-
-        if (*inputId == m_rotateYawEventId)
-        {
-            m_yawKeyValue = value;
-            // AZ_Printf("Object", "Grab Object yaw released value %f", value);
-        }
-
-        if (*inputId == m_rotateRollEventId)
-        {
-            m_rollKeyValue = value;
-            // AZ_Printf("Object", "Grab Object roll released value %f", value);
+            if (*inputId == *(it_event.first))
+            {
+                *(it_event.second) = value;
+                // print the local user ID and the action name CRC
+                // AZ_Printf("Released", it_event.first->ToString().c_str());
+            }
         }
     }
 
@@ -1150,9 +1125,8 @@ namespace PhysicsGrab
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
         if (inputId == nullptr)
-        {
             return;
-        }
+
         if (*inputId == m_throwEventId)
         {
             m_throwKeyValue = value;

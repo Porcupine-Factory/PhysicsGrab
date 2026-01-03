@@ -59,24 +59,25 @@ namespace PhysicsGrab
         AZStd::string m_strRotate = "Rotate Enable";
         StartingPointInput::InputEventNotificationId m_throwEventId;
         AZStd::string m_strThrow = "Throw";
+        StartingPointInput::InputEventNotificationId m_rotatePitchEventId;
+        AZStd::string m_strRotatePitch = "Rotate Pitch";
+        StartingPointInput::InputEventNotificationId m_rotateYawEventId;
+        AZStd::string m_strRotateYaw = "Rotate Yaw";
+        StartingPointInput::InputEventNotificationId m_rotateRollEventId;
+        AZStd::string m_strRotateRoll = "Rotate Roll";
         StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
         AZStd::string m_strGrabDistance = "Grab Distance";
-        StartingPointInput::InputEventNotificationId m_pitchEventId;
-        AZStd::string m_strPitch = "Rotate Pitch";
-        StartingPointInput::InputEventNotificationId m_yawEventId;
-        AZStd::string m_strYaw = "Rotate Yaw";
-        StartingPointInput::InputEventNotificationId m_rollEventId;
-        AZStd::string m_strRoll = "Rotate Roll";
 
         // Array of action names
-        AZStd::string* m_inputNames[7] = { &m_strGrab, &m_strRotate, &m_strThrow, &m_strPitch, &m_strYaw, &m_strRoll, &m_strGrabDistance };
+        AZStd::string* m_inputNames[7] = { &m_strGrab,      &m_strRotate,     &m_strThrow,       &m_strRotatePitch,
+                                           &m_strRotateYaw, &m_strRotateRoll, &m_strGrabDistance };
 
         // Map of event IDs and event value multipliers
         AZStd::map<StartingPointInput::InputEventNotificationId*, float*> m_controlMap = {
-            { &m_grabEventId, &m_grabKeyValue },   { &m_rotateEventId, &m_rotateKeyValue },
-            { &m_throwEventId, &m_throwKeyValue }, { &m_grabDistanceEventId, &m_grabDistanceKeyValue },
-            { &m_pitchEventId, &m_pitchKeyValue }, { &m_yawEventId, &m_yawKeyValue },
-            { &m_rollEventId, &m_rollKeyValue }
+            { &m_grabEventId, &m_grabKeyValue },         { &m_rotateEventId, &m_rotateKeyValue },
+            { &m_throwEventId, &m_throwKeyValue },       { &m_grabDistanceEventId, &m_grabDistanceKeyValue },
+            { &m_rotatePitchEventId, &m_pitchKeyValue }, { &m_rotateYawEventId, &m_yawKeyValue },
+            { &m_rotateRollEventId, &m_rollKeyValue }
         };
     };
 } // namespace PhysicsGrab

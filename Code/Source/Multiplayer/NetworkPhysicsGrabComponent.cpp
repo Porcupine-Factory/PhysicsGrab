@@ -42,19 +42,19 @@ namespace PhysicsGrab
         if (inputId == nullptr)
             return;
 
-        if (*inputId == m_pitchEventId)
+        if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue += value;
             return;
         }
 
-        if (*inputId == m_yawEventId)
+        if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue += value;
             return;
         }
 
-        if (*inputId == m_rollEventId)
+        if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue += value;
             return;
@@ -77,17 +77,17 @@ namespace PhysicsGrab
         if (inputId == nullptr)
             return;
 
-        if (*inputId == m_pitchEventId)
+        if (*inputId == m_rotatePitchEventId)
         {
             return;
         }
 
-        if (*inputId == m_yawEventId)
+        if (*inputId == m_rotateYawEventId)
         {
             return;
         }
 
-        if (*inputId == m_rollEventId)
+        if (*inputId == m_rotateRollEventId)
         {
             return;
         }
@@ -109,17 +109,17 @@ namespace PhysicsGrab
         if (inputId == nullptr)
             return;
 
-        if (*inputId == m_pitchEventId)
+        if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue += value;
         }
         
-        if (*inputId == m_yawEventId)
+        if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue += value;
         }
         
-        if (*inputId == m_rollEventId)
+        if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue += value;
         }
@@ -145,13 +145,13 @@ namespace PhysicsGrab
         auto* playerInput = input.FindComponentInput<NetworkPhysicsGrabComponentNetworkInput>();
 
         // Assign input values
-        playerInput->m_grab = m_physicsGrabObject->m_grabKeyValue;
-        playerInput->m_rotate = m_physicsGrabObject->m_rotateKeyValue;
-        playerInput->m_throw = m_physicsGrabObject->m_throwKeyValue;
-        playerInput->m_grabDistance = m_physicsGrabObject->m_grabDistanceKeyValue;
-        playerInput->m_pitch = m_physicsGrabObject->m_pitchKeyValue;
-        playerInput->m_yaw = m_physicsGrabObject->m_yawKeyValue;
-        playerInput->m_roll = m_physicsGrabObject->m_rollKeyValue;
+        playerInput->m_grab = m_grabKeyValue;
+        playerInput->m_rotate = m_rotateKeyValue;
+        playerInput->m_throw = m_throwKeyValue;
+        playerInput->m_grabDistance = m_grabDistanceKeyValue;
+        playerInput->m_pitch = m_pitchKeyValue;
+        playerInput->m_yaw = m_yawKeyValue;
+        playerInput->m_roll = m_rollKeyValue;
 
         m_pitchKeyValue = 0.0f;
         m_yawKeyValue = 0.0f;
@@ -164,7 +164,6 @@ namespace PhysicsGrab
         const auto* playerInput = input.FindComponentInput<NetworkPhysicsGrabComponentNetworkInput>();
 
         // Assign the Physics Grab's inputs from the input prediction
-
         m_physicsGrabObject->m_grabKeyValue = playerInput->m_grab;
         m_physicsGrabObject->m_rotateKeyValue = playerInput->m_rotate;
         m_physicsGrabObject->m_throwKeyValue = playerInput->m_throw;
@@ -173,12 +172,12 @@ namespace PhysicsGrab
         m_physicsGrabObject->m_yawKeyValue = playerInput->m_yaw;
         m_physicsGrabObject->m_rollKeyValue = playerInput->m_roll;
 
-        AZ_Printf("NetworkPhysicsGrabComponent", "Grab: %f", playerInput->m_grab);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Rotate: %f", playerInput->m_rotate);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Throw: %f", playerInput->m_throw);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Grab Distance: %f", playerInput->m_grabDistance);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Pitch: %f", playerInput->m_pitch);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
-        AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Grab: %f", playerInput->m_grab);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Rotate: %f", playerInput->m_rotate);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Throw: %f", playerInput->m_throw);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Grab Distance: %f", playerInput->m_grabDistance);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Pitch: %f", playerInput->m_pitch);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
+        // AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
     }
 } // namespace PhysicsGrab
