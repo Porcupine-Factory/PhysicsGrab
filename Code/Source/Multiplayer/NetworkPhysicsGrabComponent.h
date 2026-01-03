@@ -1,5 +1,7 @@
 #pragma once
 
+#include <PhysicsGrab/NetworkPhysicsGrabComponentBus.h>
+
 #include <Source/AutoGen/NetworkPhysicsGrabComponent.AutoComponent.h>
 
 #include <Clients/PhysicsGrabComponent.h>
@@ -9,6 +11,7 @@ namespace PhysicsGrab
 
     class NetworkPhysicsGrabComponentController
         : public NetworkPhysicsGrabComponentControllerBase
+        , public NetworkPhysicsGrabComponentRequestBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
     {
         friend class PhysicsGrabComponent;
@@ -31,6 +34,11 @@ namespace PhysicsGrab
         //! @param deltaTime amount of time to integrate the provided inputs over
         void ProcessInput(Multiplayer::NetworkInput& input, float deltaTime) override;
 
+        // NetworkPhysicsGrabComponentControllerRequestBus
+        bool GetIsNetEntityAutonomous() const override;
+        bool GetEnabled() const override;
+        void SetEnabled(const bool& new_enabled) override;
+
         // AZ::InputEventNotificationBus interface
         void OnPressed(float value) override;
         void OnReleased(float value) override;
@@ -39,6 +47,21 @@ namespace PhysicsGrab
     private:
         // Input event assignment and notification bus connection
         void AssignConnectInputEvents();
+
+        // NetworkPhysicsGrabComponentControllerNotificationBus
+        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
+        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
+
+        // Keep track of the previous deltaTime for averaging
+        float m_prevDeltaTime = 1.f / 60.f;
+
+        // EnableNetworkPhysicsGrabComponent Changed Event
+        AZ::Event<bool>::Handler m_enableNetworkPhysicsGrabComponentChangedEvent;
+        void OnEnableNetworkPhysicsGrabComponentChanged(const bool& enable);
+        bool m_disabled = false;
+
+        // Signals when the controller is determined to be autonomous or not
+        bool m_autonomousNotDetermined = true;
 
         // PhysicsGrabComponent object
         PhysicsGrabComponent* m_physicsGrabObject = nullptr;

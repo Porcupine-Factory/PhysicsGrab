@@ -180,5 +180,72 @@ namespace PhysicsGrab
         // AZ_Printf("NetworkPhysicsGrabComponent", "Pitch: %f", playerInput->m_pitch);
         // AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
         // AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
+
+        NetworkPhysicsGrabComponentNotificationBus::Broadcast(
+            &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickStart,
+            deltaTime,
+            m_physicsGrabObject->m_isServer,
+            GetEntityId());
+
+        // Do network stuff
+
+        NetworkPhysicsGrabComponentNotificationBus::Broadcast(
+            &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickFinish,
+            deltaTime,
+            m_physicsGrabObject->m_isServer,
+            GetEntityId());
+    }
+
+    // Event Notification methods for use in scripts
+    void NetworkPhysicsGrabComponentController::OnNetworkTickStart(
+        [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entity)
+    {
+    }
+    void NetworkPhysicsGrabComponentController::OnNetworkTickFinish(
+        [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entity)
+    {
+    }
+
+    void NetworkPhysicsGrabComponentController::OnEnableNetworkPhysicsGrabComponentChanged(const bool& enable)
+    {
+        m_disabled = !enable;
+        m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = enable;
+        if (!m_disabled)
+        {
+            m_physicsGrabObject->NetworkPhysicsGrabComponentEnabledIgnoreInputs();
+            AssignConnectInputEvents();
+        }
+        else
+        {
+            InputEventNotificationBus::MultiHandler::BusDisconnect();
+            m_physicsGrabObject->AssignConnectInputEvents();
+        }
+    }
+
+    // Request Bus getter and setter methods for use in scripts
+    bool NetworkPhysicsGrabComponentController::GetIsNetEntityAutonomous() const
+    {
+        return IsNetEntityRoleAutonomous();
+    }
+
+    bool NetworkPhysicsGrabComponentController::GetEnabled() const
+    {
+        return !m_disabled;
+    }
+
+    void NetworkPhysicsGrabComponentController::SetEnabled(const bool& new_enabled)
+    {
+        m_disabled = !new_enabled;
+        m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = new_enabled;
+        if (!m_disabled)
+        {
+            m_physicsGrabObject->NetworkPhysicsGrabComponentEnabledIgnoreInputs();
+            AssignConnectInputEvents();
+        }
+        else
+        {
+            InputEventNotificationBus::MultiHandler::BusDisconnect();
+            m_physicsGrabObject->AssignConnectInputEvents();
+        }
     }
 } // namespace PhysicsGrab

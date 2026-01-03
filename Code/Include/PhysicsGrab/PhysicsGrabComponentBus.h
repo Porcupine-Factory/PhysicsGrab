@@ -265,6 +265,8 @@ namespace PhysicsGrab
         virtual void OnThrowStateCounterZero() = 0;
         virtual void OnMaxThrowDistance() = 0;
         virtual void OnChargeComplete() = 0;
+        virtual void OnNetworkPhysicsGrabTickStart(const float&) = 0;
+        virtual void OnNetworkPhysicsGrabTickFinish(const float&) = 0;
     };
 
     using PhysicsGrabNotificationBus = AZ::EBus<PhysicsGrabNotifications>;
@@ -287,7 +289,9 @@ namespace PhysicsGrab
             OnThrowStop,
             OnThrowStateCounterZero,
             OnMaxThrowDistance,
-            OnChargeComplete);
+            OnChargeComplete,
+            OnNetworkPhysicsGrabTickStart,
+            OnNetworkPhysicsGrabTickFinish);
 
         void OnObjectSphereCastHit() override
         {
@@ -328,6 +332,14 @@ namespace PhysicsGrab
         void OnChargeComplete() override
         {
             Call(FN_OnChargeComplete);
+        }
+        void OnNetworkPhysicsGrabTickStart(const float& deltaTime) override
+        {
+            Call(FN_OnNetworkPhysicsGrabTickStart, deltaTime);
+        }
+        void OnNetworkPhysicsGrabTickFinish(const float& deltaTime) override
+        {
+            Call(FN_OnNetworkPhysicsGrabTickFinish, deltaTime);
         }
     };
 } // namespace PhysicsGrab

@@ -14,6 +14,7 @@
 
 #include <PhysicsGrab/PidController.h>
 #include <PhysicsGrab/PhysicsGrabComponentBus.h>
+#include <PhysicsGrab/NetworkPhysicsGrabComponentBus.h>
 #include <PhysicsGrab/PhysicsGrabTypeIds.h>
 
 #include <LmbrCentral/Scripting/TagComponentBus.h>
@@ -42,9 +43,11 @@ namespace PhysicsGrab
         , public AZ::EntityBus::Handler
         , public Camera::CameraNotificationBus::Handler
         , public AZ::TickBus::Handler
+        , public NetworkPhysicsGrabComponentNotificationBus::Handler
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public PhysicsGrabComponentRequestBus::Handler
     {
+        friend class NetworkPhysicsGrabComponent;
         friend class NetworkPhysicsGrabComponentController;
 
     public:
@@ -74,6 +77,10 @@ namespace PhysicsGrab
         void OnHeld(float value) override;
 
         void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
+
+        // NetworkPhysicsGrabComponentNotificationBus
+        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
+        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
 
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
@@ -371,7 +378,7 @@ namespace PhysicsGrab
 
         // NetworkPhysicsGrab object
         NetworkPhysicsGrabComponent* m_networkPhysicsGrabObject = nullptr;
-        //NetworkPhysicsGrabComponentController* m_networkPhysicsGrabControllerObject = nullptr;
+        //NetworkPhysicsGrabComponent* m_networkPhysicsGrabControllerObject = nullptr;
 
         // Networking related variables
         bool m_networkPhysicsGrabComponentEnabled = false;
@@ -417,10 +424,13 @@ namespace PhysicsGrab
         AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
         AZStd::string m_currentGrabbedCollisionLayerName;
 
+        // Stores the previous frame tick deltaTime, previous physics timestep, and previous NetworkFPC tick deltaTime
         float m_physicsTimeAccumulator = 0.0f;
         float m_physicsTimestep = 1.0f / 60.0f;
-        float m_prevTimestep = 1.0f / 60.f;
         float m_prevDeltaTime = 1.0f / 60.f;
+        float m_prevTimestep = 1.f / 60.f;
+        float m_prevNetworkPhysicsGrabDeltaTime = 1.f / 60.f;
+
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;
         float m_maxDropDistance = 4.5f;
@@ -475,6 +485,7 @@ namespace PhysicsGrab
         float m_prevGrabKeyValue = 0.f;
         float m_prevRotateKeyValue = 0.f;
         float m_prevThrowKeyValue = 0.f;
+        float m_physicsTimestepScaleFactor = 1.f;
 
         bool m_needsCameraFallback = false;
         bool m_enableChargeThrow = false;

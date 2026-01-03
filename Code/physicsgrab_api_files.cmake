@@ -9,4 +9,6 @@ set(FILES
     Include/PhysicsGrab/PhysicsGrabComponentBus.h
     Include/PhysicsGrab/PhysicsGrabBus.h
     Include/PhysicsGrab/PhysicsGrabTypeIds.h
+    Include/PhysicsGrab/NetworkPhysicsGrabBus.h
+    Include/PhysicsGrab/NetworkPhysicsGrabComponentBus.h
 )

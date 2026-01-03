@@ -1192,6 +1192,36 @@ namespace PhysicsGrab
         m_prevDeltaTime = deltaTime;
     }
 
+    void PhysicsGrabComponent::OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity)
+    {
+        if (!m_isAutonomousClient && !m_isServer && !m_isHost)
+        {
+            NotAutonomousSoDisconnect();
+            return;
+        }
+        if (entity != GetEntityId())
+            return;
+        if (!((m_isHost && server) || (m_isServer && !server)))
+        {
+            PhysicsGrabNotificationBus::Broadcast(
+                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickStart, deltaTime * m_physicsTimestepScaleFactor);
+            if (!m_networkPhysicsGrabComponentEnabled)
+                NetworkPhysicsGrabComponentRequestBus::BroadcastResult(
+                    m_networkPhysicsGrabComponentEnabled, &NetworkPhysicsGrabComponentRequestBus::Events::GetEnabled);
+            ProcessStates(((deltaTime + m_prevNetworkPhysicsGrabDeltaTime) / 2.f), 0);
+        }
+    }
+
+    void PhysicsGrabComponent::OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity)
+    {
+        if ((!m_isAutonomousClient && !m_isServer && !m_isHost) || (entity != GetEntityId()))
+            return;
+        if (!((m_isHost && server) || (m_isServer && !server)))
+            PhysicsGrabNotificationBus::Broadcast(
+                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickFinish, deltaTime * m_physicsTimestepScaleFactor);
+        m_prevNetworkPhysicsGrabDeltaTime = deltaTime;
+    }
+
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
     void PhysicsGrabComponent::InterpolateMeshTransform(float deltaTime)
     {
