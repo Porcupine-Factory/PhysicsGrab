@@ -8,6 +8,11 @@ namespace PhysicsGrab
 
     NetworkPhysicsGrabComponentController::NetworkPhysicsGrabComponentController(NetworkPhysicsGrabComponent& parent)
         : NetworkPhysicsGrabComponentControllerBase(parent)
+        , m_enableNetworkPhysicsGrabComponentChangedEvent(
+              [this](bool enable)
+              {
+                  OnEnableNetworkPhysicsGrabComponentChanged(enable);
+              })
     {
     }
 
@@ -127,13 +132,28 @@ namespace PhysicsGrab
 
     void NetworkPhysicsGrabComponentController::OnActivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)
     {
-        if (IsNetEntityRoleAutonomous())
-            AssignConnectInputEvents();
+        NetworkPhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
+
+        // Subscribe to EnableNetworkPhysicsGrabComponent change events
+        EnableNetworkPhysicsGrabComponentAddEvent(m_enableNetworkPhysicsGrabComponentChangedEvent);
 
         // Get access to the PhysicsGrabComponent object and its members
         const AZ::Entity* entity = GetParent().GetEntity();
         m_physicsGrabObject = entity->FindComponent<PhysicsGrabComponent>();
         m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = GetEnableNetworkPhysicsGrabComponent();
+
+        m_physicsGrabObject->NetworkPhysicsGrabComponentEnabledIgnoreInputs();
+
+        if (IsNetEntityRoleAutonomous())
+        {
+            m_autonomousNotDetermined = false;
+            m_physicsGrabObject->IsAutonomousSoConnect();
+            AssignConnectInputEvents();
+            if (IsNetEntityRoleAuthority())
+                m_physicsGrabObject->m_isHost = true;
+            else
+                m_physicsGrabObject->m_isAutonomousClient = true;
+        }
     }
 
     void NetworkPhysicsGrabComponentController::OnDeactivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)
@@ -162,6 +182,19 @@ namespace PhysicsGrab
     void NetworkPhysicsGrabComponentController::ProcessInput(
         Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)
     {
+
+        // Disconnect from various buses when the NetworkPhysicsGrabComponentController is not autonomous, and only do this once
+        if (m_autonomousNotDetermined)
+        {
+            m_physicsGrabObject->NotAutonomousSoDisconnect();
+            if (IsNetEntityRoleAuthority())
+                m_physicsGrabObject->m_isServer = true;
+            m_autonomousNotDetermined = false;
+        }
+
+        if (!m_physicsGrabObject->m_isServer && !m_physicsGrabObject->m_isHost && !m_physicsGrabObject->m_isAutonomousClient)
+            return;
+
         const auto* playerInput = input.FindComponentInput<NetworkPhysicsGrabComponentNetworkInput>();
 
         // Assign the Physics Grab's inputs from the input prediction

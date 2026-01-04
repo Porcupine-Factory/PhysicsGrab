@@ -3981,7 +3981,8 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetLocallyEnableNetworkPhysicsGrabComponent(const bool& new_networkPhysicsGrabComponentEnabled)
     {
         m_networkPhysicsGrabComponentEnabled = new_networkPhysicsGrabComponentEnabled;
-        // NetworkFPCControllerRequestBus::Event(GetEntityId(), &NetworkFPCControllerRequestBus::Events::SetEnabled, m_networkFPCEnabled);
+        NetworkPhysicsGrabComponentRequestBus::Event(
+            GetEntityId(), &NetworkPhysicsGrabComponentRequestBus::Events::SetEnabled, m_networkPhysicsGrabComponentEnabled);
     }
 
     void PhysicsGrabComponent::NetworkPhysicsGrabComponentEnabledIgnoreInputs()
