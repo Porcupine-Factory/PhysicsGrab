@@ -937,7 +937,7 @@ namespace PhysicsGrab
 
         if (!m_isObjectKinematic && (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
-            ProcessStates((physicsTimestep + m_prevTimestep) / 2.f, true);
+            ProcessStates((physicsTimestep + m_prevTimestep) / 2.f, 1);
         }
 
         // Reset time accumulator
@@ -1129,10 +1129,10 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::ProcessStates(const float& deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::ProcessStates(const float& deltaTime, const AZ::u8& tickTimestepNetwork)
     {
         // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
-        if (isPhysicsUpdate)
+        if (tickTimestepNetwork == 1)
         {
             // Only handle hold and rotate for dynamic during physics fixed time steps
             if (m_isObjectKinematic)
@@ -1142,10 +1142,10 @@ namespace PhysicsGrab
             switch (m_state)
             {
             case PhysicsGrabStates::holdState:
-                HoldObjectState(deltaTime, isPhysicsUpdate);
+                HoldObjectState(deltaTime, tickTimestepNetwork);
                 break;
             case PhysicsGrabStates::rotateState:
-                RotateObjectState(deltaTime, isPhysicsUpdate);
+                RotateObjectState(deltaTime, tickTimestepNetwork);
                 break;
             default:
                 return;
@@ -1182,7 +1182,7 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
-        ProcessStates((deltaTime + m_prevDeltaTime) / 2.f);
+        ProcessStates((deltaTime + m_prevDeltaTime) / 2.f, 0);
         if (m_meshSmoothing)
         {
             InterpolateMeshTransform((deltaTime + m_prevDeltaTime) / 2.f);
@@ -1208,7 +1208,7 @@ namespace PhysicsGrab
             if (!m_networkPhysicsGrabComponentEnabled)
                 NetworkPhysicsGrabComponentRequestBus::BroadcastResult(
                     m_networkPhysicsGrabComponentEnabled, &NetworkPhysicsGrabComponentRequestBus::Events::GetEnabled);
-            ProcessStates(((deltaTime + m_prevNetworkPhysicsGrabDeltaTime) / 2.f), 0);
+            ProcessStates(((deltaTime + m_prevNetworkPhysicsGrabDeltaTime) / 2.f), 2);
         }
     }
 
@@ -1522,14 +1522,14 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::HoldObjectState(float deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::HoldObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {
             CheckForObjects();
         }
 
-        if (isPhysicsUpdate)
+        if (tickTimestepNetwork == 1)
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
@@ -1628,14 +1628,14 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::RotateObjectState(float deltaTime, bool isPhysicsUpdate)
+    void PhysicsGrabComponent::RotateObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {
             CheckForObjects();
         }
 
-        if (isPhysicsUpdate)
+        if (tickTimestepNetwork == 1)
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
