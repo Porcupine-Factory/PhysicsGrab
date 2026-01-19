@@ -57,10 +57,10 @@ ly_add_target(
             Gem::FirstPersonController
             Gem::LmbrCentral.Static
             Gem::Atom_RPI.Public
-	    Gem::MultiplayerPhysX5.Client
+	    Gem::AMultiplayerPhysX5.Client
             # For autogen components
             PRIVATE
-            Gem::MultiplayerPhysX5.Client.Static
+            Gem::AMultiplayerPhysX5.Client.Static
     AUTOGEN_RULES
         *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
         *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
@@ -90,10 +90,10 @@ ly_add_target(
             Gem::PhysX5.Static
             Gem::LmbrCentral.Static
             Gem::Atom_RPI.Public
-	    Gem::MultiplayerPhysX5.Client
+	    Gem::AMultiplayerPhysX5.Client
             # For autogen components
             PRIVATE
-            Gem::MultiplayerPhysX5.Client.Static
+            Gem::AMultiplayerPhysX5.Client.Static
     AUTOGEN_RULES
         *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
         *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
