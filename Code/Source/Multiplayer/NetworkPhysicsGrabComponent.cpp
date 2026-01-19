@@ -158,6 +158,9 @@ namespace PhysicsGrab
 
     void NetworkPhysicsGrabComponentController::OnDeactivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)
     {
+        InputEventNotificationBus::MultiHandler::BusDisconnect();
+        NetworkPhysicsGrabComponentRequestBus::Handler::BusDisconnect();
+        m_enableNetworkPhysicsGrabComponentChangedEvent.Disconnect();
     }
 
     void NetworkPhysicsGrabComponentController::CreateInput(
