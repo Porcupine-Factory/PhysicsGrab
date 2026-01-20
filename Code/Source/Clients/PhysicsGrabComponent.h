@@ -14,8 +14,10 @@
 
 #include <PhysicsGrab/PidController.h>
 #include <PhysicsGrab/PhysicsGrabComponentBus.h>
-#include <PhysicsGrab/NetworkPhysicsGrabComponentBus.h>
 #include <PhysicsGrab/PhysicsGrabTypeIds.h>
+#ifdef NETWORKPHYSICSGRAB
+#include <PhysicsGrab/NetworkPhysicsGrabComponentBus.h>
+#endif
 
 #include <LmbrCentral/Scripting/TagComponentBus.h>
 
@@ -43,7 +45,9 @@ namespace PhysicsGrab
         , public AZ::EntityBus::Handler
         , public Camera::CameraNotificationBus::Handler
         , public AZ::TickBus::Handler
+#ifdef NETWORKPHYSICSGRAB
         , public NetworkPhysicsGrabComponentNotificationBus::Handler
+#endif
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public PhysicsGrabComponentRequestBus::Handler
     {
@@ -79,8 +83,10 @@ namespace PhysicsGrab
         void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 
         // NetworkPhysicsGrabComponentNotificationBus
+#ifdef NETWORKPHYSICSGRAB
         void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
         void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
+#endif
 
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
@@ -377,8 +383,11 @@ namespace PhysicsGrab
         void ThrowObjectState(const float& deltaTime);
 
         // NetworkPhysicsGrab object
+#ifdef NETWORKPHYSICSGRAB
         NetworkPhysicsGrabComponent* m_networkPhysicsGrabObject = nullptr;
-        //NetworkPhysicsGrabComponent* m_networkPhysicsGrabControllerObject = nullptr;
+#else
+        bool* m_networkPhysicsGrabObject = nullptr;
+#endif
 
         // Networking related variables
         bool m_networkPhysicsGrabComponentEnabled = false;

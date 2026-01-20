@@ -1,6 +1,8 @@
 #include <Clients/PhysicsGrabComponent.h>
 
+#ifdef NETWORKPHYSICSGRAB
 #include <Multiplayer/NetworkPhysicsGrabComponent.h>
+#endif
 
 #include <Atom/RPI.Public/ViewportContext.h>
 #include <Atom/RPI.Public/ViewportContextBus.h>
@@ -856,6 +858,9 @@ namespace PhysicsGrab
         }
         // Connect the handler to the request bus
         PhysicsGrabComponentRequestBus::Handler::BusConnect(GetEntityId());
+#ifdef NETWORKPHYSICSGRAB
+        NetworkPhysicsGrabComponentNotificationBus::Handler::BusConnect(GetEntityId());
+#endif
 
         // Check whether the game is being ran in the O3DE editor
         AZ::ApplicationTypeQuery applicationType;
@@ -918,9 +923,11 @@ namespace PhysicsGrab
             AZ::EntityBus::Handler::BusConnect(m_grabbingEntityId);
         }
 
-        // Get access to the NetworkFPC object and its member
+        // Get access to the NetworkPhysicsGrab object and its member
+#ifdef NETWORKPHYSICSGRAB
         const AZ::Entity* entity = GetEntity();
         m_networkPhysicsGrabObject = entity->FindComponent<NetworkPhysicsGrabComponent>();
+#endif
 
         // Determine if the NetworkPhysicsGrab is enabled
         if (m_networkPhysicsGrabObject != nullptr)
@@ -999,6 +1006,9 @@ namespace PhysicsGrab
         AZ::TickBus::Handler::BusDisconnect();
         InputEventNotificationBus::MultiHandler::BusDisconnect();
         PhysicsGrabComponentRequestBus::Handler::BusDisconnect();
+#ifdef NETWORKPHYSICSGRAB
+        NetworkPhysicsGrabComponentNotificationBus::Handler::BusDisconnect();
+#endif
 
         m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         m_sceneSimulationStartHandler.Disconnect();
