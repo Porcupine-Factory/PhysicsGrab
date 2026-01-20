@@ -6,6 +6,8 @@
 
 #include <Clients/PhysicsGrabComponent.h>
 
+#include <Multiplayer/Components/NetworkRigidBodyComponent.h>
+
 namespace PhysicsGrab
 {
 

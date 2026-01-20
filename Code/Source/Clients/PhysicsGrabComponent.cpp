@@ -2064,19 +2064,23 @@ namespace PhysicsGrab
                 AZ::Vector3 linearForce = m_massIndependentHeldPID ? m_grabbedObjectMass * linearPidOutput : linearPidOutput;
 
                 // Apply as impulse
-                AZ::Vector3 linearImpulse = linearForce * deltaTime;
-                if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != PhysicsGrabStates::rotateState))
+                m_linearImpulse = linearForce * deltaTime;
+
+                if (!m_networkPhysicsGrabComponentEnabled)
                 {
-                    Physics::RigidBodyRequestBus::Event(
-                        m_grabbedObjectEntityId,
-                        &Physics::RigidBodyRequests::ApplyLinearImpulseAtWorldPoint,
-                        linearImpulse,
-                        effectivePoint);
-                }
-                else
-                {
-                    Physics::RigidBodyRequestBus::Event(
-                        m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, linearImpulse);
+                    if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != PhysicsGrabStates::rotateState))
+                    {
+                        Physics::RigidBodyRequestBus::Event(
+                            m_grabbedObjectEntityId,
+                            &Physics::RigidBodyRequests::ApplyLinearImpulseAtWorldPoint,
+                            m_linearImpulse,
+                            effectivePoint);
+                    }
+                    else
+                    {
+                        Physics::RigidBodyRequestBus::Event(
+                            m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyLinearImpulse, m_linearImpulse);
+                    }
                 }
             }
             else

@@ -223,8 +223,42 @@ namespace PhysicsGrab
             m_physicsGrabObject->m_isServer,
             GetEntityId());
 
-#if AZ_TRAIT_SERVER
         // Do network stuff
+#if AZ_TRAIT_SERVER
+        if (IsNetEntityRoleAuthority())
+        {
+            if (m_physicsGrabObject->m_grabbedObjectEntityId.IsValid())
+            {
+                AZ::Entity* grabbedEntity = m_physicsGrabObject->GetEntityPtr(m_physicsGrabObject->m_grabbedObjectEntityId);
+                if (grabbedEntity)
+                {
+                    Multiplayer::NetBindComponent* netBind = grabbedEntity->FindComponent<Multiplayer::NetBindComponent>();
+                    if (netBind != nullptr)
+                    {
+                        Multiplayer::NetEntityId netId = netBind->GetNetEntityId();
+                        Multiplayer::ConstNetworkEntityHandle entityHandle =
+                            Multiplayer::GetMultiplayer()->GetNetworkEntityManager()->GetEntity(netId);
+
+                        if (entityHandle != nullptr && entityHandle.GetEntity() != nullptr)
+                        {
+                            Multiplayer::NetworkRigidBodyComponent* rigidBodyComponent =
+                                entityHandle.GetEntity()->FindComponent<Multiplayer::NetworkRigidBodyComponent>();
+                            if (rigidBodyComponent)
+                            {
+                                AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
+                                AZ::TransformBus::EventResult(
+                                    grabbedEntityTranslation,
+                                    m_physicsGrabObject->m_grabbedObjectEntityId,
+                                    &AZ::TransformBus::Events::GetWorldTranslation);
+
+                                // AZ_Printf("NetworkPhysicsGrabComponent", "Calling SendApplyImpulse");
+                                rigidBodyComponent->SendApplyImpulse(m_physicsGrabObject->m_linearImpulse, grabbedEntityTranslation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 #endif
 
         NetworkPhysicsGrabComponentNotificationBus::Broadcast(

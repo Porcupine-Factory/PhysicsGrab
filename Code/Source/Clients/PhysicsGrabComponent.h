@@ -409,6 +409,7 @@ namespace PhysicsGrab
         AZ::Vector3 m_currentAngularVelocity = AZ::Vector3::CreateZero();
         AZ::Vector3 m_hitPosition = AZ::Vector3::CreateZero();
         AZ::Vector3 m_localGrabOffset = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_linearImpulse = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_detectedObjectEntityId;
         AZ::EntityId m_meshEntityId;
