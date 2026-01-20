@@ -1,4 +1,3 @@
-
 # Currently we are in the Code folder: ${CMAKE_CURRENT_LIST_DIR}
 # Get the platform specific folder ${pal_dir} for the current folder: ${CMAKE_CURRENT_LIST_DIR}/Platform/${PAL_PLATFORM_NAME}
 # Note: o3de_pal_dir will take care of the details for us, as this may be a restricted platform
@@ -34,73 +33,120 @@ ly_add_target(
 
 # The ${gem_name}.Private.Object target is an internal target
 # It should not be used outside of this Gems CMakeLists.txt
-if(TARGET Gem::FirstPersonController)
-ly_add_target(
-    NAME ${gem_name}.Private.Object STATIC
-    NAMESPACE Gem
-    FILES_CMAKE
-        physicsgrab_private_files.cmake
-	physicsgrab_autogen_files.cmake
-        ${pal_dir}/physicsgrab_private_files.cmake
-    TARGET_PROPERTIES
-        O3DE_PRIVATE_TARGET TRUE
-    INCLUDE_DIRECTORIES
-        PRIVATE
-            Include
-            Source
-    BUILD_DEPENDENCIES
-        PUBLIC
-            AZ::AzCore
-            AZ::AzFramework
-            Gem::StartingPointInput.Static
-            Gem::PhysX5.Static
-            Gem::FirstPersonController
-            Gem::LmbrCentral.Static
-            Gem::Atom_RPI.Public
-	    Gem::AMultiplayerPhysX5.Client
-            # For autogen components
-            PRIVATE
-            Gem::AMultiplayerPhysX5.Client.Static
-    AUTOGEN_RULES
-        *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
-        *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
-        *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
-        *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
-
-)
+if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
+    if(TARGET Gem::FirstPersonController)
+        ly_add_target(
+            NAME ${gem_name}.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_private_files.cmake
+                physicsgrab_autogen_files.cmake
+                ${pal_dir}/physicsgrab_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzCore
+                    AZ::AzFramework
+                    Gem::StartingPointInput.Static
+                    Gem::PhysX5.Static
+                    Gem::FirstPersonController
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+                    # For autogen components
+                    Gem::AMultiplayerPhysX5.Unified.Static
+                PRIVATE
+                    Gem::AMultiplayerPhysX5.Unified.Static
+            AUTOGEN_RULES
+                *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
+                *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
+                *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
+                *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
+        )
+    else()
+        ly_add_target(
+            NAME ${gem_name}.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_private_files.cmake
+                physicsgrab_autogen_files.cmake
+                ${pal_dir}/physicsgrab_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzCore
+                    AZ::AzFramework
+                    Gem::StartingPointInput.Static
+                    Gem::PhysX5.Static
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+                    # For autogen components
+                    Gem::AMultiplayerPhysX5.Unified.Static
+                PRIVATE
+                    Gem::AMultiplayerPhysX5.Unified.Static
+            AUTOGEN_RULES
+                *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
+                *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
+                *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
+                *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
+        )
+    endif()
 else()
-ly_add_target(
-    NAME ${gem_name}.Private.Object STATIC
-    NAMESPACE Gem
-    FILES_CMAKE
-        physicsgrab_private_files.cmake
-	physicsgrab_autogen_files.cmake
-        ${pal_dir}/physicsgrab_private_files.cmake
-    TARGET_PROPERTIES
-        O3DE_PRIVATE_TARGET TRUE
-    INCLUDE_DIRECTORIES
-        PRIVATE
-            Include
-            Source
-    BUILD_DEPENDENCIES
-        PUBLIC
-            AZ::AzCore
-            AZ::AzFramework
-            Gem::StartingPointInput.Static
-            Gem::PhysX5.Static
-            Gem::LmbrCentral.Static
-            Gem::Atom_RPI.Public
-	    Gem::AMultiplayerPhysX5.Client
-            # For autogen components
-            PRIVATE
-            Gem::AMultiplayerPhysX5.Client.Static
-    AUTOGEN_RULES
-        *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
-        *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
-        *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
-        *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
-
-)
+    if(TARGET Gem::FirstPersonController)
+        ly_add_target(
+            NAME ${gem_name}.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_private_files.cmake
+                ${pal_dir}/physicsgrab_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzCore
+                    AZ::AzFramework
+                    Gem::StartingPointInput.Static
+                    Gem::PhysX5.Static
+                    Gem::FirstPersonController
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+        )
+    else()
+        ly_add_target(
+            NAME ${gem_name}.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_private_files.cmake
+                ${pal_dir}/physicsgrab_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzCore
+                    AZ::AzFramework
+                    Gem::StartingPointInput.Static
+                    Gem::PhysX5.Static
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+        )
+    endif()
 endif()
 
 # Here add ${gem_name} target, it depends on the Private Object library and Public API interface
@@ -172,46 +218,46 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
     # which is only to be used by this gems CMakeLists.txt and any subdirectories
     # Other gems should not use this target
     if(TARGET Gem::FirstPersonController)
-    ly_add_target(
-        NAME ${gem_name}.Editor.Private.Object STATIC
-        NAMESPACE Gem
-        FILES_CMAKE
-            physicsgrab_editor_private_files.cmake
-        TARGET_PROPERTIES
-            O3DE_PRIVATE_TARGET TRUE
-        INCLUDE_DIRECTORIES
-            PRIVATE
-                Include
-                Source
-        BUILD_DEPENDENCIES
-            PUBLIC
-                AZ::AzToolsFramework
-                Gem::${gem_name}.Private.Object
-	        Gem::StartingPointInput.Static
-	        Gem::FirstPersonController
-	        Gem::LmbrCentral.Static
-                Gem::Atom_RPI.Public
-    )
+        ly_add_target(
+            NAME ${gem_name}.Editor.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_editor_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzToolsFramework
+                    Gem::${gem_name}.Private.Object
+                    Gem::StartingPointInput.Static
+                    Gem::FirstPersonController
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+        )
     else()
-    ly_add_target(
-        NAME ${gem_name}.Editor.Private.Object STATIC
-        NAMESPACE Gem
-        FILES_CMAKE
-            physicsgrab_editor_private_files.cmake
-        TARGET_PROPERTIES
-            O3DE_PRIVATE_TARGET TRUE
-        INCLUDE_DIRECTORIES
-            PRIVATE
-                Include
-                Source
-        BUILD_DEPENDENCIES
-            PUBLIC
-                AZ::AzToolsFramework
-                Gem::${gem_name}.Private.Object
-	        Gem::StartingPointInput.Static
-	        Gem::LmbrCentral.Static
-                Gem::Atom_RPI.Public
-    )
+        ly_add_target(
+            NAME ${gem_name}.Editor.Private.Object STATIC
+            NAMESPACE Gem
+            FILES_CMAKE
+                physicsgrab_editor_private_files.cmake
+            TARGET_PROPERTIES
+                O3DE_PRIVATE_TARGET TRUE
+            INCLUDE_DIRECTORIES
+                PRIVATE
+                    Include
+                    Source
+            BUILD_DEPENDENCIES
+                PUBLIC
+                    AZ::AzToolsFramework
+                    Gem::${gem_name}.Private.Object
+                    Gem::StartingPointInput.Static
+                    Gem::LmbrCentral.Static
+                    Gem::Atom_RPI.Public
+        )
     endif()
 
     ly_add_target(

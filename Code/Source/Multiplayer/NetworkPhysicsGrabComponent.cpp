@@ -223,7 +223,9 @@ namespace PhysicsGrab
             m_physicsGrabObject->m_isServer,
             GetEntityId());
 
+#if AZ_TRAIT_SERVER
         // Do network stuff
+#endif
 
         NetworkPhysicsGrabComponentNotificationBus::Broadcast(
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickFinish,
