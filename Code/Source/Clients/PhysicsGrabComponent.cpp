@@ -1215,9 +1215,11 @@ namespace PhysicsGrab
         {
             PhysicsGrabNotificationBus::Broadcast(
                 &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickStart, deltaTime * m_physicsTimestepScaleFactor);
+#ifdef NETWORKPHYSICSGRAB
             if (!m_networkPhysicsGrabComponentEnabled)
                 NetworkPhysicsGrabComponentRequestBus::BroadcastResult(
                     m_networkPhysicsGrabComponentEnabled, &NetworkPhysicsGrabComponentRequestBus::Events::GetEnabled);
+#endif
             ProcessStates(((deltaTime + m_prevNetworkPhysicsGrabDeltaTime) / 2.f), 2);
         }
     }
@@ -2608,6 +2610,12 @@ namespace PhysicsGrab
     {
     }
     void PhysicsGrabComponent::OnChargeComplete()
+    {
+    }
+    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickStart([[maybe_unused]] const float& deltaTime)
+    {
+    }
+    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickFinish([[maybe_unused]] const float& deltaTime)
     {
     }
 
@@ -4012,5 +4020,8 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::NotAutonomousSoDisconnect()
     {
         AZ::TickBus::Handler::BusDisconnect();
+        m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
+        m_sceneSimulationStartHandler.Disconnect();
+        m_sceneSimulationFinishHandler.Disconnect();
     }
 } // namespace PhysicsGrab
