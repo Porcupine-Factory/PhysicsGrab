@@ -177,15 +177,45 @@ namespace PhysicsGrab
         playerInput->m_yaw = m_yawKeyValue;
         playerInput->m_roll = m_rollKeyValue;
 
+        if (m_physicsGrabObject)
+        {
+            // Get the grabbing entity transform (camera or FPC camera)
+            AZ::Transform cameraTransform = AZ::Transform::CreateIdentity();
+
+#ifdef FIRST_PERSON_CONTROLLER
+            if (m_physicsGrabObject->m_useFPControllerForGrab)
+            {
+                AZ::TransformInterface* cameraRotationTransform = nullptr;
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                if (cameraRotationTransform)
+                {
+                    cameraTransform = cameraRotationTransform->GetWorldTM();
+                }
+            }
+            else
+#endif
+            {
+                if (m_physicsGrabObject->m_grabbingEntityPtr)
+                {
+                    cameraTransform = m_physicsGrabObject->m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+                }
+            }
+
+            playerInput->m_cameraPosition = cameraTransform.GetTranslation();
+            playerInput->m_cameraRotation = cameraTransform.GetRotation();
+            playerInput->m_currentGrabDistance = m_physicsGrabObject->m_grabDistance;
+        }
+
         m_pitchKeyValue = 0.0f;
         m_yawKeyValue = 0.0f;
         m_rollKeyValue = 0.0f;
     }
 
-    void NetworkPhysicsGrabComponentController::ProcessInput(
-        Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)
+    void NetworkPhysicsGrabComponentController::ProcessInput(Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)
     {
-
         // Disconnect from various buses when the NetworkPhysicsGrabComponentController is not autonomous, and only do this once
         if (m_autonomousNotDetermined)
         {
@@ -194,9 +224,6 @@ namespace PhysicsGrab
                 m_physicsGrabObject->m_isServer = true;
             m_autonomousNotDetermined = false;
         }
-
-        if (!m_physicsGrabObject->m_isServer && !m_physicsGrabObject->m_isHost && !m_physicsGrabObject->m_isAutonomousClient)
-            return;
 
         const auto* playerInput = input.FindComponentInput<NetworkPhysicsGrabComponentNetworkInput>();
 
@@ -217,6 +244,17 @@ namespace PhysicsGrab
         // AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
         // AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
 
+        // Store camera transform for server to use in spherecast
+        m_physicsGrabObject->m_networkCameraPosition = playerInput->m_cameraPosition;
+        m_physicsGrabObject->m_networkCameraRotation = playerInput->m_cameraRotation;
+        m_physicsGrabObject->m_grabDistance = playerInput->m_currentGrabDistance;
+
+        // Enable network camera transform usage for server
+        if (m_physicsGrabObject->m_isServer)
+        {
+            m_physicsGrabObject->m_useNetworkCameraTransform = true;
+        }
+
         NetworkPhysicsGrabComponentNotificationBus::Broadcast(
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickStart,
             deltaTime,
@@ -229,33 +267,34 @@ namespace PhysicsGrab
         {
             if (m_physicsGrabObject->m_grabbedObjectEntityId.IsValid())
             {
-                AZ::Entity* grabbedEntity = m_physicsGrabObject->GetEntityPtr(m_physicsGrabObject->m_grabbedObjectEntityId);
-                if (grabbedEntity)
+                // Get grabbed object position
+                AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
+                AZ::TransformBus::EventResult(
+                    grabbedEntityTranslation, m_physicsGrabObject->m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
+
+                // Apply linear impulse (for holding)
+                Physics::RigidBodyRequestBus::Event(
+                    m_physicsGrabObject->m_grabbedObjectEntityId,
+                    &Physics::RigidBodyRequests::ApplyLinearImpulse,
+                    m_physicsGrabObject->m_linearImpulse);
+
+                // Apply angular velocity (for rotation)
+                if (m_physicsGrabObject->GetIsInRotateState() || m_physicsGrabObject->GetIsInHeldState())
                 {
-                    Multiplayer::NetBindComponent* netBind = grabbedEntity->FindComponent<Multiplayer::NetBindComponent>();
-                    if (netBind != nullptr)
+                    if (!m_physicsGrabObject->m_isObjectKinematic)
                     {
-                        Multiplayer::NetEntityId netId = netBind->GetNetEntityId();
-                        Multiplayer::ConstNetworkEntityHandle entityHandle =
-                            Multiplayer::GetMultiplayer()->GetNetworkEntityManager()->GetEntity(netId);
-
-                        if (entityHandle != nullptr && entityHandle.GetEntity() != nullptr)
-                        {
-                            Multiplayer::NetworkRigidBodyComponent* rigidBodyComponent =
-                                entityHandle.GetEntity()->FindComponent<Multiplayer::NetworkRigidBodyComponent>();
-                            if (rigidBodyComponent)
-                            {
-                                AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
-                                AZ::TransformBus::EventResult(
-                                    grabbedEntityTranslation,
-                                    m_physicsGrabObject->m_grabbedObjectEntityId,
-                                    &AZ::TransformBus::Events::GetWorldTranslation);
-
-                                // AZ_Printf("NetworkPhysicsGrabComponent", "Calling SendApplyImpulse");
-                                rigidBodyComponent->SendApplyImpulse(m_physicsGrabObject->m_linearImpulse, grabbedEntityTranslation);
-                            }
-                        }
+                        AZ::Vector3 angularVelocity = m_physicsGrabObject->m_currentAngularVelocity;
+                        Physics::RigidBodyRequestBus::Event(
+                            m_physicsGrabObject->m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, angularVelocity);
                     }
+                }
+                else
+                {
+                    // Zero out when not rotating
+                    Physics::RigidBodyRequestBus::Event(
+                        m_physicsGrabObject->m_grabbedObjectEntityId,
+                        &Physics::RigidBodyRequests::SetAngularVelocity,
+                        AZ::Vector3::CreateZero());
                 }
             }
         }

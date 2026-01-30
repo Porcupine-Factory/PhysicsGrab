@@ -1142,7 +1142,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::ProcessStates(const float& deltaTime, const AZ::u8& tickTimestepNetwork)
     {
         // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
-        if (tickTimestepNetwork == 1)
+        if (tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             // Only handle hold and rotate for dynamic during physics fixed time steps
             if (m_isObjectKinematic)
@@ -1172,10 +1172,10 @@ namespace PhysicsGrab
             CheckForObjectsState();
             break;
         case PhysicsGrabStates::holdState:
-            HoldObjectState(deltaTime);
+            HoldObjectState(deltaTime, tickTimestepNetwork);
             break;
         case PhysicsGrabStates::rotateState:
-            RotateObjectState(deltaTime);
+            RotateObjectState(deltaTime, tickTimestepNetwork);
             break;
         case PhysicsGrabStates::throwState:
             ThrowObjectState(deltaTime);
@@ -1338,7 +1338,12 @@ namespace PhysicsGrab
             // Set Grabbed Object as Dynamic Rigid Body if set to be dynamic while holding
             else
             {
-                SetGrabbedObjectKinematicElseDynamic(false);
+                // Don't enable local physics simulation on autonomous clients with networked objects
+                // NetworkRigidBodyComponent keeps them kinematic for replication
+                if (!(m_networkPhysicsGrabComponentEnabled && m_isAutonomousClient))
+                {
+                    SetGrabbedObjectKinematicElseDynamic(false);
+                }
                 m_isObjectKinematic = false;
             }
 
@@ -1408,9 +1413,14 @@ namespace PhysicsGrab
             m_localGrabOffset = objectTM.GetInverse().TransformPoint(m_hitPosition);
 
             // Compute dynamic initial grab distance as projected distance along forward to effective point
-            const AZ::Vector3 initialEffectivePoint = m_offsetGrab ? m_hitPosition : objectTM.GetTranslation();
-            const float projectedGrabDistance = (initialEffectivePoint - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
-            m_grabDistance = AZ::GetClamp(projectedGrabDistance, m_minGrabDistance, m_maxGrabDistance);
+            // For multiplayer, only calculate if not already set by client
+            if (!m_networkPhysicsGrabComponentEnabled || m_isAutonomousClient || m_isHost)
+            {
+                const AZ::Vector3 initialEffectivePoint = m_offsetGrab ? m_hitPosition : objectTM.GetTranslation();
+                const float projectedGrabDistance =
+                    (initialEffectivePoint - m_grabbingEntityTransform.GetTranslation()).Dot(m_forwardVector);
+                m_grabDistance = AZ::GetClamp(projectedGrabDistance, m_minGrabDistance, m_maxGrabDistance);
+            }
 
             m_meshEntityPtr = nullptr;
             if (m_meshSmoothing && !m_isObjectKinematic)
@@ -1541,14 +1551,18 @@ namespace PhysicsGrab
             CheckForObjects();
         }
 
-        if (tickTimestepNetwork == 1)
+        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)) || tickTimestepNetwork == 2)
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
-
+          
             // Update dynamic objects on physics fixed time step
             HoldObject(deltaTime);
-            return;
+            // Early return ONLY for physics tick, continue for network tick
+            if (tickTimestepNetwork == 1)
+            {
+                return;
+            }
         }
 
         // Update m_grabbingEntityTransform to ensure it's current
@@ -1573,7 +1587,17 @@ namespace PhysicsGrab
         }
 
         // Compute current absolute distance and check against threshold
-        const AZ::Vector3 grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbingEntityTranslation;
+        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        {
+            // On server with network mode, use network camera position (same as grab reference)
+            grabbingEntityTranslation = m_networkCameraPosition;
+        }
+        else
+        {
+            // Otherwise use grabbing entity transform
+            grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        }
         AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
         AZ::TransformBus::EventResult(grabbedEntityTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
         const float currentGrabDistance = grabbedEntityTranslation.GetDistance(grabbingEntityTranslation);
@@ -1591,7 +1615,10 @@ namespace PhysicsGrab
         }
 
         // Update grab distance every frame (non-physics) for reliable input capture
-        UpdateGrabDistance(deltaTime);
+        if (!m_networkPhysicsGrabComponentEnabled || m_isAutonomousClient || m_isHost)
+        {
+            UpdateGrabDistance(deltaTime);
+        }
 
         if (m_isObjectKinematic)
         {
@@ -1647,7 +1674,7 @@ namespace PhysicsGrab
             CheckForObjects();
         }
 
-        if (tickTimestepNetwork == 1)
+        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)) || tickTimestepNetwork == 2)
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
@@ -1655,7 +1682,11 @@ namespace PhysicsGrab
             // Update dynamic objects on physics fixed time step
             HoldObject(deltaTime);
             RotateObject(deltaTime);
-            return;
+            // Early return ONLY for physics tick, continue for network tick
+            if (tickTimestepNetwork == 1)
+            {
+                return;
+            }
         }
 
         // Update m_grabbingEntityTransform to ensure it's current
@@ -1680,7 +1711,17 @@ namespace PhysicsGrab
             }
         }
         // Compute current absolute distance and check against threshold
-        const AZ::Vector3 grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        AZ::Vector3 grabbingEntityTranslation;
+        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        {
+            // On server with network mode, use network camera position (same as grab reference)
+            grabbingEntityTranslation = m_networkCameraPosition;
+        }
+        else
+        {
+            // Otherwise use grabbing entity transform
+            grabbingEntityTranslation = m_grabbingEntityTransform.GetTranslation();
+        }
         AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
         AZ::TransformBus::EventResult(grabbedEntityTranslation, m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
         const float currentGrabDistance = grabbedEntityTranslation.GetDistance(grabbingEntityTranslation);
@@ -1700,7 +1741,10 @@ namespace PhysicsGrab
         }
 
         // Update grab distance every frame (non-physics) for reliable input capture
-        UpdateGrabDistance(deltaTime);
+        if (!m_networkPhysicsGrabComponentEnabled || m_isAutonomousClient || m_isHost)
+        {
+            UpdateGrabDistance(deltaTime);
+        }
 
         // Accumulate mouse deltas every frame for dynamic (to capture all between physics ticks)
         m_accumPitch += m_pitchKeyValue;
@@ -1833,26 +1877,35 @@ namespace PhysicsGrab
             m_detectedObjectEntityId = AZ::EntityId();
         }
 
-#ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
+        // On server, use network camera transform if available
+        if (m_isServer && m_useNetworkCameraTransform)
         {
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                m_cameraRotationTransform,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-            m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
-            m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+            m_grabbingEntityTransform = AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
+            m_forwardVector = m_grabbingEntityTransform.GetBasisY();
         }
         else
-#endif
         {
-            // Get forward vector relative to the grabbing entity's transform
-            m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+#ifdef FIRST_PERSON_CONTROLLER
 
-            // Get our grabbing entity's world transform
-            m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            if (m_useFPControllerForGrab)
+            {
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    m_cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
+                m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+            }
+            else
+#endif
+            {
+                // Get forward vector relative to the grabbing entity's transform
+                m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+
+                // Get our grabbing entity's world transform
+                m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+            }
         }
-
         // Perform a spherecast query to check if colliding with object
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
 
@@ -1959,53 +2012,69 @@ namespace PhysicsGrab
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
     void PhysicsGrabComponent::HoldObject(float deltaTime)
     {
-// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
-#ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
+        // On server, use network camera transform if available
+        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
         {
-            AZ::Vector3 characterPosition;
-            AZ::TransformBus::EventResult(characterPosition, GetEntityId(), &AZ::TransformBus::Events::GetWorldTranslation);
-            float eyeHeight = 0.f;
-            float cameraLocalZTravelDistance = 0.f;
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                m_cameraRotationTransform,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-            m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                eyeHeight, GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequests::GetEyeHeight);
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                cameraLocalZTravelDistance,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraLocalZTravelDistance);
+            // Construct camera transform from network data
+            AZ::Transform networkCameraTransform =
+                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
 
-            AZ::Transform characterTM;
-            AZ::TransformBus::EventResult(characterTM, GetEntityId(), &AZ::TransformInterface::GetWorldTM);
-            m_grabReference = characterTM;
+            // Get forward vector from network camera
+            m_forwardVector = networkCameraTransform.GetBasisY();
 
-            // Use the spherecasts axis direction pose as the virtual Z axis to align with in case the character is rotated on X or Y
-            AZ::Vector3 spherecastsAxisDirectionPose = AZ::Vector3::CreateAxisZ();
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                spherecastsAxisDirectionPose,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetSphereCastsAxisDirectionPose);
-
-            m_grabReference.SetTranslation(characterPosition + spherecastsAxisDirectionPose * (eyeHeight + cameraLocalZTravelDistance));
-            // Add forward offset to the height-adjusted position
-            m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
+            // Set grab reference using network camera position and forward vector
+            m_grabReference = networkCameraTransform;
+            m_grabReference.SetTranslation(m_networkCameraPosition + m_forwardVector * m_grabDistance);
         }
         // Use user-specified grab entity for Grab Reference
         else
-#endif
         {
-            // Get forward vector relative to the grabbing entity's transform
-            m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
-            // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
-            m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
-            m_grabReference.SetTranslation(
-                m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetTranslation() + m_forwardVector * m_grabDistance);
-        }
+// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+#ifdef FIRST_PERSON_CONTROLLER
+            if (m_useFPControllerForGrab)
+            {
+                AZ::Vector3 characterPosition;
+                AZ::TransformBus::EventResult(characterPosition, GetEntityId(), &AZ::TransformBus::Events::GetWorldTranslation);
+                float eyeHeight = 0.f;
+                float cameraLocalZTravelDistance = 0.f;
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    m_cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    eyeHeight, GetEntityId(), &FirstPersonController::FirstPersonControllerComponentRequests::GetEyeHeight);
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    cameraLocalZTravelDistance,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraLocalZTravelDistance);
 
+                AZ::Transform characterTM;
+                AZ::TransformBus::EventResult(characterTM, GetEntityId(), &AZ::TransformInterface::GetWorldTM);
+                m_grabReference = characterTM;
+
+                // Use the spherecasts axis direction pose as the virtual Z axis to align with in case the character is rotated on X or Y
+                AZ::Vector3 spherecastsAxisDirectionPose = AZ::Vector3::CreateAxisZ();
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    spherecastsAxisDirectionPose,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetSphereCastsAxisDirectionPose);
+
+                m_grabReference.SetTranslation(characterPosition + spherecastsAxisDirectionPose * (eyeHeight + cameraLocalZTravelDistance));
+                // Add forward offset to the height-adjusted position
+                m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
+            }
+            // Use user-specified grab entity for Grab Reference
+            else
+#endif
+            {
+                // Get forward vector relative to the grabbing entity's transform
+                m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+                // Creates a reference point for the Grabbed Object translation in front of the Grabbing Entity
+                m_grabReference = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+                m_grabReference.SetTranslation(m_grabReference.GetTranslation() + m_forwardVector * m_grabDistance);
+            }
+        }
         // Get object transform once (center of mass transform)
         AZ::Transform objectTM = AZ::Transform::CreateIdentity();
         AZ::TransformBus::EventResult(objectTM, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
@@ -2139,25 +2208,39 @@ namespace PhysicsGrab
     // Rigid Body type, or if KinematicWhileHeld is enabled.
     void PhysicsGrabComponent::RotateObject(float deltaTime)
     {
-// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
-#ifdef FIRST_PERSON_CONTROLLER
-        if (m_useFPControllerForGrab)
+        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
         {
-            FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                m_cameraRotationTransform,
-                GetEntityId(),
-                &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-            m_rightVector = m_cameraRotationTransform->GetWorldTM().GetBasisX();
-            m_upVector = m_cameraRotationTransform->GetWorldTM().GetBasisZ();
+            AZ::Transform networkCameraTransform =
+                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
+        
+            m_rightVector = networkCameraTransform.GetBasisX();
+            m_upVector = networkCameraTransform.GetBasisZ();
+            m_forwardVector = networkCameraTransform.GetBasisY();
         }
         else
-#endif
         {
-            // Get right vector relative to the grabbing entity's transform
-            m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
-
-            // Get up vector relative to the grabbing entity's transform
-            m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
+// Use FPC Entity directly for Grab Reference for tighter tracking and avoid camera lerp lag
+#ifdef FIRST_PERSON_CONTROLLER
+            if (m_useFPControllerForGrab)
+            {
+                FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
+                    m_cameraRotationTransform,
+                    GetEntityId(),
+                    &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
+                m_rightVector = m_cameraRotationTransform->GetWorldTM().GetBasisX();
+                m_upVector = m_cameraRotationTransform->GetWorldTM().GetBasisZ();
+                m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
+            }
+            else
+#endif
+            {
+                // Get right vector relative to the grabbing entity's transform
+                m_rightVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisX();
+                // Get up vector relative to the grabbing entity's transform
+                m_upVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisZ();
+                // Get forward vector relative to the grabbing entity's transform
+                m_forwardVector = m_grabbingEntityPtr->GetTransform()->GetWorldTM().GetBasisY();
+            }
         }
         // Pitch value depends on whether pitch input key is ignored via SetPitchKeyValue()
         const float pitchValue = m_ignorePitchKeyInputValue ? m_pitchKeyValue : m_pitch;
@@ -2209,7 +2292,10 @@ namespace PhysicsGrab
                 m_currentAngularVelocity = targetAngularVelocity;
             }
 
-            SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
+            if (!m_networkPhysicsGrabComponentEnabled)
+            {
+                SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
+            }
 
             // Reset accumulators after applying in physics branch
             m_accumPitch = 0.0f;
@@ -2383,8 +2469,13 @@ namespace PhysicsGrab
 
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
-// Determine the effective rotation based on First Person Controller usage if enabled
-// Use camera rotation for full tidal lock, or character rotation otherwise
+        // Determine the effective rotation based on First Person Controller usage if enabled
+        // Use camera rotation for full tidal lock, or character rotation otherwise
+        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        {
+            return m_networkCameraRotation;
+        }
+
 #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
@@ -2475,11 +2566,14 @@ namespace PhysicsGrab
                 }
 
                 // Compute angular impulse from torque and delta time
-                AZ::Vector3 angularImpulse = angularTorque * deltaTime;
+                m_angularImpulse = angularTorque * deltaTime;
 
-                // Apply angular impulse to the grabbed object
-                Physics::RigidBodyRequestBus::Event(
-                    m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, angularImpulse);
+                if (!m_networkPhysicsGrabComponentEnabled)
+                {
+                    // Apply angular impulse to the grabbed object
+                    Physics::RigidBodyRequestBus::Event(
+                        m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, m_angularImpulse);
+                }
             }
             else
             {

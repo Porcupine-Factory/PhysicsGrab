@@ -396,6 +396,9 @@ namespace PhysicsGrab
         bool m_isServer = false;
         bool m_isHost = false;
         bool m_isAutonomousClient = false;
+        bool m_useNetworkCameraTransform = false;
+        AZ::Vector3 m_networkCameraPosition = AZ::Vector3::CreateZero();
+        AZ::Quaternion m_networkCameraRotation = AZ::Quaternion::CreateIdentity();
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();
         AZ::Transform m_grabReference = AZ::Transform::CreateIdentity();
@@ -421,6 +424,7 @@ namespace PhysicsGrab
         AZ::Vector3 m_hitPosition = AZ::Vector3::CreateZero();
         AZ::Vector3 m_localGrabOffset = AZ::Vector3::CreateZero();
         AZ::Vector3 m_linearImpulse = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_angularImpulse = AZ::Vector3::CreateZero();
 
         AZ::EntityId m_detectedObjectEntityId;
         AZ::EntityId m_meshEntityId;

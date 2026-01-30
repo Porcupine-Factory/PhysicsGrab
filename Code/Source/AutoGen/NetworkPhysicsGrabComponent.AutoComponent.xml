@@ -23,5 +23,8 @@
     <NetworkInput Type="float" Name="Pitch" Init="0.f" />
     <NetworkInput Type="float" Name="Yaw" Init="0.f" />
     <NetworkInput Type="float" Name="Roll" Init="0.f" />
+    <NetworkInput Type="AZ::Vector3" Name="CameraPosition" Init="AZ::Vector3::CreateZero()" />
+    <NetworkInput Type="AZ::Quaternion" Name="CameraRotation" Init="AZ::Quaternion::CreateIdentity()" />
+    <NetworkInput Type="float" Name="CurrentGrabDistance" Init="0.f" />
 
 </Component>
