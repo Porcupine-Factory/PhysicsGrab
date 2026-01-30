@@ -452,7 +452,7 @@ namespace PhysicsGrab
         float m_maxDropDistance = 4.5f;
         float m_grabDistance = 0.0f;
         float m_grabDistanceWheelSensitivity = 0.01f;
-        float m_velocityCompDampRate = 9.f;
+        float m_velocityCompDampRate = 20.f;
         float m_angularVelocityDampRate = 25.0f;
         float m_kinematicYawRotateScale = 1.2f;
         float m_kinematicPitchRotateScale = 2.133f;
@@ -468,7 +468,7 @@ namespace PhysicsGrab
         float m_currentObjectLinearDamping = 0.0f;
         float m_grabDistanceSpeed = 0.4f;
         float m_grabResponse = 10.f;
-        float m_throwImpulse = 8.0f;
+        float m_throwImpulse = 10.0f;
         float m_minThrowImpulse = 3.0f;
         float m_maxThrowImpulse = 20.0f;
         float m_chargeTime = 3.0f;
@@ -517,7 +517,7 @@ namespace PhysicsGrab
         bool m_kinematicWhileHeld = false;
         bool m_freezeCharacterRotation = true;
         bool m_rotateEnableToggle = false;
-        bool m_tidalLock = true;
+        bool m_tidalLock = false;
         bool m_dynamicTidalLock = true;
         bool m_kinematicTidalLock = true;
         bool m_fullTidalLockForFPC = true;
