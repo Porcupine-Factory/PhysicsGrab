@@ -805,7 +805,9 @@ namespace PhysicsGrab
                 ->Event("Get Is Host", &PhysicsGrabComponentRequests::GetIsHost)
                 ->Event("Get Locally Enable NetworkFPC", &PhysicsGrabComponentRequests::GetLocallyEnableNetworkPhysicsGrabComponent)
                 ->Event("Set Locally Enable NetworkFPC", &PhysicsGrabComponentRequests::SetLocallyEnableNetworkPhysicsGrabComponent)
-                ->Event("Network Physics Grab Component Enabled Ignore Inputs", &PhysicsGrabComponentRequests::NetworkPhysicsGrabComponentEnabledIgnoreInputs)
+                ->Event(
+                    "Network Physics Grab Component Enabled Ignore Inputs",
+                    &PhysicsGrabComponentRequests::NetworkPhysicsGrabComponentEnabledIgnoreInputs)
                 ->Event("Is Autonomous So Connect", &PhysicsGrabComponentRequests::IsAutonomousSoConnect)
                 ->Event("Not Autonomous So Disconnect", &PhysicsGrabComponentRequests::NotAutonomousSoDisconnect);
 
@@ -861,33 +863,6 @@ namespace PhysicsGrab
 #ifdef NETWORKPHYSICSGRAB
         NetworkPhysicsGrabComponentNotificationBus::Handler::BusConnect(GetEntityId());
 #endif
-
-        // Check whether the game is being ran in the O3DE editor
-        AZ::ApplicationTypeQuery applicationType;
-        if (auto componentApplicationRequests = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
-            componentApplicationRequests != nullptr)
-        {
-            componentApplicationRequests->QueryApplicationType(applicationType);
-        }
-
-        // If not running in the editor and the timestep is less than or equal to 1/(refresh rate) then disable mesh smoothing
-        if (!applicationType.IsEditor())
-        {
-            AzFramework::NativeWindowHandle windowHandle = nullptr;
-            windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
-            if (windowHandle)
-            {
-                float refreshRate = 60.f;
-                AzFramework::WindowRequestBus::EventResult(
-                    refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
-
-                const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
-
-                // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
-                if (config->m_fixedTimestep <= 1.f / refreshRate)
-                    m_meshSmoothing = false;
-            }
-        }
 
         // Initialize Held Object PID controller
         m_pidController = PidController<AZ::Vector3>(
@@ -976,6 +951,40 @@ namespace PhysicsGrab
             {
                 AZ_Warning(
                     "PhysicsGrabComponent", false, "Failed to retrieve grabbing entity for ID %s.", m_grabbingEntityId.ToString().c_str());
+            }
+        }
+
+        if (m_networkPhysicsGrabObject != nullptr
+#ifdef NETWORKPHYSICSGRAB
+            || Multiplayer::NetEntityId() != static_cast<Multiplayer::NetEntityId>(-1)
+#endif
+        )
+        {
+            // Check whether the game is being ran in the O3DE editor
+            AZ::ApplicationTypeQuery applicationType;
+            if (auto componentApplicationRequests = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
+                componentApplicationRequests != nullptr)
+            {
+                componentApplicationRequests->QueryApplicationType(applicationType);
+            }
+
+            // If not running in the editor and the timestep is less than or equal to 1/(refresh rate) then disable mesh smoothing
+            if (!applicationType.IsEditor())
+            {
+                AzFramework::NativeWindowHandle windowHandle = nullptr;
+                windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
+                if (windowHandle)
+                {
+                    float refreshRate = 60.f;
+                    AzFramework::WindowRequestBus::EventResult(
+                        refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
+
+                    const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
+
+                    // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
+                    if (config->m_fixedTimestep <= 1.f / refreshRate)
+                        m_meshSmoothing = false;
+                }
             }
         }
     }
@@ -1555,7 +1564,7 @@ namespace PhysicsGrab
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
-          
+
             // Update dynamic objects on physics fixed time step
             HoldObject(deltaTime);
             // Early return ONLY for physics tick, continue for network tick
@@ -2212,7 +2221,7 @@ namespace PhysicsGrab
         {
             AZ::Transform networkCameraTransform =
                 AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
-        
+
             m_rightVector = networkCameraTransform.GetBasisX();
             m_upVector = networkCameraTransform.GetBasisZ();
             m_forwardVector = networkCameraTransform.GetBasisY();
