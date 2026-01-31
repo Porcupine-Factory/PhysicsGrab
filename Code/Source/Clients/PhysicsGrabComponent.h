@@ -508,7 +508,7 @@ namespace PhysicsGrab
         bool m_isChargingThrow = false;
         bool m_enableChargeWhileRotating = false;
         bool m_hasNotifiedChargeComplete = false;
-        bool m_meshSmoothing = true;
+        bool m_meshSmoothing = false;
         bool m_velocityCompensation = true;
         bool m_smoothDynamicRotation = true;
         bool m_disableGravityWhileHeld = false;

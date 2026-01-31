@@ -54,9 +54,6 @@ namespace PhysicsGrab
         void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
         void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
 
-        // Keep track of the previous deltaTime for averaging
-        float m_prevDeltaTime = 1.f / 60.f;
-
         // EnableNetworkPhysicsGrabComponent Changed Event
         AZ::Event<bool>::Handler m_enableNetworkPhysicsGrabComponentChangedEvent;
         void OnEnableNetworkPhysicsGrabComponentChanged(const bool& enable);
