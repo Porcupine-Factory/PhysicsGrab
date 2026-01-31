@@ -179,20 +179,20 @@ namespace PhysicsGrab
 
         if (m_physicsGrabObject)
         {
-            // Get the grabbing entity transform (camera or FPC camera)
-            AZ::Transform cameraTransform = AZ::Transform::CreateIdentity();
+            // Get the grabbing entity transform
+            AZ::Transform grabbingEntityTransform = AZ::Transform::CreateIdentity();
 
 #ifdef FIRST_PERSON_CONTROLLER
             if (m_physicsGrabObject->m_useFPControllerForGrab)
             {
-                AZ::TransformInterface* cameraRotationTransform = nullptr;
+                AZ::TransformInterface* fpcCameraRotationTransform = nullptr;
                 FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
-                    cameraRotationTransform,
+                    fpcCameraRotationTransform,
                     GetEntityId(),
                     &FirstPersonController::FirstPersonControllerComponentRequests::GetCameraRotationTransform);
-                if (cameraRotationTransform)
+                if (fpcCameraRotationTransform)
                 {
-                    cameraTransform = cameraRotationTransform->GetWorldTM();
+                    grabbingEntityTransform = fpcCameraRotationTransform->GetWorldTM();
                 }
             }
             else
@@ -200,13 +200,13 @@ namespace PhysicsGrab
             {
                 if (m_physicsGrabObject->m_grabbingEntityPtr)
                 {
-                    cameraTransform = m_physicsGrabObject->m_grabbingEntityPtr->GetTransform()->GetWorldTM();
+                    grabbingEntityTransform = m_physicsGrabObject->m_grabbingEntityPtr->GetTransform()->GetWorldTM();
                 }
             }
 
-            playerInput->m_cameraPosition = cameraTransform.GetTranslation();
-            playerInput->m_cameraRotation = cameraTransform.GetRotation();
-            playerInput->m_currentGrabDistance = m_physicsGrabObject->m_grabDistance;
+            SetGrabbingEntityTranslation(grabbingEntityTransform.GetTranslation());
+            SetGrabbingEntityRotation(grabbingEntityTransform.GetRotation());
+            SetCurrentGrabDistance(m_physicsGrabObject->m_grabDistance);
         }
 
         m_pitchKeyValue = 0.0f;
@@ -244,10 +244,10 @@ namespace PhysicsGrab
         // AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
         // AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
 
-        // Store camera transform for server to use in spherecast
-        m_physicsGrabObject->m_networkCameraPosition = playerInput->m_cameraPosition;
-        m_physicsGrabObject->m_networkCameraRotation = playerInput->m_cameraRotation;
-        m_physicsGrabObject->m_grabDistance = playerInput->m_currentGrabDistance;
+        // Store grabbing entity transform for server detection
+        m_physicsGrabObject->m_networkCameraTranslation = GetGrabbingEntityTranslation();
+        m_physicsGrabObject->m_networkCameraRotation = GetGrabbingEntityRotation();
+        m_physicsGrabObject->m_grabDistance = GetCurrentGrabDistance();
 
         // Enable network camera transform usage for server
         if (m_physicsGrabObject->m_isServer)

@@ -397,7 +397,7 @@ namespace PhysicsGrab
         bool m_isHost = false;
         bool m_isAutonomousClient = false;
         bool m_useNetworkCameraTransform = false;
-        AZ::Vector3 m_networkCameraPosition = AZ::Vector3::CreateZero();
+        AZ::Vector3 m_networkCameraTranslation = AZ::Vector3::CreateZero();
         AZ::Quaternion m_networkCameraRotation = AZ::Quaternion::CreateIdentity();
 
         AZ::Transform m_grabbingEntityTransform = AZ::Transform::CreateIdentity();

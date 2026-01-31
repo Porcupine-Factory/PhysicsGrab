@@ -1600,7 +1600,7 @@ namespace PhysicsGrab
         if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
         {
             // On server with network mode, use network camera position (same as grab reference)
-            grabbingEntityTranslation = m_networkCameraPosition;
+            grabbingEntityTranslation = m_networkCameraTranslation;
         }
         else
         {
@@ -1724,7 +1724,7 @@ namespace PhysicsGrab
         if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
         {
             // On server with network mode, use network camera position (same as grab reference)
-            grabbingEntityTranslation = m_networkCameraPosition;
+            grabbingEntityTranslation = m_networkCameraTranslation;
         }
         else
         {
@@ -1889,7 +1889,7 @@ namespace PhysicsGrab
         // On server, use network camera transform if available
         if (m_isServer && m_useNetworkCameraTransform)
         {
-            m_grabbingEntityTransform = AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
+            m_grabbingEntityTransform = AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
             m_forwardVector = m_grabbingEntityTransform.GetBasisY();
         }
         else
@@ -2026,14 +2026,14 @@ namespace PhysicsGrab
         {
             // Construct camera transform from network data
             AZ::Transform networkCameraTransform =
-                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
+                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
 
             // Get forward vector from network camera
             m_forwardVector = networkCameraTransform.GetBasisY();
 
             // Set grab reference using network camera position and forward vector
             m_grabReference = networkCameraTransform;
-            m_grabReference.SetTranslation(m_networkCameraPosition + m_forwardVector * m_grabDistance);
+            m_grabReference.SetTranslation(m_networkCameraTranslation + m_forwardVector * m_grabDistance);
         }
         // Use user-specified grab entity for Grab Reference
         else
@@ -2220,7 +2220,7 @@ namespace PhysicsGrab
         if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
         {
             AZ::Transform networkCameraTransform =
-                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraPosition);
+                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
 
             m_rightVector = networkCameraTransform.GetBasisX();
             m_upVector = networkCameraTransform.GetBasisZ();

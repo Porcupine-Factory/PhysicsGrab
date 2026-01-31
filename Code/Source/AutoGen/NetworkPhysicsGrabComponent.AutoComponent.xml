@@ -8,23 +8,17 @@
     OverrideInclude="Multiplayer/NetworkPhysicsGrabComponent.h"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-	<NetworkProperty Type="bool" Name="EnableNetworkPhysicsGrabComponent"
-				 Init="true" ReplicateFrom="Authority"
-				 ReplicateTo="Client" IsRewindable="false"
-				 IsPredictable="false" IsPublic="true"
-				 Container="Object" ExposeToEditor="false"
-				 ExposeToScript="true" GenerateEventBindings="true"
-				 Description="Determines whether NetworkNetworkPhysicsGrabComponent is enabled or disabled"/>
-	
+	<NetworkProperty Type="bool" Name="EnableNetworkPhysicsGrabComponent" Init="true" ReplicateFrom="Authority" ReplicateTo="Client" IsRewindable="false" IsPredictable="false" IsPublic="true" Container="Object" ExposeToEditor="false" ExposeToScript="true" GenerateEventBindings="true" Description="Determines whether NetworkNetworkPhysicsGrabComponent is enabled or disabled"/>
+    <NetworkProperty Type="AZ::Vector3" Name="GrabbingEntityTranslation" Init="AZ::Vector3::CreateZero()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity translation of the autonomous player, replicated to the server for spherecasts and grab position calculations" />
+    <NetworkProperty Type="AZ::Quaternion" Name="GrabbingEntityRotation" Init="AZ::Quaternion::CreateIdentity()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity rotation of the autonomous player, replicated to the server for spherecasts and grab orientation calculations" />
+    <NetworkProperty Type="float" Name="CurrentGrabDistance" Init="0.0f" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Distance from the grabbing entity to the grabbed object's translation, replicated to the server" />
+
     <NetworkInput Type="float" Name="Grab" Init="0.f" />
     <NetworkInput Type="float" Name="Rotate" Init="0.f" />
     <NetworkInput Type="float" Name="Throw" Init="0.f" />
-    <NetworkInput Type="float" Name="GrabDistance" Init="0.f" />
     <NetworkInput Type="float" Name="Pitch" Init="0.f" />
     <NetworkInput Type="float" Name="Yaw" Init="0.f" />
     <NetworkInput Type="float" Name="Roll" Init="0.f" />
-    <NetworkInput Type="AZ::Vector3" Name="CameraPosition" Init="AZ::Vector3::CreateZero()" />
-    <NetworkInput Type="AZ::Quaternion" Name="CameraRotation" Init="AZ::Quaternion::CreateIdentity()" />
-    <NetworkInput Type="float" Name="CurrentGrabDistance" Init="0.f" />
+    <NetworkInput Type="float" Name="GrabDistance" Init="0.f" />
 
 </Component>
