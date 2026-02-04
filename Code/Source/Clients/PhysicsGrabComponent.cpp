@@ -1560,7 +1560,7 @@ namespace PhysicsGrab
             CheckForObjects();
         }
 
-        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)) || tickTimestepNetwork == 2)
+        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)))
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
@@ -1682,8 +1682,8 @@ namespace PhysicsGrab
         {
             CheckForObjects();
         }
-
-        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)) || tickTimestepNetwork == 2)
+        // Only call HoldObject and RotateObject during physics tick, and only server or host when networked
+        if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)))
         {
             // Compensate for potential velocity change from grab entity
             ComputeGrabbingEntityVelocity(deltaTime);
@@ -2155,8 +2155,8 @@ namespace PhysicsGrab
 
                 // Apply as impulse
                 m_linearImpulse = linearForce * deltaTime;
-
-                if (!m_networkPhysicsGrabComponentEnabled)
+                // In multiplayer, only the server or host applies physics impulses
+                if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
                 {
                     if (m_offsetGrab && (m_gravityAppliesToPointRotation || m_state != PhysicsGrabStates::rotateState))
                     {
@@ -2192,7 +2192,9 @@ namespace PhysicsGrab
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
-            if (m_state != PhysicsGrabStates::rotateState && m_dynamicTidalLock && m_tidalLock)
+            // In multiplayer, only the server or host performs tidal locking
+            if (m_state != PhysicsGrabStates::rotateState && m_dynamicTidalLock && m_tidalLock &&
+                (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
             {
                 TidalLock(deltaTime);
             }
@@ -2300,8 +2302,8 @@ namespace PhysicsGrab
             {
                 m_currentAngularVelocity = targetAngularVelocity;
             }
-
-            if (!m_networkPhysicsGrabComponentEnabled)
+            // In multiplayer, only the server or host sets angular velocity
+            if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
             {
                 SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
             }
@@ -4123,8 +4125,11 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::NotAutonomousSoDisconnect()
     {
         AZ::TickBus::Handler::BusDisconnect();
-        m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
-        m_sceneSimulationStartHandler.Disconnect();
-        m_sceneSimulationFinishHandler.Disconnect();
+        if (!m_isServer && !m_isHost)
+        {
+            m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
+            m_sceneSimulationStartHandler.Disconnect();
+            m_sceneSimulationFinishHandler.Disconnect();
+        }
     }
 } // namespace PhysicsGrab

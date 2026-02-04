@@ -219,9 +219,9 @@ namespace PhysicsGrab
         // Disconnect from various buses when the NetworkPhysicsGrabComponentController is not autonomous, and only do this once
         if (m_autonomousNotDetermined)
         {
-            m_physicsGrabObject->NotAutonomousSoDisconnect();
             if (IsNetEntityRoleAuthority())
                 m_physicsGrabObject->m_isServer = true;
+            m_physicsGrabObject->NotAutonomousSoDisconnect();
             m_autonomousNotDetermined = false;
         }
 
@@ -260,45 +260,6 @@ namespace PhysicsGrab
             deltaTime,
             m_physicsGrabObject->m_isServer,
             GetEntityId());
-
-        // Do network stuff
-#if AZ_TRAIT_SERVER
-        if (IsNetEntityRoleAuthority())
-        {
-            if (m_physicsGrabObject->m_grabbedObjectEntityId.IsValid())
-            {
-                // Get grabbed object position
-                AZ::Vector3 grabbedEntityTranslation = AZ::Vector3::CreateZero();
-                AZ::TransformBus::EventResult(
-                    grabbedEntityTranslation, m_physicsGrabObject->m_grabbedObjectEntityId, &AZ::TransformBus::Events::GetWorldTranslation);
-
-                // Apply linear impulse (for holding)
-                Physics::RigidBodyRequestBus::Event(
-                    m_physicsGrabObject->m_grabbedObjectEntityId,
-                    &Physics::RigidBodyRequests::ApplyLinearImpulse,
-                    m_physicsGrabObject->m_linearImpulse);
-
-                // Apply angular velocity (for rotation)
-                if (m_physicsGrabObject->GetIsInRotateState() || m_physicsGrabObject->GetIsInHeldState())
-                {
-                    if (!m_physicsGrabObject->m_isObjectKinematic)
-                    {
-                        AZ::Vector3 angularVelocity = m_physicsGrabObject->m_currentAngularVelocity;
-                        Physics::RigidBodyRequestBus::Event(
-                            m_physicsGrabObject->m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetAngularVelocity, angularVelocity);
-                    }
-                }
-                else
-                {
-                    // Zero out when not rotating
-                    Physics::RigidBodyRequestBus::Event(
-                        m_physicsGrabObject->m_grabbedObjectEntityId,
-                        &Physics::RigidBodyRequests::SetAngularVelocity,
-                        AZ::Vector3::CreateZero());
-                }
-            }
-        }
-#endif
 
         NetworkPhysicsGrabComponentNotificationBus::Broadcast(
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickFinish,
