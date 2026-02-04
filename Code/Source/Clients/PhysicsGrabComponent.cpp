@@ -2192,9 +2192,7 @@ namespace PhysicsGrab
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
             // the controlling entity's local z rotation
-            // In multiplayer, only the server or host performs tidal locking
-            if (m_state != PhysicsGrabStates::rotateState && m_dynamicTidalLock && m_tidalLock &&
-                (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
+            if (m_state != PhysicsGrabStates::rotateState && m_dynamicTidalLock && m_tidalLock)
             {
                 TidalLock(deltaTime);
             }
@@ -2480,30 +2478,45 @@ namespace PhysicsGrab
 
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
-        // Determine the effective rotation based on First Person Controller usage if enabled
-        // Use camera rotation for full tidal lock, or character rotation otherwise
-        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
-        {
-            return m_networkCameraRotation;
-        }
+        // Determine whether to use network-replicated transform
+        const bool networkTidalLock = (m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform;
 
 #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
         {
             if (m_fullTidalLockForFPC)
             {
-                // Use camera rotation for full lock
-                return m_cameraRotationTransform->GetWorldRotationQuaternion();
+                if (networkTidalLock)
+                {
+                    // Use replicated camera rotation for full tidal lock
+                    return m_networkCameraRotation;
+                }
+                else
+                {
+                    // Use camera rotation for full lock in single-player
+                    return m_cameraRotationTransform->GetWorldRotationQuaternion();
+                }
             }
             else
             {
+                // Partial tidal lock. Object follows character body rotation (yaw only)
+                // Same for both networked and local. Character rotation is not replicated.
                 return GetEntity()->GetTransform()->GetWorldRotationQuaternion();
             }
         }
         else
 #endif
         {
-            return m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            if (networkTidalLock)
+            {
+                // Use replicated rotation when not using FPC. Always full tidal lock in this case.
+                return m_networkCameraRotation;
+            }
+            else
+            {
+                // Use grabbing entity rotation when not using FPC. Always full tidal lock in this case.
+                return m_grabbingEntityPtr->GetTransform()->GetWorldRotationQuaternion();
+            }
         }
     }
 
@@ -2579,7 +2592,8 @@ namespace PhysicsGrab
                 // Compute angular impulse from torque and delta time
                 m_angularImpulse = angularTorque * deltaTime;
 
-                if (!m_networkPhysicsGrabComponentEnabled)
+                // In multiplayer, only the server or host performs tidal locking
+                if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
                 {
                     // Apply angular impulse to the grabbed object
                     Physics::RigidBodyRequestBus::Event(
