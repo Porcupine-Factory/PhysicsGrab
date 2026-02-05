@@ -73,7 +73,6 @@ if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
             NAMESPACE Gem
             FILES_CMAKE
                 physicsgrab_private_files.cmake
-                physicsgrab_autogen_files.cmake
                 ${pal_dir}/physicsgrab_private_files.cmake
             TARGET_PROPERTIES
                 O3DE_PRIVATE_TARGET TRUE
@@ -89,15 +88,6 @@ if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
                     Gem::PhysX5.Static
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
-                    # For autogen components
-                    Gem::AMultiplayerPhysX5.Unified.Static
-                PRIVATE
-                    Gem::AMultiplayerPhysX5.Unified.Static
-            AUTOGEN_RULES
-                *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
-                *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
-                *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
-                *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
         )
     endif()
 else()

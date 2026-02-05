@@ -83,10 +83,8 @@ namespace PhysicsGrab
         void OnTick(float deltaTime, AZ::ScriptTimePoint) override;
 
         // NetworkPhysicsGrabComponentNotificationBus
-#ifdef NETWORKPHYSICSGRAB
         void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
         void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
-#endif
 
         AZ::Entity* GetEntityPtr(AZ::EntityId pointer) const;
         AZ::Entity* GetActiveCameraEntityPtr() const;
