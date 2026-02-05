@@ -1840,7 +1840,6 @@ namespace PhysicsGrab
         if (m_throwStateCounter == m_throwStateMaxTime && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             ThrowObject();
-            // Reset entity IDs after throwing to allow grabbing new objects
         }
 
         m_throwStateCounter -= deltaTime;
