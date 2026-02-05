@@ -467,7 +467,7 @@ namespace PhysicsGrab
         float m_prevObjectLinearDamping = 0.f;
         float m_currentObjectLinearDamping = 0.0f;
         float m_grabDistanceSpeed = 0.3f;
-        float m_grabResponse = 10.f;
+        float m_grabResponse = 15.f;
         float m_throwImpulse = 10.0f;
         float m_minThrowImpulse = 3.0f;
         float m_maxThrowImpulse = 20.0f;

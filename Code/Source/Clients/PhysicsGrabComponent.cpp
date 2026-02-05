@@ -2101,7 +2101,7 @@ namespace PhysicsGrab
         }
 
         // Move the object using Translation (Transform) if it is a Kinematic Rigid Body
-        if (m_isObjectKinematic)
+        if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             // Move object by setting its Translation
             AZ::TransformBus::Event(
@@ -2186,8 +2186,12 @@ namespace PhysicsGrab
                 }
 
                 // Simple velocity-based application
-                Physics::RigidBodyRequestBus::Event(
-                    m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetLinearVelocity + compensation);
+                // In multiplayer, only the server or host sets velocity
+                if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
+                {
+                    Physics::RigidBodyRequestBus::Event(
+                        m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetLinearVelocity, targetLinearVelocity + compensation);
+                }
             }
 
             // If object is NOT in rotate state, couple the grabbed entity's rotation to
@@ -2259,7 +2263,7 @@ namespace PhysicsGrab
         const float rollValue = m_ignoreRollKeyInputValue ? m_rollKeyValue : m_roll;
 
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
-        if (m_isObjectKinematic)
+        if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
                 AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * 0.01f) +
@@ -2300,7 +2304,7 @@ namespace PhysicsGrab
             {
                 m_currentAngularVelocity = targetAngularVelocity;
             }
-            // In multiplayer, only the server or host sets angular velocity
+            // Rotate the object. In multiplayer, only the server or host sets angular velocity
             if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
             {
                 SetGrabbedObjectAngularVelocity(m_currentAngularVelocity);
@@ -2479,7 +2483,7 @@ namespace PhysicsGrab
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
         // Determine whether to use network-replicated transform
-        const bool networkTidalLock = (m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform;
+        const bool networkTidalLock = (m_isServer || m_isHost) && m_useNetworkCameraTransform;
 
 #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
@@ -2556,9 +2560,10 @@ namespace PhysicsGrab
 
         AZ::Vector3 angularError = errorAxis * errorAngle;
 
-        if (m_isObjectKinematic)
+        if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             // For kinematic objects, directly apply the delta rotation to the object's transform
+            // In multiplayer, only the server or host performs tidal locking
             AZ::Transform transform = AZ::Transform::CreateIdentity();
             AZ::TransformBus::EventResult(transform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
             transform.SetRotation(targetGrabbedObjectRotation);
@@ -2600,7 +2605,7 @@ namespace PhysicsGrab
                         m_grabbedObjectEntityId, &Physics::RigidBodyRequests::ApplyAngularImpulse, m_angularImpulse);
                 }
             }
-            else
+            else if (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)
             {
                 // Fallback to simple angular velocity control (mass-independent)
                 SetGrabbedObjectAngularVelocity(targetAngularVelocity);
