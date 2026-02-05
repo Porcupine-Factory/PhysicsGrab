@@ -2647,7 +2647,7 @@ namespace PhysicsGrab
 
             // Reset discrete input to prevent re-application on network ticks
             // Prevents overly senstive inputs in multiplayer
-            if (m_ignoreGrabDistanceKeyInputValue)
+            if (m_networkPhysicsGrabComponentEnabled && m_ignoreGrabDistanceKeyInputValue)
             {
                 m_grabDistanceKeyValue = 0.0f;
             }
