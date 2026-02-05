@@ -65,6 +65,12 @@ namespace PhysicsGrab
             return;
         }
 
+        if (*inputId == m_grabDistanceEventId)
+        {
+            m_grabDistanceKeyValue += value;
+            return;
+        }
+
         for (auto& it_event : m_controlMap)
         {
             if (*inputId == *(it_event.first))
@@ -93,6 +99,11 @@ namespace PhysicsGrab
         }
 
         if (*inputId == m_rotateRollEventId)
+        {
+            return;
+        }
+
+        if (*inputId == m_grabDistanceEventId)
         {
             return;
         }
@@ -127,6 +138,11 @@ namespace PhysicsGrab
         if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue += value;
+        }
+
+        if (*inputId == m_grabDistanceEventId)
+        {
+            m_grabDistanceKeyValue += value;
         }
     }
 
@@ -212,6 +228,7 @@ namespace PhysicsGrab
         m_pitchKeyValue = 0.0f;
         m_yawKeyValue = 0.0f;
         m_rollKeyValue = 0.0f;
+        m_grabDistanceKeyValue = 0.0f;
     }
 
     void NetworkPhysicsGrabComponentController::ProcessInput(Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)

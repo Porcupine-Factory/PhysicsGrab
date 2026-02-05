@@ -5,7 +5,9 @@
 
 #include <AzCore/Serialization/SerializeContext.h>
 
+#if __has_include(<Source/AutoGen/AutoComponentTypes.h>)
 #include <Source/AutoGen/AutoComponentTypes.h>
+#endif
 
 namespace PhysicsGrab
 {
@@ -62,8 +64,10 @@ namespace PhysicsGrab
         PhysicsGrabRequestBus::Handler::BusConnect();
         AZ::TickBus::Handler::BusConnect();
 
+#ifdef NETWORKPHYSICSGRAB
         // Register multiplayer components
         RegisterMultiplayerComponents();
+#endif
     }
 
     void PhysicsGrabSystemComponent::Deactivate()

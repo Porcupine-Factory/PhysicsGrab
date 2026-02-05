@@ -7,7 +7,9 @@
 #include <Clients/PhysicsGrabComponent.h>
 #include <Clients/PhysicsGrabSystemComponent.h>
 
+#if __has_include(<Source/AutoGen/AutoComponentTypes.h>)
 #include <Source/AutoGen/AutoComponentTypes.h>
+#endif
 
 namespace PhysicsGrab
 {
@@ -24,8 +26,10 @@ namespace PhysicsGrab
         m_descriptors.insert(
             m_descriptors.end(), { PhysicsGrabSystemComponent::CreateDescriptor(), PhysicsGrabComponent::CreateDescriptor() });
 
+#ifdef NETWORKPHYSICSGRAB
         //< Register multiplayer components
         CreateComponentDescriptors(m_descriptors);
+#endif
     }
 
     AZ::ComponentTypeList PhysicsGrabModuleInterface::GetRequiredSystemComponents() const
