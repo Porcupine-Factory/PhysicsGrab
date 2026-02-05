@@ -2644,6 +2644,13 @@ namespace PhysicsGrab
         if (fabs(grabDistanceValue) > 1.0f)
         {
             grabDistanceChange = grabDistanceValue * m_grabDistanceWheelSensitivity * m_grabDistanceSpeed;
+
+            // Reset discrete input to prevent re-application on network ticks
+            // Prevents overly senstive inputs in multiplayer
+            if (m_ignoreGrabDistanceKeyInputValue)
+            {
+                m_grabDistanceKeyValue = 0.0f;
+            }
         }
         // Continuous/held condition (keyboard or analog)
         else
