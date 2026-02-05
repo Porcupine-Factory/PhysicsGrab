@@ -1837,12 +1837,10 @@ namespace PhysicsGrab
     {
         // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it
         // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
-        if (m_throwStateCounter == m_throwStateMaxTime)
+        if (m_throwStateCounter == m_throwStateMaxTime && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             ThrowObject();
             // Reset entity IDs after throwing to allow grabbing new objects
-            m_detectedObjectEntityId = AZ::EntityId();
-            m_grabbedObjectEntityId = AZ::EntityId();
         }
 
         m_throwStateCounter -= deltaTime;
