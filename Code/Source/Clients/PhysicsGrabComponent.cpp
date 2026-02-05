@@ -1628,8 +1628,8 @@ namespace PhysicsGrab
         {
             UpdateGrabDistance(deltaTime);
         }
-
-        if (m_isObjectKinematic)
+        // In multiplayer, only the server or host performs the HoldObject logic for kinematic objects
+        if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             HoldObject(deltaTime);
         }
@@ -1759,8 +1759,8 @@ namespace PhysicsGrab
         m_accumPitch += m_pitchKeyValue;
         m_accumYaw += m_yawKeyValue;
         m_accumRoll += m_rollKeyValue;
-
-        if (m_isObjectKinematic)
+        // In multiplayer, only the server or host performs the HoldObject and RotateObject logic for kinematic objects
+        if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
             HoldObject(deltaTime);
 #ifdef FIRST_PERSON_CONTROLLER
