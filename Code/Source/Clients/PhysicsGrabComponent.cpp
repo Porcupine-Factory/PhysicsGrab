@@ -2613,7 +2613,8 @@ namespace PhysicsGrab
 #ifdef FIRST_PERSON_CONTROLLER
     void PhysicsGrabComponent::FreezeCharacterRotation()
     {
-        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_freezeCharacterRotation)
+        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() &&
+            m_useFPControllerForGrab && m_freezeCharacterRotation)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(),
