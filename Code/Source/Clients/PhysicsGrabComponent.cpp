@@ -1213,13 +1213,11 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity)
     {
-        if (!m_isAutonomousClient && !m_isServer && !m_isHost)
-        {
-            NotAutonomousSoDisconnect();
-            return;
-        }
         if (entity != GetEntityId())
             return;
+        if (!m_isAutonomousClient && !m_isServer && !m_isHost)
+            return;
+
         if (!((m_isHost && server) || (m_isServer && !server)))
         {
             PhysicsGrabNotificationBus::Broadcast(
