@@ -266,12 +266,6 @@ namespace PhysicsGrab
         m_physicsGrabObject->m_networkCameraRotation = GetGrabbingEntityRotation();
         m_physicsGrabObject->m_grabDistance = GetCurrentGrabDistance();
 
-        // Enable network camera transform usage for server
-        if (m_physicsGrabObject->m_isServer)
-        {
-            m_physicsGrabObject->m_useNetworkCameraTransform = true;
-        }
-
         NetworkPhysicsGrabComponentNotificationBus::Broadcast(
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickStart,
             deltaTime,

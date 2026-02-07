@@ -1595,7 +1595,7 @@ namespace PhysicsGrab
 
         // Compute current absolute distance and check against threshold
         AZ::Vector3 grabbingEntityTranslation;
-        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        if (m_isServer)
         {
             // On server with network mode, use network camera position (same as grab reference)
             grabbingEntityTranslation = m_networkCameraTranslation;
@@ -1719,7 +1719,7 @@ namespace PhysicsGrab
         }
         // Compute current absolute distance and check against threshold
         AZ::Vector3 grabbingEntityTranslation;
-        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        if (m_isServer)
         {
             // On server with network mode, use network camera position (same as grab reference)
             grabbingEntityTranslation = m_networkCameraTranslation;
@@ -1867,6 +1867,11 @@ namespace PhysicsGrab
     // first returned hit to m_detectedObjectEntityId
     void PhysicsGrabComponent::CheckForObjects(bool detectionOnly)
     {
+        AZ_Printf(
+            "PhysicsGrabComponent::CheckForObjects",
+            "m_grabbingEntityPtr is nullptr = %s, m_isServer = %s",
+            (m_grabbingEntityPtr == nullptr) ? "True" : "False",
+            (m_isServer) ? "True" : "False");
         // Early exit if no valid grabbing entity to prevent null dereference
         if (m_grabbingEntityPtr == nullptr)
         {
@@ -1882,7 +1887,7 @@ namespace PhysicsGrab
         }
 
         // On server, use network camera transform if available
-        if (m_isServer && m_useNetworkCameraTransform)
+        if (m_isServer)
         {
             m_grabbingEntityTransform = AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
             m_forwardVector = m_grabbingEntityTransform.GetBasisY();
@@ -2017,7 +2022,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::HoldObject(float deltaTime)
     {
         // On server, use network camera transform if available
-        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        if (m_isServer)
         {
             // Construct camera transform from network data
             AZ::Transform networkCameraTransform =
@@ -2216,7 +2221,7 @@ namespace PhysicsGrab
     // Rigid Body type, or if KinematicWhileHeld is enabled.
     void PhysicsGrabComponent::RotateObject(float deltaTime)
     {
-        if ((m_isServer || m_isAutonomousClient) && m_useNetworkCameraTransform)
+        if (m_isServer)
         {
             AZ::Transform networkCameraTransform =
                 AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
@@ -2478,7 +2483,7 @@ namespace PhysicsGrab
     AZ::Quaternion PhysicsGrabComponent::GetEffectiveGrabbingRotation() const
     {
         // Determine whether to use network-replicated transform
-        const bool networkTidalLock = (m_isServer || m_isHost) && m_useNetworkCameraTransform;
+        const bool networkTidalLock = (m_isServer || m_isHost);
 
 #ifdef FIRST_PERSON_CONTROLLER
         if (m_useFPControllerForGrab)
