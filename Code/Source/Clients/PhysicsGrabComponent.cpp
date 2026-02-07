@@ -1867,11 +1867,6 @@ namespace PhysicsGrab
     // first returned hit to m_detectedObjectEntityId
     void PhysicsGrabComponent::CheckForObjects(bool detectionOnly)
     {
-        AZ_Printf(
-            "PhysicsGrabComponent::CheckForObjects",
-            "m_grabbingEntityPtr is nullptr = %s, m_isServer = %s",
-            (m_grabbingEntityPtr == nullptr) ? "True" : "False",
-            (m_isServer) ? "True" : "False");
         // Early exit if no valid grabbing entity to prevent null dereference
         if (m_grabbingEntityPtr == nullptr)
         {
