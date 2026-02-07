@@ -1913,6 +1913,17 @@ namespace PhysicsGrab
             }
         }
         // Perform a spherecast query to check if colliding with object
+        AZStd::vector<AZ::EntityId> children;
+        AZ::TransformBus::EventResult(children, GetEntityId(), &AZ::TransformInterface::GetChildren);
+
+        // If grab entity is a separate hierarchy, also exclude its children
+        if (m_grabbingEntityPtr->GetId() != GetEntityId())
+        {
+            AZStd::vector<AZ::EntityId> grabChildren;
+            AZ::TransformBus::EventResult(grabChildren, m_grabbingEntityPtr->GetId(), &AZ::TransformInterface::GetChildren);
+            children.insert(children.end(), grabChildren.begin(), grabChildren.end());
+        }
+
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
 
         AzPhysics::ShapeCastRequest request = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(
@@ -1922,28 +1933,22 @@ namespace PhysicsGrab
             m_sphereCastDistance,
             AzPhysics::SceneQuery::QueryType::Dynamic,
             m_grabbedCollisionGroup,
-            nullptr);
+            [this, &children](const AzPhysics::SimulatedBody* body, [[maybe_unused]] const Physics::Shape* shape)
+            {
+                const AZ::EntityId bodyId = body->GetEntityId();
+                if (bodyId == GetEntityId() || bodyId == m_grabbingEntityPtr->GetId())
+                    return AzPhysics::SceneQuery::QueryHitType::None;
+                for (const AZ::EntityId& childId : children)
+                {
+                    if (bodyId == childId)
+                        return AzPhysics::SceneQuery::QueryHitType::None;
+                }
+                return m_detectMultipleHits ? AzPhysics::SceneQuery::QueryHitType::Touch : AzPhysics::SceneQuery::QueryHitType::Block;
+            });
         request.m_reportMultipleHits = m_detectMultipleHits;
 
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
-
-        // Filter out hits from the grabbing entity and its children
-        AZStd::vector<AZ::EntityId> children;
-        AZ::TransformBus::EventResult(children, m_grabbingEntityPtr->GetId(), &AZ::TransformInterface::GetChildren);
-
-        auto filterSelfAndChildren = [this, &children](AzPhysics::SceneQueryHit& hit)
-        {
-            if (hit.m_entityId == m_grabbingEntityPtr->GetId())
-                return true;
-            for (const AZ::EntityId& childId : children)
-            {
-                if (hit.m_entityId == childId)
-                    return true;
-            }
-            return false;
-        };
-        AZStd::erase_if(hits.m_hits, filterSelfAndChildren);
 
         m_objectSphereCastHit = false;
 
