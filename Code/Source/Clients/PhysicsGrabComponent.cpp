@@ -800,6 +800,8 @@ namespace PhysicsGrab
                 ->Event("Get Tidal Lock Last Derivative", &PhysicsGrabComponentRequests::GetTidalLockLastDerivative)
                 ->Event("Get Target Translation", &PhysicsGrabComponentRequests::GetTargetTranslation)
                 ->Event("Get Target Rotation", &PhysicsGrabComponentRequests::GetTargetRotation)
+                ->Event("Get Detect Multiple Hits", &PhysicsGrabComponentRequests::GetDetectMultipleHits)
+                ->Event("Set Detect Multiple Hits", &PhysicsGrabComponentRequests::SetDetectMultipleHits)
                 ->Event("Get Is Autonomous Client", &PhysicsGrabComponentRequests::GetIsAutonomousClient)
                 ->Event("Get Is Server", &PhysicsGrabComponentRequests::GetIsServer)
                 ->Event("Get Is Host", &PhysicsGrabComponentRequests::GetIsHost)
@@ -1921,7 +1923,7 @@ namespace PhysicsGrab
             AzPhysics::SceneQuery::QueryType::Dynamic,
             m_grabbedCollisionGroup,
             nullptr);
-        request.m_reportMultipleHits = true;
+        request.m_reportMultipleHits = m_detectMultipleHits;
 
         AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
         AzPhysics::SceneQueryHits hits = sceneInterface->QueryScene(sceneHandle, &request);
@@ -4105,6 +4107,16 @@ namespace PhysicsGrab
         AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
         AZ::Quaternion targetQuat = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
         return targetQuat.GetEulerRadians();
+    }
+
+    bool PhysicsGrabComponent::GetDetectMultipleHits() const
+    {
+        return m_detectMultipleHits;
+    }
+
+    void PhysicsGrabComponent::SetDetectMultipleHits(const bool& new_detectMultipleHits)
+    {
+        m_detectMultipleHits = new_detectMultipleHits;
     }
 
     bool PhysicsGrabComponent::GetIsAutonomousClient() const

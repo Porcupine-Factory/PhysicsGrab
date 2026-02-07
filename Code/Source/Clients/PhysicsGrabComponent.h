@@ -300,6 +300,8 @@ namespace PhysicsGrab
         AZ::Vector3 GetTidalLockLastDerivative() const override;
         AZ::Vector3 GetTargetTranslation() const override;
         AZ::Vector3 GetTargetRotation() const override;
+        bool GetDetectMultipleHits() const override;
+        void SetDetectMultipleHits(const bool& new_detectMultipleHits);
         bool GetIsAutonomousClient() const override;
         bool GetIsServer() const override;
         bool GetIsHost() const override;
@@ -545,6 +547,7 @@ namespace PhysicsGrab
         bool m_gravityAppliesToPointRotation = false;
         bool m_detectInIdle = false;
         bool m_enableMaxDropDistance = true;
+        bool m_detectMultipleHits = true;
 
         PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
         PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;

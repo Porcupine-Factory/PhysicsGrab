@@ -234,6 +234,8 @@ namespace PhysicsGrab
         virtual AZ::Vector3 GetTidalLockLastDerivative() const = 0;
         virtual AZ::Vector3 GetTargetTranslation() const = 0;
         virtual AZ::Vector3 GetTargetRotation() const = 0;
+        virtual bool GetDetectMultipleHits() const = 0;
+        virtual void SetDetectMultipleHits(const bool&) = 0;
         virtual bool GetIsInIdleState() const = 0;
         virtual bool GetIsInCheckState() const = 0;
         virtual bool GetIsInHeldState() const = 0;
