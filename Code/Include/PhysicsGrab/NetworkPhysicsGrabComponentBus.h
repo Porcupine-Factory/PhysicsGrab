@@ -43,19 +43,13 @@ namespace PhysicsGrab
             OnNetworkTickStart,
             OnNetworkTickFinish);
 
-        void OnNetworkTickStart(
-            [[maybe_unused]] const float& deltaTime,
-            [[maybe_unused]] const bool& server,
-            [[maybe_unused]] const AZ::EntityId& entity) override
+        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entityId) override
         {
-            Call(FN_OnNetworkTickStart);
+            Call(FN_OnNetworkTickStart, deltaTime, server, entityId);
         }
-        void OnNetworkTickFinish(
-            [[maybe_unused]] const float& deltaTime,
-            [[maybe_unused]] const bool& server,
-            [[maybe_unused]] const AZ::EntityId& entity) override
+        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entityId) override
         {
-            Call(FN_OnNetworkTickFinish);
+            Call(FN_OnNetworkTickFinish, deltaTime, server, entityId);
         }
     };
 } // namespace PhysicsGrab

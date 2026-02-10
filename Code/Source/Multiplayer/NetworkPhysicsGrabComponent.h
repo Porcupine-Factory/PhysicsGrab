@@ -51,8 +51,8 @@ namespace PhysicsGrab
         void AssignConnectInputEvents();
 
         // NetworkPhysicsGrabComponentControllerNotificationBus
-        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
-        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity);
+        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entityId);
+        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entityId);
 
         // EnableNetworkPhysicsGrabComponent Changed Event
         AZ::Event<bool>::Handler m_enableNetworkPhysicsGrabComponentChangedEvent;
