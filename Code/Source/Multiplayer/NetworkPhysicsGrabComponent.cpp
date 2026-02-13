@@ -266,13 +266,15 @@ namespace PhysicsGrab
         m_physicsGrabObject->m_networkCameraRotation = GetGrabbingEntityRotation();
         m_physicsGrabObject->m_grabDistance = GetCurrentGrabDistance();
 
-        NetworkPhysicsGrabComponentNotificationBus::Broadcast(
+        NetworkPhysicsGrabComponentNotificationBus::Event(
+            GetEntityId(),
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickStart,
             deltaTime,
             m_physicsGrabObject->m_isServer,
             GetEntityId());
 
-        NetworkPhysicsGrabComponentNotificationBus::Broadcast(
+        NetworkPhysicsGrabComponentNotificationBus::Event(
+            GetEntityId(),
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickFinish,
             deltaTime,
             m_physicsGrabObject->m_isServer,

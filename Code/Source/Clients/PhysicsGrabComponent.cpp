@@ -1226,8 +1226,10 @@ namespace PhysicsGrab
 
         if (!((m_isHost && server) || (m_isServer && !server)))
         {
-            PhysicsGrabNotificationBus::Broadcast(
-                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickStart, deltaTime * m_physicsTimestepScaleFactor);
+            PhysicsGrabNotificationBus::Event(
+                GetEntityId(),
+                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickStart,
+                deltaTime * m_physicsTimestepScaleFactor);
 #ifdef NETWORKPHYSICSGRAB
             if (!m_networkPhysicsGrabComponentEnabled)
                 NetworkPhysicsGrabComponentRequestBus::BroadcastResult(
@@ -1242,8 +1244,10 @@ namespace PhysicsGrab
         if ((!m_isAutonomousClient && !m_isServer && !m_isHost) || (entity != GetEntityId()))
             return;
         if (!((m_isHost && server) || (m_isServer && !server)))
-            PhysicsGrabNotificationBus::Broadcast(
-                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickFinish, deltaTime * m_physicsTimestepScaleFactor);
+            PhysicsGrabNotificationBus::Event(
+                GetEntityId(),
+                &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickFinish,
+                deltaTime * m_physicsTimestepScaleFactor);
         m_prevNetworkPhysicsGrabDeltaTime = deltaTime;
     }
 
@@ -1520,7 +1524,7 @@ namespace PhysicsGrab
 
             m_state = PhysicsGrabStates::holdState;
             // Broadcast a grab start notification event
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStart);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnHoldStart);
 
 #ifdef FIRST_PERSON_CONTROLLER
             if (m_useFPControllerForGrab)
@@ -1659,7 +1663,7 @@ namespace PhysicsGrab
               (!m_rotateEnableToggle && m_rotateKeyValue != 0.f))))
         {
             m_state = PhysicsGrabStates::rotateState;
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStart);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnRotateStart);
             m_forceTransition = false;
         }
         // Handle throw input and charging logic, transitioning to throw state if triggered
@@ -1815,7 +1819,7 @@ namespace PhysicsGrab
             m_tidalLockPidController.Reset();
 
             m_state = PhysicsGrabStates::holdState;
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnRotateStop);
             m_forceTransition = false;
         }
         // Handle throw input and charging logic, transitioning to throw state if triggered
@@ -1852,15 +1856,15 @@ namespace PhysicsGrab
         if (m_grabReference.GetTranslation().GetDistance(
                 GetEntityPtr(m_thrownGrabbedObjectEntityId)->GetTransform()->GetWorldTM().GetTranslation()) > m_sphereCastDistance)
         {
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStop);
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnMaxThrowDistance);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnThrowStop);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnMaxThrowDistance);
             m_state = PhysicsGrabStates::idleState;
         }
         // Escape from the throw state if grabbed object is in throw state longer than m_throwStateMaxTime
         else if (m_throwStateCounter <= 0.f)
         {
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStop);
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStateCounterZero);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnThrowStop);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnThrowStateCounterZero);
             m_state = PhysicsGrabStates::idleState;
         }
         else
@@ -2365,8 +2369,8 @@ namespace PhysicsGrab
         m_state = PhysicsGrabStates::throwState;
 
         // Broadcast hold stop and throw start notifications
-        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
-        PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnThrowStart);
+        PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnHoldStop);
+        PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnThrowStart);
 
         // Reset charging state after initiating throw
         m_isChargingThrow = false;
@@ -2435,11 +2439,11 @@ namespace PhysicsGrab
 
         if (notifyHoldStop)
         {
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnHoldStop);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnHoldStop);
         }
         if (notifyRotateStop)
         {
-            PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnRotateStop);
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnRotateStop);
         }
     }
 
@@ -2469,7 +2473,7 @@ namespace PhysicsGrab
             // Check if full charge is reached and notify if not already done, to signal completion event
             if (!m_hasNotifiedChargeComplete && m_currentChargeTime >= m_chargeTime)
             {
-                PhysicsGrabNotificationBus::Broadcast(&PhysicsGrabNotificationBus::Events::OnChargeComplete);
+                PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnChargeComplete);
                 m_hasNotifiedChargeComplete = true;
             }
         }
