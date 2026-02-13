@@ -12,6 +12,7 @@
     <NetworkProperty Type="AZ::Vector3" Name="GrabbingEntityTranslation" Init="AZ::Vector3::CreateZero()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity translation of the autonomous player, replicated to the server for spherecasts and grab position calculations" />
     <NetworkProperty Type="AZ::Quaternion" Name="GrabbingEntityRotation" Init="AZ::Quaternion::CreateIdentity()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity rotation of the autonomous player, replicated to the server for spherecasts and grab orientation calculations" />
     <NetworkProperty Type="float" Name="CurrentGrabDistance" Init="0.0f" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Distance from the grabbing entity to the grabbed object's translation, replicated to the server" />
+	<NetworkProperty Type="AZStd::string" Name="GrabbedObjectNetEntityIdString" Init="&quot;&quot;" ReplicateFrom="Authority" ReplicateTo="Client" IsRewindable="false" IsPredictable="false" IsPublic="true" Container="Object" ExposeToEditor="false" ExposeToScript="true" GenerateEventBindings="true" Description="NetEntityId string of the currently grabbed object."/>
 
     <NetworkInput Type="float" Name="Grab" Init="0.f" />
     <NetworkInput Type="float" Name="Rotate" Init="0.f" />
@@ -21,4 +22,12 @@
     <NetworkInput Type="float" Name="Roll" Init="0.f" />
     <NetworkInput Type="float" Name="GrabDistance" Init="0.f" />
 
+	<RemoteProcedure Name="ForceGrabByNetEntityId"
+					 InvokeFrom="Autonomous" HandleOn="Authority"
+					 IsPublic="true" IsReliable="true"
+					 GenerateEventBindings="true"
+					 Description="Client sends a NetEntityId string to the server, which resolves it to a local EntityId and calls ForceGrab from PhysicsGrabComponent.">
+		<Param Type="AZStd::string" Name="netEntityIdString"/>
+	</RemoteProcedure>
+	
 </Component>

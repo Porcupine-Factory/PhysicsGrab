@@ -18,6 +18,7 @@ namespace PhysicsGrab
         virtual bool GetIsNetEntityAutonomous() const = 0;
         virtual bool GetEnabled() const = 0;
         virtual void SetEnabled(const bool&) = 0;
+        virtual void ForceGrabByNetEntityId(const AZStd::string&) = 0;
     };
 
     using NetworkPhysicsGrabComponentRequestBus = AZ::EBus<NetworkPhysicsGrabComponentRequests>;

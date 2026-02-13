@@ -40,11 +40,16 @@ namespace PhysicsGrab
         bool GetIsNetEntityAutonomous() const override;
         bool GetEnabled() const override;
         void SetEnabled(const bool& new_enabled) override;
+        void ForceGrabByNetEntityId(const AZStd::string& netEntityIdString) override;
 
         // AZ::InputEventNotificationBus interface
         void OnPressed(float value) override;
         void OnReleased(float value) override;
         void OnHeld(float value) override;
+
+#if AZ_TRAIT_SERVER
+        void HandleForceGrabByNetEntityId(AzNetworking::IConnection* invokingConnection, const AZStd::string& netEntityIdString) override;
+#endif
 
     private:
         // Input event assignment and notification bus connection

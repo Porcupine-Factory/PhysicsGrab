@@ -279,11 +279,33 @@ namespace PhysicsGrab
             GetEntityId());
     }
 
+#if AZ_TRAIT_SERVER
+    void NetworkPhysicsGrabComponentController::HandleForceGrabByNetEntityId(
+        [[maybe_unused]] AzNetworking::IConnection* invokingConnection, const AZStd::string& netEntityIdString)
+    {
+        // Convert string to NetEntityId
+        Multiplayer::NetEntityId targetNetEntityId = 
+            static_cast<Multiplayer::NetEntityId>(AZStd::stoull(netEntityIdString));
+        
+        const Multiplayer::ConstNetworkEntityHandle targetEntity = 
+            Multiplayer::GetNetworkEntityManager()->GetEntity(targetNetEntityId);
+
+        if (targetEntity && targetEntity.GetEntity() && m_physicsGrabObject)
+        {
+            const AZ::EntityId resolvedEntityId = targetEntity.GetEntity()->GetId();
+            // Execute the grab on the server and replicate the grabbed object's NetEntityId to clients
+            m_physicsGrabObject->ForceGrab(resolvedEntityId);
+            SetGrabbedObjectNetEntityIdString(netEntityIdString);
+        }
+    }
+#endif
+
     // Event Notification methods for use in scripts
     void NetworkPhysicsGrabComponentController::OnNetworkTickStart(
         [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entityId)
     {
     }
+
     void NetworkPhysicsGrabComponentController::OnNetworkTickFinish(
         [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entityId)
     {
@@ -303,6 +325,12 @@ namespace PhysicsGrab
             InputEventNotificationBus::MultiHandler::BusDisconnect();
             m_physicsGrabObject->AssignConnectInputEvents();
         }
+    }
+
+    void NetworkPhysicsGrabComponentController::ForceGrabByNetEntityId(const AZStd::string& netEntityIdString)
+    {
+        // Forward to the auto-generated RPC method on the base class
+        NetworkPhysicsGrabComponentControllerBase::ForceGrabByNetEntityId(netEntityIdString);
     }
 
     // Request Bus getter and setter methods for use in scripts
