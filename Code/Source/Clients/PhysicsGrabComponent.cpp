@@ -802,6 +802,10 @@ namespace PhysicsGrab
                 ->Event("Get Target Rotation", &PhysicsGrabComponentRequests::GetTargetRotation)
                 ->Event("Get Detect Multiple Hits", &PhysicsGrabComponentRequests::GetDetectMultipleHits)
                 ->Event("Set Detect Multiple Hits", &PhysicsGrabComponentRequests::SetDetectMultipleHits)
+#ifdef NETWORKPHYSICSGRAB
+                ->Event("Get NetEntityId String By EntityId", &PhysicsGrabComponentRequests::GetNetEntityIdStringByEntityId)
+                ->Event("Get EntityId By NetEntityId String", &PhysicsGrabComponentRequests::GetEntityIdByNetEntityIdString)
+#endif
                 ->Event("Get Is Autonomous Client", &PhysicsGrabComponentRequests::GetIsAutonomousClient)
                 ->Event("Get Is Server", &PhysicsGrabComponentRequests::GetIsServer)
                 ->Event("Get Is Host", &PhysicsGrabComponentRequests::GetIsHost)
@@ -4173,4 +4177,40 @@ namespace PhysicsGrab
             m_sceneSimulationFinishHandler.Disconnect();
         }
     }
+
+#ifdef NETWORKPHYSICSGRAB
+    AZStd::string PhysicsGrabComponent::GetNetEntityIdStringByEntityId(const AZ::EntityId& entityId) const
+    {
+        const Multiplayer::INetworkEntityManager* networkEntityManager = Multiplayer::GetMultiplayer()->GetNetworkEntityManager();
+        const Multiplayer::NetEntityId netEntityId = networkEntityManager->GetNetEntityIdById(entityId);
+        return AZStd::to_string(netEntityId);
+    }
+
+    Multiplayer::NetEntityId PhysicsGrabComponent::GetNetEntityIdByEntityId(const AZ::EntityId& entityId) const
+    {
+        const Multiplayer::INetworkEntityManager* networkEntityManager = Multiplayer::GetMultiplayer()->GetNetworkEntityManager();
+        return networkEntityManager->GetNetEntityIdById(entityId);
+    }
+
+    AZ::EntityId PhysicsGrabComponent::GetEntityIdByNetEntityId(const Multiplayer::NetEntityId& netEntityId) const
+    {
+        const Multiplayer::INetworkEntityManager* networkEntityManager = Multiplayer::GetMultiplayer()->GetNetworkEntityManager();
+        const Multiplayer::ConstNetworkEntityHandle entity = networkEntityManager->GetEntity(netEntityId);
+        if (entity)
+            return entity.GetEntity()->GetId();
+        else
+            return AZ::EntityId(AZ::EntityId::InvalidEntityId);
+    }
+
+    AZ::EntityId PhysicsGrabComponent::GetEntityIdByNetEntityIdString(const AZStd::string& netEntityIdString) const
+    {
+        const Multiplayer::INetworkEntityManager* networkEntityManager = Multiplayer::GetMultiplayer()->GetNetworkEntityManager();
+        const Multiplayer::ConstNetworkEntityHandle entity =
+            networkEntityManager->GetEntity(static_cast<Multiplayer::NetEntityId>(AZStd::stoull(netEntityIdString)));
+        if (entity)
+            return entity.GetEntity()->GetId();
+        else
+            return AZ::EntityId(AZ::EntityId::InvalidEntityId);
+    }
+#endif
 } // namespace PhysicsGrab

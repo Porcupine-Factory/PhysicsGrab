@@ -310,6 +310,12 @@ namespace PhysicsGrab
         void NetworkPhysicsGrabComponentEnabledIgnoreInputs() override;
         void IsAutonomousSoConnect() override;
         void NotAutonomousSoDisconnect() override;
+#ifdef NETWORKPHYSICSGRAB
+        AZStd::string GetNetEntityIdStringByEntityId(const AZ::EntityId& entityId) const override;
+        Multiplayer::NetEntityId GetNetEntityIdByEntityId(const AZ::EntityId& entityId) const override;
+        AZ::EntityId GetEntityIdByNetEntityId(const Multiplayer::NetEntityId& netEntityId) const override;
+        AZ::EntityId GetEntityIdByNetEntityIdString(const AZStd::string& netEntityIdString) const override;
+#endif
 
         // Input binding getters and setters
         AZStd::string GetGrabInputKey() const override;

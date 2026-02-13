@@ -6,6 +6,10 @@
 #include <AzFramework/Physics/Collision/CollisionLayers.h>
 #include <PhysicsGrab/PhysicsGrabTypeIds.h>
 
+#ifdef NETWORKPHYSICSGRAB
+#include <Multiplayer/MultiplayerTypes.h>
+#endif
+
 namespace PhysicsGrab
 {
     // Forward declaration for the enum defined in PhysicsGrabComponent
@@ -250,6 +254,12 @@ namespace PhysicsGrab
         virtual void NetworkPhysicsGrabComponentEnabledIgnoreInputs() = 0;
         virtual void IsAutonomousSoConnect() = 0;
         virtual void NotAutonomousSoDisconnect() = 0;
+#ifdef NETWORKPHYSICSGRAB
+        virtual AZStd::string GetNetEntityIdStringByEntityId(const AZ::EntityId&) const = 0;
+        virtual Multiplayer::NetEntityId GetNetEntityIdByEntityId(const AZ::EntityId&) const = 0;
+        virtual AZ::EntityId GetEntityIdByNetEntityId(const Multiplayer::NetEntityId&) const = 0;
+        virtual AZ::EntityId GetEntityIdByNetEntityIdString(const AZStd::string&) const = 0;
+#endif
     };
 
     using PhysicsGrabComponentRequestBus = AZ::EBus<PhysicsGrabComponentRequests>;
