@@ -129,12 +129,12 @@ namespace PhysicsGrab
         {
             m_pitchKeyValue += value;
         }
-        
+
         if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue += value;
         }
-        
+
         if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue += value;
@@ -273,6 +273,10 @@ namespace PhysicsGrab
             m_physicsGrabObject->m_isServer,
             GetEntityId());
 
+        if (m_physicsGrabObject->m_isServer && m_physicsGrabObject->m_state == PhysicsGrabStates::holdState)
+            SetGrabbedObjectNetEntityIdString(
+                m_physicsGrabObject->GetNetEntityIdStringByEntityId(m_physicsGrabObject->m_grabbedObjectEntityId));
+
         NetworkPhysicsGrabComponentNotificationBus::Event(
             GetEntityId(),
             &NetworkPhysicsGrabComponentNotificationBus::Events::OnNetworkTickFinish,
@@ -286,11 +290,9 @@ namespace PhysicsGrab
         [[maybe_unused]] AzNetworking::IConnection* invokingConnection, const AZStd::string& netEntityIdString)
     {
         // Convert string to NetEntityId
-        Multiplayer::NetEntityId targetNetEntityId = 
-            static_cast<Multiplayer::NetEntityId>(AZStd::stoull(netEntityIdString));
-        
-        const Multiplayer::ConstNetworkEntityHandle targetEntity = 
-            Multiplayer::GetNetworkEntityManager()->GetEntity(targetNetEntityId);
+        Multiplayer::NetEntityId targetNetEntityId = static_cast<Multiplayer::NetEntityId>(AZStd::stoull(netEntityIdString));
+
+        const Multiplayer::ConstNetworkEntityHandle targetEntity = Multiplayer::GetNetworkEntityManager()->GetEntity(targetNetEntityId);
 
         if (targetEntity && targetEntity.GetEntity() && m_physicsGrabObject)
         {
