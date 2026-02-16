@@ -3743,6 +3743,7 @@ namespace PhysicsGrab
                 ForceTransition(PhysicsGrabStates::holdState);
             }
 
+#ifdef NETWORKPHYSICSGRAB
             // In multiplayer, only autonomous client calls ForceGrabByNetEntityId RPC
             // Server recieves RPC in NetworkPhysicsGrabComponentController::HandleForceGrabByNetEntityId()
             if (m_isAutonomousClient)
@@ -3754,6 +3755,7 @@ namespace PhysicsGrab
                         GetEntityId(), &NetworkPhysicsGrabComponentRequests::ForceGrabByNetEntityId, netEntityIdString);
                 }
             }
+#endif
         }
     }
 
