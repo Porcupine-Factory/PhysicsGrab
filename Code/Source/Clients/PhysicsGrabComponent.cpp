@@ -1041,7 +1041,6 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
-        //required.push_back(AZ_CRC_CE("InputConfigurationService"));
         required.push_back(AZ_CRC_CE("TransformService"));
     }
 
@@ -1059,6 +1058,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
         dependent.push_back(AZ_CRC_CE("FirstPersonControllerService"));
+        dependent.push_back(AZ_CRC_CE("InputConfigurationService"));
     }
 
     AZ::Entity* PhysicsGrabComponent::GetActiveCameraEntityPtr() const
