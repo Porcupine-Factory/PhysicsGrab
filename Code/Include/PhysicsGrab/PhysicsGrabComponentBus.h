@@ -259,6 +259,7 @@ namespace PhysicsGrab
         virtual Multiplayer::NetEntityId GetNetEntityIdByEntityId(const AZ::EntityId&) const = 0;
         virtual AZ::EntityId GetEntityIdByNetEntityId(const Multiplayer::NetEntityId&) const = 0;
         virtual AZ::EntityId GetEntityIdByNetEntityIdString(const AZStd::string&) const = 0;
+        virtual void ForceGrabByNetEntityIdString(const AZStd::string&) = 0;
 #endif
     };
 

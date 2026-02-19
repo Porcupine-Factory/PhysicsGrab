@@ -1041,7 +1041,7 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
-        required.push_back(AZ_CRC_CE("InputConfigurationService"));
+        //required.push_back(AZ_CRC_CE("InputConfigurationService"));
         required.push_back(AZ_CRC_CE("TransformService"));
     }
 
@@ -4229,6 +4229,15 @@ namespace PhysicsGrab
             return entity.GetEntity()->GetId();
         else
             return AZ::EntityId(AZ::EntityId::InvalidEntityId);
+    }
+
+    void PhysicsGrabComponent::ForceGrabByNetEntityIdString(const AZStd::string& netEntityIdString)
+    {
+        AZ::EntityId localEntityId = GetEntityIdByNetEntityIdString(netEntityIdString);
+        if (localEntityId.IsValid())
+        {
+            ForceGrab(localEntityId);
+        }
     }
 #endif
 } // namespace PhysicsGrab

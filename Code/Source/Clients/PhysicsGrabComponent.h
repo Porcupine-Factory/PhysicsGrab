@@ -315,6 +315,7 @@ namespace PhysicsGrab
         Multiplayer::NetEntityId GetNetEntityIdByEntityId(const AZ::EntityId& entityId) const override;
         AZ::EntityId GetEntityIdByNetEntityId(const Multiplayer::NetEntityId& netEntityId) const override;
         AZ::EntityId GetEntityIdByNetEntityIdString(const AZStd::string& netEntityIdString) const override;
+        void ForceGrabByNetEntityIdString(const AZStd::string& netEntityIdString) override;
 #endif
 
         // Input binding getters and setters
