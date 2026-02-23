@@ -805,6 +805,7 @@ namespace PhysicsGrab
 #ifdef NETWORKPHYSICSGRAB
                 ->Event("Get NetEntityId String By EntityId", &PhysicsGrabComponentRequests::GetNetEntityIdStringByEntityId)
                 ->Event("Get EntityId By NetEntityId String", &PhysicsGrabComponentRequests::GetEntityIdByNetEntityIdString)
+                ->Event("Force Grab By NetEntityId String", &PhysicsGrabComponentRequests::ForceGrabByNetEntityIdString)
 #endif
                 ->Event("Get Is Autonomous Client", &PhysicsGrabComponentRequests::GetIsAutonomousClient)
                 ->Event("Get Is Server", &PhysicsGrabComponentRequests::GetIsServer)
@@ -1894,7 +1895,8 @@ namespace PhysicsGrab
         // On server, use network camera transform if available
         if (m_isServer)
         {
-            m_grabbingEntityTransform = AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
+            m_grabbingEntityTransform =
+                AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
             m_forwardVector = m_grabbingEntityTransform.GetBasisY();
         }
         else
@@ -2626,8 +2628,8 @@ namespace PhysicsGrab
 #ifdef FIRST_PERSON_CONTROLLER
     void PhysicsGrabComponent::FreezeCharacterRotation()
     {
-        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() &&
-            m_useFPControllerForGrab && m_freezeCharacterRotation)
+        if (FirstPersonController::FirstPersonControllerComponentRequestBus::HasHandlers() && m_useFPControllerForGrab &&
+            m_freezeCharacterRotation)
         {
             FirstPersonController::FirstPersonControllerComponentRequestBus::Event(
                 GetEntityId(),
