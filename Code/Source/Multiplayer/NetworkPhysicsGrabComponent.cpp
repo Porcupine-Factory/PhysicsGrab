@@ -273,9 +273,11 @@ namespace PhysicsGrab
             m_physicsGrabObject->m_isServer,
             GetEntityId());
 
-        if (m_physicsGrabObject->m_isServer && m_physicsGrabObject->m_state == PhysicsGrabStates::holdState)
+#if AZ_TRAIT_SERVER
+        if (m_physicsGrabObject->m_state == PhysicsGrabStates::holdState)
             SetGrabbedObjectNetEntityIdString(
                 m_physicsGrabObject->GetNetEntityIdStringByEntityId(m_physicsGrabObject->m_grabbedObjectEntityId));
+#endif
 
         NetworkPhysicsGrabComponentNotificationBus::Event(
             GetEntityId(),
