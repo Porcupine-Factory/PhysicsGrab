@@ -223,6 +223,16 @@ namespace PhysicsGrab
             SetGrabbingEntityTranslation(grabbingEntityTransform.GetTranslation());
             SetGrabbingEntityRotation(grabbingEntityTransform.GetRotation());
             SetCurrentGrabDistance(m_physicsGrabObject->m_grabDistance);
+
+            // Send the client's locally-detected grab target to the server
+            if (m_physicsGrabObject->m_grabbedObjectEntityId.IsValid())
+            {
+                SetClientGrabTargetNetEntityId(m_physicsGrabObject->GetNetEntityIdByEntityId(m_physicsGrabObject->m_grabbedObjectEntityId));
+            }
+            else
+            {
+                SetClientGrabTargetNetEntityId(Multiplayer::InvalidNetEntityId);
+            }
         }
 
         m_pitchKeyValue = 0.0f;
@@ -261,10 +271,41 @@ namespace PhysicsGrab
         // AZ_Printf("NetworkPhysicsGrabComponent", "Yaw: %f", playerInput->m_yaw);
         // AZ_Printf("NetworkPhysicsGrabComponent", "Roll: %f", playerInput->m_roll);
 
-        // Store grabbing entity transform for server detection
-        m_physicsGrabObject->m_networkCameraTranslation = GetGrabbingEntityTranslation();
-        m_physicsGrabObject->m_networkCameraRotation = GetGrabbingEntityRotation();
-        m_physicsGrabObject->m_grabDistance = GetCurrentGrabDistance();
+        // Resolve client's claimed target from NetEntityId to local EntityId
+        if (GetClientGrabTargetNetEntityId() != Multiplayer::InvalidNetEntityId)
+        {
+            m_physicsGrabObject->m_clientGrabTargetEntityId =
+                m_physicsGrabObject->GetEntityIdByNetEntityId(GetClientGrabTargetNetEntityId());
+        }
+        else
+        {
+            m_physicsGrabObject->m_clientGrabTargetEntityId = AZ::EntityId();
+        }
+
+        // Verify the replicated camera position is within a reasonable offset
+        // from the player character's authoritative position. Rejects spoofed
+        // camera data that could allow grabbing objects across the map.
+        AZ::Vector3 characterTranslation = AZ::Vector3::CreateZero();
+        AZ::TransformBus::EventResult(characterTranslation, GetEntityId(), &AZ::TransformBus::Events::GetWorldTranslation);
+
+        const float cameraOffset = GetGrabbingEntityTranslation().GetDistance(characterTranslation);
+
+        if (cameraOffset > m_physicsGrabObject->m_maxNetworkCameraOffset)
+        {
+            // Fall back to character position and rotation as a safe default
+            m_physicsGrabObject->m_networkCameraTranslation = characterTranslation;
+            m_physicsGrabObject->m_networkCameraRotation = GetEntity()->GetTransform()->GetWorldRotationQuaternion();
+        }
+        else
+        {
+            m_physicsGrabObject->m_networkCameraTranslation = GetGrabbingEntityTranslation();
+            m_physicsGrabObject->m_networkCameraRotation = GetGrabbingEntityRotation();
+        }
+
+        // Clamp replicated grab distance to min/max bounds.
+        // Prevents a cheating or bugged client from holding objects unreasonably far.
+        m_physicsGrabObject->m_grabDistance =
+            AZ::GetClamp(GetCurrentGrabDistance(), m_physicsGrabObject->m_minGrabDistance, m_physicsGrabObject->m_maxGrabDistance);
 
         NetworkPhysicsGrabComponentNotificationBus::Event(
             GetEntityId(),

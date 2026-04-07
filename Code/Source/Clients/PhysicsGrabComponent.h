@@ -403,6 +403,9 @@ namespace PhysicsGrab
         bool m_isServer = false;
         bool m_isHost = false;
         bool m_isAutonomousClient = false;
+        float m_radiusToleranceMultiplier = 2.0f;
+        float m_maxNetworkCameraOffset = 4.0f;
+        AZ::EntityId m_clientGrabTargetEntityId;
         AZ::Vector3 m_networkCameraTranslation = AZ::Vector3::CreateZero();
         AZ::Quaternion m_networkCameraRotation = AZ::Quaternion::CreateIdentity();
 
