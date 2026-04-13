@@ -1332,6 +1332,7 @@ namespace PhysicsGrab
     {
         CheckForObjects();
 
+#ifdef NETWORKPHYSICSGRAB
         // Server-side validation of the client's target grabbed object (Multiplayer only)
         // Runs after the server's own sphere cast in CheckForObjects()
         if (m_isServer && m_clientGrabTargetEntityId.IsValid() && !m_forceTransition)
@@ -1410,6 +1411,7 @@ namespace PhysicsGrab
                 }
             }
         }
+#endif
 
         // Check if sphere cast hits a valid object before transitioning to holdState.
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
