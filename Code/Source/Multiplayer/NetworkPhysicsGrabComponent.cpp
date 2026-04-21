@@ -315,7 +315,7 @@ namespace PhysicsGrab
             GetEntityId());
 
 #if AZ_TRAIT_SERVER
-        if (m_physicsGrabObject->m_state == PhysicsGrabStates::holdState)
+        if (IsNetEntityRoleAuthority() && m_physicsGrabObject->m_state == PhysicsGrabStates::holdState)
             SetGrabbedObjectNetEntityIdString(
                 m_physicsGrabObject->GetNetEntityIdStringByEntityId(m_physicsGrabObject->m_grabbedObjectEntityId));
 #endif
