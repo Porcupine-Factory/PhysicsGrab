@@ -1,5 +1,5 @@
 
-if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
+if(TARGET Gem::Multiplayer.Unified.Static)
 set(FILES
     Source/PhysicsGrabModuleInterface.cpp
     Source/PhysicsGrabModuleInterface.h

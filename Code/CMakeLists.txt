@@ -33,7 +33,7 @@ ly_add_target(
 
 # The ${gem_name}.Private.Object target is an internal target
 # It should not be used outside of this Gems CMakeLists.txt
-if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
+if(TARGET Gem::Multiplayer.Unified.Static)
     if(TARGET Gem::FirstPersonController)
         ly_add_target(
             NAME ${gem_name}.Private.Object STATIC
@@ -58,9 +58,9 @@ if(TARGET Gem::AMultiplayerPhysX5.Unified.Static)
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
                     # For autogen components
-                    Gem::AMultiplayerPhysX5.Unified.Static
+                    Gem::Multiplayer.Unified.Static
                 PRIVATE
-                    Gem::AMultiplayerPhysX5.Unified.Static
+                    Gem::Multiplayer.Unified.Static
             AUTOGEN_RULES
                 *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
                 *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
