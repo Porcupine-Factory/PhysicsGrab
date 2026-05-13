@@ -109,7 +109,7 @@ namespace PhysicsGrab
                 ->Field("Smooth Dynamic Rotation", &PhysicsGrabComponent::m_smoothDynamicRotation)
                 ->Field("Angular Velocity Damp Rate", &PhysicsGrabComponent::m_angularVelocityDampRate)
 
-                ->Field("PID Held Dynamics", &PhysicsGrabComponent::m_enablePIDHeldDynamics)
+                ->Field("Advanced Hold Dynamics", &PhysicsGrabComponent::m_enablePIDHeldDynamics)
                 ->Field("Mass Independent PID", &PhysicsGrabComponent::m_massIndependentHeldPID)
                 ->Field("PID P Gain", &PhysicsGrabComponent::m_heldProportionalGain)
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N/m")
@@ -122,7 +122,7 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Edit::Attributes::Suffix, " N")
                 ->Field("PID Deriv Filter Alpha", &PhysicsGrabComponent::m_heldDerivativeFilterAlpha)
 
-                ->Field("Enable PID Tidal Lock Dynamics", &PhysicsGrabComponent::m_enablePIDTidalLockDynamics)
+                ->Field("Advanced Tidal Lock Dynamics", &PhysicsGrabComponent::m_enablePIDTidalLockDynamics)
                 ->Field("Mass Independent Tidal Lock", &PhysicsGrabComponent::m_massIndependentTidalLock)
                 ->Field("Scale Independent Tidal Lock", &PhysicsGrabComponent::m_scaleIndependentTidalLock)
                 ->Field("Tidal Lock PID P Gain", &PhysicsGrabComponent::m_tidalLockProportionalGain)
@@ -453,14 +453,8 @@ namespace PhysicsGrab
                     ->Attribute(AZ::Edit::Attributes::Suffix, " s")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnableChargeThrow)
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Hold Dynamics")
+                    ->GroupElementToggle("Advanced Hold Dynamics", &PhysicsGrabComponent::m_enablePIDHeldDynamics)
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_enablePIDHeldDynamics,
-                        "PID Held Dynamics",
-                        "Enables PID controller for dynamic held objects, creating spring-like (underdamped/overdamped) motion. Disabling "
-                        "uses simple linear velocity.")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
@@ -503,13 +497,8 @@ namespace PhysicsGrab
                         "Filters derivative noise (higher = more smoothing, less jitter but delayed response).")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetEnablePIDHeldDynamics)
 
-                    ->ClassElement(AZ::Edit::ClassElements::Group, "Advanced Tidal Lock Dynamics")
+                    ->GroupElementToggle("Advanced Tidal Lock Dynamics", &PhysicsGrabComponent::m_enablePIDTidalLockDynamics)
                     ->Attribute(AZ::Edit::Attributes::AutoExpand, false)
-                    ->DataElement(
-                        nullptr,
-                        &PhysicsGrabComponent::m_enablePIDTidalLockDynamics,
-                        "PID Tidal Lock Dynamics",
-                        "Uses PID for spring-like tidal lock (enable for tunable rotation; disable for direct angular velocity).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
                     ->DataElement(
                         nullptr,
