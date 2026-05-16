@@ -1320,87 +1320,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::CheckForObjectsState()
     {
         CheckForObjects();
-
-#ifdef NETWORKPHYSICSGRAB
-        // Server-side validation of the client's target grabbed object (Multiplayer only)
-        // Runs after the server's own sphere cast in CheckForObjects()
-        if (m_isServer && m_clientGrabTargetEntityId.IsValid() && !m_forceTransition)
-        {
-            // Skip validation if the server's sphere cast already agrees with the client
-            if (!(m_objectSphereCastHit && m_grabbedObjectEntityId == m_clientGrabTargetEntityId))
-            {
-                // Server either missed entirely or hit a different object
-                // Run a targeted sphere cast with inflated radius
-                const float validationRadius = m_sphereCastRadius * m_radiusToleranceMultiplier;
-
-                AzPhysics::ShapeCastRequest validationRequest = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(
-                    validationRadius,
-                    m_grabbingEntityTransform,
-                    m_forwardVector,
-                    m_sphereCastDistance,
-                    AzPhysics::SceneQuery::QueryType::Dynamic,
-                    m_grabbedCollisionGroup,
-                    [this, &clientClaimedEntityId = m_clientGrabTargetEntityId](
-                        const AzPhysics::SimulatedBody* body, [[maybe_unused]] const Physics::Shape* shape)
-                    {
-                        const AZ::EntityId bodyId = body->GetEntityId();
-                        if (bodyId == GetEntityId() || bodyId == m_grabbingEntityPtr->GetId())
-                            return AzPhysics::SceneQuery::QueryHitType::None;
-                        // Only accept the client's claimed target
-                        if (bodyId == clientClaimedEntityId)
-                            return AzPhysics::SceneQuery::QueryHitType::Block;
-                        return AzPhysics::SceneQuery::QueryHitType::None;
-                    });
-
-                auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
-                AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
-                AzPhysics::SceneQueryHits validationHits = sceneInterface->QueryScene(sceneHandle, &validationRequest);
-
-                if (validationHits)
-                {
-                    // Correction case - client's grabbed object target is reachable with tolerance
-                    m_grabbedObjectEntityId = m_clientGrabTargetEntityId;
-                    m_hitPosition = validationHits.m_hits.at(0).m_position;
-                    m_objectSphereCastHit = true;
-
-                    AZ::Transform clientTargetTM = AZ::Transform::CreateIdentity();
-                    AZ::TransformBus::EventResult(clientTargetTM, m_clientGrabTargetEntityId, &AZ::TransformInterface::GetWorldTM);
-
-                    const AZ::Vector3 objectPos = clientTargetTM.GetTranslation();
-                    const float distFromCamera = objectPos.GetDistance(m_networkCameraTranslation);
-
-                    AZ_Printf(
-                        "PhysicsGrabComponent",
-                        "Server grab validation correction: accepted client's grabbed object target entity %s | "
-                        "Object position: (%.2f, %.2f, %.2f) | "
-                        "Camera position: (%.2f, %.2f, %.2f) | "
-                        "Distance: %.2f | Validation radius: %.2f",
-                        m_clientGrabTargetEntityId.ToString().c_str(),
-                        GetNetEntityIdStringByEntityId(m_clientGrabTargetEntityId).c_str(),
-                        static_cast<float>(objectPos.GetX()),
-                        static_cast<float>(objectPos.GetY()),
-                        static_cast<float>(objectPos.GetZ()),
-                        static_cast<float>(m_networkCameraTranslation.GetX()),
-                        static_cast<float>(m_networkCameraTranslation.GetY()),
-                        static_cast<float>(m_networkCameraTranslation.GetZ()),
-                        distFromCamera,
-                        validationRadius);
-                }
-                else
-                {
-                    // Rejection case - grabbable object not reachable even with inflated radius.
-                    m_objectSphereCastHit = false;
-
-                    AZ_Printf(
-                        "PhysicsGrabComponent",
-                        "Server grab validation rejection: client's grabbed object target entity %s "
-                        "not reachable with inflated radius",
-                        m_clientGrabTargetEntityId.ToString().c_str(),
-                        GetNetEntityIdStringByEntityId(m_clientGrabTargetEntityId).c_str());
-                }
-            }
-        }
-#endif
+        ValidateClientGrabTarget();
 
         // Check if sphere cast hits a valid object before transitioning to holdState.
         // Other conditionals allow forced state transition to bypass inputs with m_forceTransition, or
@@ -2097,6 +2017,90 @@ namespace PhysicsGrab
                 }
             }
         }
+    }
+
+    void PhysicsGrabComponent::ValidateClientGrabTarget()
+    {
+#ifdef NETWORKPHYSICSGRAB
+        // Server-side validation of the client's target grabbed object (Multiplayer only)
+        // Runs after the server's own sphere cast in CheckForObjects()
+        if (m_isServer && m_clientGrabTargetEntityId.IsValid() && !m_forceTransition)
+        {
+            // Skip validation if the server's sphere cast already agrees with the client
+            if (!(m_objectSphereCastHit && m_grabbedObjectEntityId == m_clientGrabTargetEntityId))
+            {
+                // Server either missed entirely or hit a different object
+                // Run a targeted sphere cast with inflated radius
+                const float validationRadius = m_sphereCastRadius * m_radiusToleranceMultiplier;
+
+                AzPhysics::ShapeCastRequest validationRequest = AzPhysics::ShapeCastRequestHelpers::CreateSphereCastRequest(
+                    validationRadius,
+                    m_grabbingEntityTransform,
+                    m_forwardVector,
+                    m_sphereCastDistance,
+                    AzPhysics::SceneQuery::QueryType::Dynamic,
+                    m_grabbedCollisionGroup,
+                    [this, &clientClaimedEntityId = m_clientGrabTargetEntityId](
+                        const AzPhysics::SimulatedBody* body, [[maybe_unused]] const Physics::Shape* shape)
+                    {
+                        const AZ::EntityId bodyId = body->GetEntityId();
+                        if (bodyId == GetEntityId() || bodyId == m_grabbingEntityPtr->GetId())
+                            return AzPhysics::SceneQuery::QueryHitType::None;
+                        // Only accept the client's claimed target
+                        if (bodyId == clientClaimedEntityId)
+                            return AzPhysics::SceneQuery::QueryHitType::Block;
+                        return AzPhysics::SceneQuery::QueryHitType::None;
+                    });
+
+                auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();
+                AzPhysics::SceneHandle sceneHandle = sceneInterface->GetSceneHandle(AzPhysics::DefaultPhysicsSceneName);
+                AzPhysics::SceneQueryHits validationHits = sceneInterface->QueryScene(sceneHandle, &validationRequest);
+
+                if (validationHits)
+                {
+                    // Correction case - client's grabbed object target is reachable with tolerance
+                    m_grabbedObjectEntityId = m_clientGrabTargetEntityId;
+                    m_hitPosition = validationHits.m_hits.at(0).m_position;
+                    m_objectSphereCastHit = true;
+
+                    AZ::Transform clientTargetTM = AZ::Transform::CreateIdentity();
+                    AZ::TransformBus::EventResult(clientTargetTM, m_clientGrabTargetEntityId, &AZ::TransformInterface::GetWorldTM);
+
+                    const AZ::Vector3 objectPos = clientTargetTM.GetTranslation();
+                    const float distFromCamera = objectPos.GetDistance(m_networkCameraTranslation);
+
+                    AZ_Printf(
+                        "PhysicsGrabComponent",
+                        "Server grab validation correction: accepted client's grabbed object target entity %s | "
+                        "Object position: (%.2f, %.2f, %.2f) | "
+                        "Camera position: (%.2f, %.2f, %.2f) | "
+                        "Distance: %.2f | Validation radius: %.2f",
+                        m_clientGrabTargetEntityId.ToString().c_str(),
+                        GetNetEntityIdStringByEntityId(m_clientGrabTargetEntityId).c_str(),
+                        static_cast<float>(objectPos.GetX()),
+                        static_cast<float>(objectPos.GetY()),
+                        static_cast<float>(objectPos.GetZ()),
+                        static_cast<float>(m_networkCameraTranslation.GetX()),
+                        static_cast<float>(m_networkCameraTranslation.GetY()),
+                        static_cast<float>(m_networkCameraTranslation.GetZ()),
+                        distFromCamera,
+                        validationRadius);
+                }
+                else
+                {
+                    // Rejection case - grabbable object not reachable even with inflated radius.
+                    m_objectSphereCastHit = false;
+
+                    AZ_Printf(
+                        "PhysicsGrabComponent",
+                        "Server grab validation rejection: client's grabbed object target entity %s "
+                        "not reachable with inflated radius",
+                        m_clientGrabTargetEntityId.ToString().c_str(),
+                        GetNetEntityIdStringByEntityId(m_clientGrabTargetEntityId).c_str());
+                }
+            }
+        }
+#endif
     }
 
     // Hold and move object using physics or translation, based on object's

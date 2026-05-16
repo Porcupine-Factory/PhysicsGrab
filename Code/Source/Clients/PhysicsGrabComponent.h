@@ -345,6 +345,7 @@ namespace PhysicsGrab
         AZStd::string m_meshTagName = "GrabMesh";
 
         void CheckForObjects(bool detectionOnly = false);
+        void ValidateClientGrabTarget();
         void HoldObject(float deltaTime);
         void RotateObject(float deltaTime);
         void ThrowObject();
