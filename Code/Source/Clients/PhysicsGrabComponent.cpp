@@ -2376,8 +2376,8 @@ namespace PhysicsGrab
             float yawSpeed = (deltaTime > 0.0f) ? m_accumYaw / deltaTime : 0.0f;
             float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
 
-            AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01) +
-                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01) + (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01;
+            AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01f) +
+                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01f) + (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01f;
 
             // Lerp toward target rotation for gradual damping
             if (m_smoothDynamicRotation)
