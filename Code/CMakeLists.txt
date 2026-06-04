@@ -31,9 +31,40 @@ ly_add_target(
            AZ::AzCore
 )
 
+# Determine if the Multiplayer gem is enabled
+set(MULTIPLAYER_GEM_ENABLED FALSE)
+
+# Check project.json for the Multiplayer gem
+if(NOT MULTIPLAYER_GEM_ENABLED AND EXISTS "${CMAKE_SOURCE_DIR}/project.json")
+    file(READ "${CMAKE_SOURCE_DIR}/project.json" _project_json_content)
+    if(_project_json_content MATCHES "\"Multiplayer\"" OR
+       _project_json_content MATCHES "\"Multiplayer==" OR
+       _project_json_content MATCHES "\"Multiplayer>=" OR
+       _project_json_content MATCHES "\"Multiplayer~=" OR
+       _project_json_content MATCHES "\"Multiplayer>" OR
+       _project_json_content MATCHES "\"Multiplayer<")
+        set(MULTIPLAYER_GEM_ENABLED TRUE)
+    endif()
+endif()
+
+# Fallback to checking enabled_gems.cmake
+if(NOT MULTIPLAYER_GEM_ENABLED AND EXISTS "${CMAKE_SOURCE_DIR}/Code/enabled_gems.cmake")
+    file(READ "${CMAKE_SOURCE_DIR}/Code/enabled_gems.cmake" _enabled_gems_content)
+    if(_enabled_gems_content MATCHES "\"Multiplayer\"" OR _enabled_gems_content MATCHES "[ \t\r\n]Multiplayer[ \t\r\n]")
+        set(MULTIPLAYER_GEM_ENABLED TRUE)
+    endif()
+endif()
+
+# When building the engine workspace directly, standard gems are included
+if(NOT MULTIPLAYER_GEM_ENABLED AND EXISTS "${CMAKE_SOURCE_DIR}/engine.json")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/Gems/Multiplayer")
+        set(MULTIPLAYER_GEM_ENABLED TRUE)
+    endif()
+endif()
+
 # The ${gem_name}.Private.Object target is an internal target
 # It should not be used outside of this Gems CMakeLists.txt
-if(TARGET Gem::Multiplayer.Unified.Static)
+if(MULTIPLAYER_GEM_ENABLED)
     if(TARGET Gem::FirstPersonController)
         ly_add_target(
             NAME ${gem_name}.Private.Object STATIC
@@ -73,6 +104,7 @@ if(TARGET Gem::Multiplayer.Unified.Static)
             NAMESPACE Gem
             FILES_CMAKE
                 physicsgrab_private_files.cmake
+                physicsgrab_autogen_files.cmake
                 ${pal_dir}/physicsgrab_private_files.cmake
             TARGET_PROPERTIES
                 O3DE_PRIVATE_TARGET TRUE
@@ -88,6 +120,15 @@ if(TARGET Gem::Multiplayer.Unified.Static)
                     Gem::PhysX5.Static
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
+                    # For autogen components
+                    Gem::Multiplayer.Unified.Static
+                PRIVATE
+                    Gem::Multiplayer.Unified.Static
+            AUTOGEN_RULES
+                *.AutoComponent.xml,AutoComponent_Header.jinja,$path/$fileprefix.AutoComponent.h
+                *.AutoComponent.xml,AutoComponent_Source.jinja,$path/$fileprefix.AutoComponent.cpp
+                *.AutoComponent.xml,AutoComponentTypes_Header.jinja,$path/AutoComponentTypes.h
+                *.AutoComponent.xml,AutoComponentTypes_Source.jinja,$path/AutoComponentTypes.cpp
         )
     endif()
 else()

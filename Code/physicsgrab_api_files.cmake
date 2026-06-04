@@ -5,11 +5,11 @@ find_path(FPC_INCLUDE_DIR
         "${LY_PROJECTS}/../../Gems/FirstPersonController/1.0.0/Code/Include"
 )
 
-if(TARGET Gem::Multiplayer.Unified.Static)
+if(MULTIPLAYER_GEM_ENABLED)
     add_compile_definitions(NETWORKPHYSICSGRAB)
 endif()
 
-if(TARGET Gem::Multiplayer.Unified.Static)
+if(MULTIPLAYER_GEM_ENABLED)
     set(FILES
         Include/PhysicsGrab/PhysicsGrabComponentBus.h
         Include/PhysicsGrab/PhysicsGrabBus.h
