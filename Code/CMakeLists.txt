@@ -94,6 +94,12 @@ if(NOT FPC_GEM_ENABLED AND EXISTS "${CMAKE_SOURCE_DIR}/engine.json")
     endif()
 endif()
 
+# Define NETWORKPHYSICSGRAB for the gem's targets when the Multiplayer gem is enabled,
+# so the guarded source code paths are compiled in
+if(MULTIPLAYER_GEM_ENABLED)
+    add_compile_definitions(NETWORKPHYSICSGRAB)
+endif()
+
 # The ${gem_name}.Private.Object target is an internal target
 # It should not be used outside of this Gems CMakeLists.txt
 if(MULTIPLAYER_GEM_ENABLED)
@@ -118,6 +124,7 @@ if(MULTIPLAYER_GEM_ENABLED)
                     Gem::StartingPointInput.Static
                     Gem::PhysX5.Static
                     Gem::FirstPersonController
+                    Gem::FirstPersonController.API
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
                     # For autogen components
@@ -184,6 +191,7 @@ else()
                     Gem::StartingPointInput.Static
                     Gem::PhysX5.Static
                     Gem::FirstPersonController
+                    Gem::FirstPersonController.API
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
         )
@@ -298,6 +306,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                     Gem::${gem_name}.Private.Object
                     Gem::StartingPointInput.Static
                     Gem::FirstPersonController
+                    Gem::FirstPersonController.API
                     Gem::LmbrCentral.Static
                     Gem::Atom_RPI.Public
         )

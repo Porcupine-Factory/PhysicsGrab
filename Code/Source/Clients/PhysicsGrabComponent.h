@@ -25,6 +25,9 @@
 
 #if __has_include(<FirstPersonController/FirstPersonControllerComponentBus.h>)
 #include <FirstPersonController/FirstPersonControllerComponentBus.h>
+#ifndef FIRST_PERSON_CONTROLLER
+#define FIRST_PERSON_CONTROLLER
+#endif
 #endif
 
 namespace PhysicsGrab
