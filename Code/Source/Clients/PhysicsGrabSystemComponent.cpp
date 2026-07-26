@@ -33,10 +33,17 @@ namespace PhysicsGrab
 
     void PhysicsGrabSystemComponent::GetRequiredServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& required)
     {
+#ifdef NETWORKPHYSICSGRAB
+        required.push_back(AZ_CRC_CE("MultiplayerService"));
+#endif
     }
 
     void PhysicsGrabSystemComponent::GetDependentServices([[maybe_unused]] AZ::ComponentDescriptor::DependencyArrayType& dependent)
     {
+#ifdef NETWORKPHYSICSGRAB
+        // Keeps multiplayer component registration order consistent with the FirstPersonController gem when present.
+        dependent.push_back(AZ_CRC_CE("NetworkFPCService"));
+#endif
     }
 
     PhysicsGrabSystemComponent::PhysicsGrabSystemComponent()
