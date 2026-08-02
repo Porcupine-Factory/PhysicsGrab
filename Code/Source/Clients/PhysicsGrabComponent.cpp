@@ -905,6 +905,40 @@ namespace PhysicsGrab
         {
             InputEventNotificationBus::MultiHandler::BusDisconnect();
         }
+
+        if (m_networkPhysicsGrabObject == nullptr
+#ifdef NETWORKPHYSICSGRAB
+            && Multiplayer::NetEntityId() == static_cast<Multiplayer::NetEntityId>(-1)
+#endif
+        )
+        {
+            // Check whether the game is being ran in the O3DE editor
+            AZ::ApplicationTypeQuery applicationType;
+            if (auto componentApplicationRequests = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
+                componentApplicationRequests != nullptr)
+            {
+                componentApplicationRequests->QueryApplicationType(applicationType);
+            }
+
+            // If not running in the editor and the timestep is less than or equal to 1/(refresh rate) then disable mesh smoothing
+            if (!applicationType.IsEditor())
+            {
+                AzFramework::NativeWindowHandle windowHandle = nullptr;
+                windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
+                if (windowHandle)
+                {
+                    decltype(AZStd::declval<AzFramework::WindowRequests>().GetDisplayRefreshRate()) refreshRate = 60;
+                    AzFramework::WindowRequestBus::EventResult(
+                        refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
+
+                    const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
+
+                    // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
+                    if (config->m_fixedTimestep <= 1.f / static_cast<float>(refreshRate))
+                        m_meshSmoothing = false;
+                }
+            }
+        }
     }
 
     // Called at the beginning of each physics tick
@@ -947,40 +981,6 @@ namespace PhysicsGrab
             {
                 AZ_Warning(
                     "PhysicsGrabComponent", false, "Failed to retrieve grabbing entity for ID %s.", m_grabbingEntityId.ToString().c_str());
-            }
-        }
-
-        if (m_networkPhysicsGrabObject != nullptr
-#ifdef NETWORKPHYSICSGRAB
-            || Multiplayer::NetEntityId() != static_cast<Multiplayer::NetEntityId>(-1)
-#endif
-        )
-        {
-            // Check whether the game is being ran in the O3DE editor
-            AZ::ApplicationTypeQuery applicationType;
-            if (auto componentApplicationRequests = AZ::Interface<AZ::ComponentApplicationRequests>::Get();
-                componentApplicationRequests != nullptr)
-            {
-                componentApplicationRequests->QueryApplicationType(applicationType);
-            }
-
-            // If not running in the editor and the timestep is less than or equal to 1/(refresh rate) then disable mesh smoothing
-            if (!applicationType.IsEditor())
-            {
-                AzFramework::NativeWindowHandle windowHandle = nullptr;
-                windowHandle = AZ::RPI::ViewportContextRequests::Get()->GetDefaultViewportContext()->GetWindowHandle();
-                if (windowHandle)
-                {
-                    decltype(AZStd::declval<AzFramework::WindowRequests>().GetDisplayRefreshRate()) refreshRate = 60;
-                    AzFramework::WindowRequestBus::EventResult(
-                        refreshRate, windowHandle, &AzFramework::WindowRequestBus::Events::GetDisplayRefreshRate);
-
-                    const AzPhysics::SystemConfiguration* config = AZ::Interface<AzPhysics::SystemInterface>::Get()->GetConfiguration();
-
-                    // Disable mesh smoothing if the physics timestep is less than or equal to the refresh time
-                    if (config->m_fixedTimestep <= 1.f / static_cast<float>(refreshRate))
-                        m_meshSmoothing = false;
-                }
             }
         }
     }
