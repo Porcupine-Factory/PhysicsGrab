@@ -953,7 +953,7 @@ namespace PhysicsGrab
         }
 
         // Reset time accumulator
-        m_physicsTimeAccumulator = 0.0f;
+        m_physicsTimeAccumulator = 0.f;
 
         // Track the current physics timestep to average with the next one
         m_prevTimestep = physicsTimestep;
@@ -1253,7 +1253,7 @@ namespace PhysicsGrab
         m_physicsTimeAccumulator += deltaTime;
 
         // Calculate interpolation factor
-        const float alpha = AZ::GetClamp(m_physicsTimeAccumulator / m_physicsTimestep, 0.0f, 1.0f);
+        const float alpha = AZ::GetClamp(m_physicsTimeAccumulator / m_physicsTimestep, 0.f, 1.f);
 
         // Interpolate position
         const AZ::Vector3 interpolatedPosition =
@@ -1383,7 +1383,7 @@ namespace PhysicsGrab
             {
                 AZ::TransformBus::EventResult(m_prevPhysicsTransform, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldTM);
                 m_currentPhysicsTransform = m_prevPhysicsTransform;
-                m_physicsTimeAccumulator = 0.0f;
+                m_physicsTimeAccumulator = 0.f;
             }
 
             // Compute local grab offset from initial hit position
@@ -1399,7 +1399,7 @@ namespace PhysicsGrab
             const float averageGrabbedObjectInertia =
                 (grabbedObjectInertiaTensor.GetElement(0, 0) + grabbedObjectInertiaTensor.GetElement(1, 1) +
                  grabbedObjectInertiaTensor.GetElement(2, 2)) /
-                3.0f;
+                3.f;
 
             // If average inertia is valid (non-zero, assuming compute inertia enabled), compute factor (~ s^2)
             if (averageGrabbedObjectInertia > AZ::Constants::FloatEpsilon)
@@ -1409,7 +1409,7 @@ namespace PhysicsGrab
             else
             {
                 // If inertia unavailable, default to no scaling
-                m_effectiveInertiaFactor = 1.0f;
+                m_effectiveInertiaFactor = 1.f;
             }
 
             // Clamp to minimum to prevent very small values
@@ -1700,8 +1700,18 @@ namespace PhysicsGrab
         // Update m_grabbingEntityTransform to ensure it's current
         if (m_grabMaintained && m_enableMaxDropDistance)
         {
+            if (m_isServer)
+            {
+                // Construct camera transform from network data
+                AZ::Transform networkCameraTransform =
+                    AZ::Transform::CreateFromQuaternionAndTranslation(m_networkCameraRotation, m_networkCameraTranslation);
+
+                // Get forward vector from network camera
+                m_grabbingEntityTransform = networkCameraTransform;
+                m_forwardVector = networkCameraTransform.GetBasisY();
+            }
 #ifdef FIRST_PERSON_CONTROLLER
-            if (m_useFPControllerForGrab)
+            else if (m_useFPControllerForGrab)
             {
                 FirstPersonController::FirstPersonControllerComponentRequestBus::EventResult(
                     m_cameraRotationTransform,
@@ -1711,8 +1721,8 @@ namespace PhysicsGrab
                 m_grabbingEntityTransform = m_cameraRotationTransform->GetWorldTM();
                 m_forwardVector = m_cameraRotationTransform->GetWorldTM().GetBasisY();
             }
-            else
 #endif
+            else
             {
                 // Get our grabbing entity's world transform
                 m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
@@ -2231,7 +2241,7 @@ namespace PhysicsGrab
                 // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
                 if (m_velocityCompensation && m_pidController.GetMode() == PidController<AZ::Vector3>::Velocity)
                 {
-                    float effectiveFactor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    const float effectiveFactor = 1.f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effectiveFactor);
                     linearPidOutput += m_heldDerivativeGain * m_currentCompensationVelocity;
                 }
@@ -2266,7 +2276,7 @@ namespace PhysicsGrab
                 // Add feed-forward for target velocity only in Velocity mode (ErrorRate handles it natively)
                 if (m_velocityCompensation)
                 {
-                    float effectiveFactor = 1.0f - exp(-m_velocityCompDampRate * deltaTime);
+                    const float effectiveFactor = 1.f - exp(-m_velocityCompDampRate * deltaTime);
                     m_currentCompensationVelocity = m_currentCompensationVelocity.Lerp(m_grabbingEntityVelocity, effectiveFactor);
                     compensation = m_currentCompensationVelocity;
                 }
@@ -2351,7 +2361,7 @@ namespace PhysicsGrab
         // Rotate the object using SetRotation (Transform) if it is a Kinematic Rigid Body
         if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
-            AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
+            const AZ::Quaternion rotation = AZ::Quaternion::CreateFromAxisAngle(m_upVector, yawValue * m_kinematicYawRotateScale * 0.01f) +
                 AZ::Quaternion::CreateFromAxisAngle(m_rightVector, pitchValue * m_kinematicPitchRotateScale * 0.01f) +
                 AZ::Quaternion::CreateFromAxisAngle(m_forwardVector, rollValue * m_kinematicRollRotateScale * 0.01f);
 
@@ -2372,17 +2382,18 @@ namespace PhysicsGrab
         else
         {
             // Normalize accumulators by deltaTime to get consistent rotation speed regardless of physics timestep
-            float pitchSpeed = (deltaTime > 0.0f) ? m_accumPitch / deltaTime : 0.0f;
-            float yawSpeed = (deltaTime > 0.0f) ? m_accumYaw / deltaTime : 0.0f;
-            float rollSpeed = (deltaTime > 0.0f) ? m_accumRoll / deltaTime : 0.0f;
+            const float pitchSpeed = (deltaTime > 0.f) ? m_accumPitch / deltaTime : 0.f;
+            const float yawSpeed = (deltaTime > 0.f) ? m_accumYaw / deltaTime : 0.f;
+            const float rollSpeed = (deltaTime > 0.f) ? m_accumRoll / deltaTime : 0.f;
 
-            AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01f) +
-                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01f) + (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01f;
+            const AZ::Vector3 targetAngularVelocity = (m_rightVector * pitchSpeed * m_dynamicPitchRotateScale * 0.01f) +
+                (m_forwardVector * rollSpeed * m_dynamicRollRotateScale * 0.01f) +
+                (m_upVector * yawSpeed * m_dynamicYawRotateScale) * 0.01f;
 
             // Lerp toward target rotation for gradual damping
             if (m_smoothDynamicRotation)
             {
-                float effective_factor = 1.0f - exp(-m_angularVelocityDampRate * deltaTime);
+                const float effective_factor = 1.f - exp(-m_angularVelocityDampRate * deltaTime);
                 m_currentAngularVelocity = m_currentAngularVelocity.Lerp(targetAngularVelocity, effective_factor);
             }
             // Set angular velocity directly with no smooth damping
@@ -2397,9 +2408,9 @@ namespace PhysicsGrab
             }
 
             // Reset accumulators after applying in physics branch
-            m_accumPitch = 0.0f;
-            m_accumYaw = 0.0f;
-            m_accumRoll = 0.0f;
+            m_accumPitch = 0.f;
+            m_accumYaw = 0.f;
+            m_accumRoll = 0.f;
 
             // Update current physics transform for interpolation
             if (m_meshSmoothing)
@@ -2421,7 +2432,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::TransitionToThrow(bool isChargeEnabled)
     {
         // Determine if transitioning from rotate state to handle rotation-specific resets
-        bool fromRotate = (m_state == PhysicsGrabStates::rotateState);
+        const bool fromRotate = (m_state == PhysicsGrabStates::rotateState);
 
         // Start throw counter for timing the throw state duration
         m_throwStateCounter = m_throwStateMaxTime;
@@ -2433,7 +2444,7 @@ namespace PhysicsGrab
         if (isChargeEnabled)
         {
             // Calculate charged impulse as a linear interpolation between min and max based on charge fraction
-            float chargeFraction = AZ::GetClamp(m_currentChargeTime / m_chargeTime, 0.f, 1.f);
+            const float chargeFraction = AZ::GetClamp(m_currentChargeTime / m_chargeTime, 0.f, 1.f);
             m_currentThrowImpulse = m_minThrowImpulse + chargeFraction * (m_maxThrowImpulse - m_minThrowImpulse);
         }
         else
@@ -2461,14 +2472,14 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::ThrowObject()
     {
         // Query mass for potential scaling (default to 1 if fails)
-        float objectMass = 1.0f;
+        float objectMass = 1.f;
         Physics::RigidBodyRequestBus::EventResult(objectMass, m_thrownGrabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
         // Compute base impulse
-        AZ::Vector3 base_impulse = m_forwardVector * m_currentThrowImpulse;
+        const AZ::Vector3 base_impulse = m_forwardVector * m_currentThrowImpulse;
 
         // Optionally scale by mass for mass-independent throw velocity
-        AZ::Vector3 impulse = m_massIndependentThrow ? objectMass * base_impulse : base_impulse;
+        const AZ::Vector3 impulse = m_massIndependentThrow ? objectMass * base_impulse : base_impulse;
 
         // Apply a Linear Impulse to the grabbed object
         Physics::RigidBodyRequestBus::Event(
@@ -2634,17 +2645,17 @@ namespace PhysicsGrab
 
         // Convert the error quaternion to axis-angle representation for easier use in PID calculations.
         // The axis-angle form provides a vector (errorAxis * errorAngle) that can be scaled by time for angular velocity.
-        float errorAngle = 2.0f * acosf(AZ::GetClamp(errorQuat.GetW(), -1.0f, 1.0f));
+        float errorAngle = 2.f * acosf(AZ::GetClamp(errorQuat.GetW(), -1.f, 1.f));
         if (errorAngle > AZ::Constants::Pi)
             errorAngle = AZ::Constants::TwoPi - errorAngle;
 
         AZ::Vector3 errorAxis = errorQuat.GetImaginary().GetNormalizedSafe();
 
         // Ensure shortest rotation arc by flipping the quaternion if necessary
-        if (errorQuat.GetW() < 0.0f)
+        if (errorQuat.GetW() < 0.f)
             errorAxis = -errorAxis;
 
-        AZ::Vector3 angularError = errorAxis * errorAngle;
+        const AZ::Vector3 angularError = errorAxis * errorAngle;
 
         if (m_isObjectKinematic && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
         {
@@ -2658,12 +2669,12 @@ namespace PhysicsGrab
         else
         {
             // Compute target angular velocity
-            AZ::Vector3 targetAngularVelocity = angularError / deltaTime;
+            const AZ::Vector3 targetAngularVelocity = angularError / deltaTime;
 
             if (m_enablePIDTidalLockDynamics)
             {
                 // Use PID controller to compute torque output based on the angular error.
-                AZ::Vector3 angularPidOutput = m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
+                const AZ::Vector3 angularPidOutput = m_tidalLockPidController.Output(angularError, deltaTime, AZ::Vector3::CreateZero());
 
                 // Initialize angular torque from PID output
                 AZ::Vector3 angularTorque = angularPidOutput;
@@ -2726,9 +2737,9 @@ namespace PhysicsGrab
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
 
-        float grabDistanceChange = 0.0f;
+        float grabDistanceChange = 0.f;
         // Discrete input condition (mouse wheel)
-        if (fabs(grabDistanceValue) > 1.0f)
+        if (fabs(grabDistanceValue) > 1.f)
         {
             grabDistanceChange = grabDistanceValue * m_grabDistanceWheelSensitivity * m_grabDistanceSpeed;
 
@@ -2736,7 +2747,7 @@ namespace PhysicsGrab
             // Prevents overly senstive inputs in multiplayer
             if (m_networkPhysicsGrabComponentEnabled && m_ignoreGrabDistanceKeyInputValue)
             {
-                m_grabDistanceKeyValue = 0.0f;
+                m_grabDistanceKeyValue = 0.f;
             }
         }
         // Continuous/held condition (keyboard or analog)

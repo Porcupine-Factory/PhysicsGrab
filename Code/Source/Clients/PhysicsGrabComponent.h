@@ -407,8 +407,8 @@ namespace PhysicsGrab
         bool m_isServer = false;
         bool m_isHost = false;
         bool m_isAutonomousClient = false;
-        float m_radiusToleranceMultiplier = 2.0f;
-        float m_maxNetworkCameraOffset = 4.0f;
+        float m_radiusToleranceMultiplier = 2.f;
+        float m_maxNetworkCameraOffset = 4.f;
         AZ::EntityId m_clientGrabTargetEntityId;
         AZ::Vector3 m_networkCameraTranslation = AZ::Vector3::CreateZero();
         AZ::Quaternion m_networkCameraRotation = AZ::Quaternion::CreateIdentity();
@@ -454,19 +454,19 @@ namespace PhysicsGrab
         AZStd::string m_currentGrabbedCollisionLayerName;
 
         // Stores the previous frame tick deltaTime, previous physics timestep, and previous NetworkFPC tick deltaTime
-        float m_physicsTimeAccumulator = 0.0f;
-        float m_physicsTimestep = 1.0f / 60.0f;
-        float m_prevDeltaTime = 1.0f / 60.f;
+        float m_physicsTimeAccumulator = 0.f;
+        float m_physicsTimestep = 1.f / 60.f;
+        float m_prevDeltaTime = 1.f / 60.f;
         float m_prevTimestep = 1.f / 60.f;
         float m_prevNetworkPhysicsGrabDeltaTime = 1.f / 60.f;
 
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;
         float m_maxDropDistance = 4.5f;
-        float m_grabDistance = 0.0f;
+        float m_grabDistance = 0.f;
         float m_grabDistanceWheelSensitivity = 0.01f;
         float m_velocityCompDampRate = 20.f;
-        float m_angularVelocityDampRate = 40.0f;
+        float m_angularVelocityDampRate = 40.f;
         float m_kinematicYawRotateScale = 1.2f;
         float m_kinematicPitchRotateScale = 2.133f;
         float m_kinematicRollRotateScale = 1.2f;
@@ -478,39 +478,39 @@ namespace PhysicsGrab
         float m_tempObjectAngularDamping = 0.15f;
         float m_tempObjectLinearDamping = 0.05f;
         float m_prevObjectLinearDamping = 0.f;
-        float m_currentObjectLinearDamping = 0.0f;
+        float m_currentObjectLinearDamping = 0.f;
         float m_grabDistanceSpeed = 0.3f;
         float m_grabResponse = 15.f;
-        float m_throwImpulse = 10.0f;
-        float m_minThrowImpulse = 3.0f;
-        float m_maxThrowImpulse = 20.0f;
-        float m_chargeTime = 3.0f;
-        float m_currentChargeTime = 0.0f;
-        float m_currentThrowImpulse = 0.0f;
-        float m_grabbedObjectMass = 1.0f;
+        float m_throwImpulse = 10.f;
+        float m_minThrowImpulse = 3.f;
+        float m_maxThrowImpulse = 20.f;
+        float m_chargeTime = 3.f;
+        float m_currentChargeTime = 0.f;
+        float m_currentThrowImpulse = 0.f;
+        float m_grabbedObjectMass = 1.f;
         float m_sphereCastRadius = 0.3f;
         float m_sphereCastDistance = 4.5f;
         float m_throwStateMaxTime = 0.5f;
-        float m_throwStateCounter = 0.0f;
-        float m_combinedGrabDistance = 0.0f;
-        float m_prevGravityEnabled = 0.0f;
+        float m_throwStateCounter = 0.f;
+        float m_combinedGrabDistance = 0.f;
+        float m_prevGravityEnabled = 0.f;
         float m_heldProportionalGain = 125.f;
-        float m_heldIntegralGain = 0.0f;
+        float m_heldIntegralGain = 0.f;
         float m_heldDerivativeGain = 11.f;
-        float m_heldIntegralWindupLimit = 100.0f;
+        float m_heldIntegralWindupLimit = 100.f;
         float m_heldDerivativeFilterAlpha = 0.8f;
-        float m_tidalLockProportionalGain = 115.0f;
-        float m_tidalLockIntegralGain = 0.0f;
-        float m_tidalLockDerivativeGain = 9.0f;
-        float m_tidalLockIntegralWindupLimit = 100.0f;
+        float m_tidalLockProportionalGain = 115.f;
+        float m_tidalLockIntegralGain = 0.f;
+        float m_tidalLockDerivativeGain = 9.f;
+        float m_tidalLockIntegralWindupLimit = 100.f;
         float m_tidalLockDerivativeFilterAlpha = 0.8f;
-        float m_effectiveInertiaFactor = 0.0f;
-        float m_pitch = 0.0f;
-        float m_yaw = 0.0f;
-        float m_roll = 0.0f;
-        float m_accumPitch = 0.0f;
-        float m_accumYaw = 0.0f;
-        float m_accumRoll = 0.0f;
+        float m_effectiveInertiaFactor = 0.f;
+        float m_pitch = 0.f;
+        float m_yaw = 0.f;
+        float m_roll = 0.f;
+        float m_accumPitch = 0.f;
+        float m_accumYaw = 0.f;
+        float m_accumRoll = 0.f;
         float m_prevGrabKeyValue = 0.f;
         float m_prevRotateKeyValue = 0.f;
         float m_prevThrowKeyValue = 0.f;
@@ -577,7 +577,7 @@ namespace PhysicsGrab
                                                                      { PhysicsGrabStates::holdState, "holdState" },
                                                                      { PhysicsGrabStates::rotateState, "rotateState" },
                                                                      { PhysicsGrabStates::throwState, "throwState" } };
-        
+
         // Event value multipliers
         float m_grabKeyValue = 0.f;
         float m_rotateKeyValue = 0.f;
@@ -586,7 +586,7 @@ namespace PhysicsGrab
         float m_pitchKeyValue = 0.f;
         float m_yawKeyValue = 0.f;
         float m_rollKeyValue = 0.f;
-        
+
         // Event IDs and action names
         StartingPointInput::InputEventNotificationId m_grabEventId;
         AZStd::string m_strGrab = "Grab";
@@ -604,7 +604,7 @@ namespace PhysicsGrab
         AZStd::string m_strGrabDistance = "Grab Distance";
 
         // Array of action names
-        AZStd::string* m_inputNames[7] = { &m_strGrab, &m_strRotate, &m_strThrow, &m_strRotatePitch,
+        AZStd::string* m_inputNames[7] = { &m_strGrab,      &m_strRotate,     &m_strThrow,       &m_strRotatePitch,
                                            &m_strRotateYaw, &m_strRotateRoll, &m_strGrabDistance };
 
         // Map of event IDs and event value multipliers
