@@ -373,20 +373,6 @@ namespace PhysicsGrab
         // Input event assignment and notification bus connection
         void AssignConnectInputEvents();
 
-        // PhysicsGrabNotificationBus
-        void OnObjectSphereCastHit();
-        void OnHoldStart();
-        void OnHoldStop();
-        void OnRotateStart();
-        void OnRotateStop();
-        void OnThrowStart();
-        void OnThrowStop();
-        void OnMaxThrowDistance();
-        void OnThrowStateCounterZero();
-        void OnChargeComplete();
-        void OnNetworkPhysicsGrabTickStart(const float deltaTime);
-        void OnNetworkPhysicsGrabTickFinish(const float deltaTime);
-
         // State machine functions
         void ProcessStates(const float deltaTime, const AZ::u8& tickTimestepNetwork);
         void IdleState();

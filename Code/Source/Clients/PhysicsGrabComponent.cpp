@@ -2810,44 +2810,6 @@ namespace PhysicsGrab
         InputEventNotificationBus::MultiHandler::BusConnect(eventId);
     }
 
-    // Event Notification methods for use in scripts
-    void PhysicsGrabComponent::OnObjectSphereCastHit()
-    {
-    }
-    void PhysicsGrabComponent::OnHoldStart()
-    {
-    }
-    void PhysicsGrabComponent::OnHoldStop()
-    {
-    }
-    void PhysicsGrabComponent::OnRotateStart()
-    {
-    }
-    void PhysicsGrabComponent::OnRotateStop()
-    {
-    }
-    void PhysicsGrabComponent::OnThrowStart()
-    {
-    }
-    void PhysicsGrabComponent::OnThrowStop()
-    {
-    }
-    void PhysicsGrabComponent::OnMaxThrowDistance()
-    {
-    }
-    void PhysicsGrabComponent::OnThrowStateCounterZero()
-    {
-    }
-    void PhysicsGrabComponent::OnChargeComplete()
-    {
-    }
-    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickStart([[maybe_unused]] const float deltaTime)
-    {
-    }
-    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickFinish([[maybe_unused]] const float deltaTime)
-    {
-    }
-
     // Request Bus getter and setter methods for use in scripts
     AZ::EntityId PhysicsGrabComponent::GetGrabbingEntityId() const
     {
