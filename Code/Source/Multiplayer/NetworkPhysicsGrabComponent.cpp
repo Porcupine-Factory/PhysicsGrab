@@ -349,16 +349,16 @@ namespace PhysicsGrab
 
     // Event Notification methods for use in scripts
     void NetworkPhysicsGrabComponentController::OnNetworkTickStart(
-        [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entityId)
+        [[maybe_unused]] const float deltaTime, [[maybe_unused]] const bool server, [[maybe_unused]] const AZ::EntityId& entityId)
     {
     }
 
     void NetworkPhysicsGrabComponentController::OnNetworkTickFinish(
-        [[maybe_unused]] const float& deltaTime, [[maybe_unused]] const bool& server, [[maybe_unused]] const AZ::EntityId& entityId)
+        [[maybe_unused]] const float deltaTime, [[maybe_unused]] const bool server, [[maybe_unused]] const AZ::EntityId& entityId)
     {
     }
 
-    void NetworkPhysicsGrabComponentController::OnEnableNetworkPhysicsGrabComponentChanged(const bool& enable)
+    void NetworkPhysicsGrabComponentController::OnEnableNetworkPhysicsGrabComponentChanged(const bool enable)
     {
         m_disabled = !enable;
         m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = enable;
@@ -391,7 +391,7 @@ namespace PhysicsGrab
         return !m_disabled;
     }
 
-    void NetworkPhysicsGrabComponentController::SetEnabled(const bool& new_enabled)
+    void NetworkPhysicsGrabComponentController::SetEnabled(const bool new_enabled)
     {
         m_disabled = !new_enabled;
         m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = new_enabled;

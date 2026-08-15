@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <Component
-    Name="NetworkPhysicsGrabComponent" 
-    Namespace="PhysicsGrab" 
-    OverrideComponent="false" 
-    OverrideController="true" 
+    Name="NetworkPhysicsGrabComponent"
+    Namespace="PhysicsGrab"
+    OverrideComponent="false"
+    OverrideController="true"
     OverrideInclude="Multiplayer/NetworkPhysicsGrabComponent.h"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
@@ -30,5 +30,5 @@
 					 Description="Client sends a NetEntityId string to the server, which resolves it to a local EntityId and calls ForceGrab from PhysicsGrabComponent.">
 		<Param Type="AZStd::string" Name="netEntityIdString"/>
 	</RemoteProcedure>
-	
+
 </Component>

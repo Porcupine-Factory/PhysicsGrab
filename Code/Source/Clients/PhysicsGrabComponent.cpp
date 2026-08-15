@@ -1144,7 +1144,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::ProcessStates(const float& deltaTime, const AZ::u8& tickTimestepNetwork)
+    void PhysicsGrabComponent::ProcessStates(const float deltaTime, const AZ::u8& tickTimestepNetwork)
     {
         // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
         if (tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
@@ -1207,7 +1207,7 @@ namespace PhysicsGrab
         m_prevDeltaTime = deltaTime;
     }
 
-    void PhysicsGrabComponent::OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entity)
+    void PhysicsGrabComponent::OnNetworkTickStart(const float deltaTime, const bool server, const AZ::EntityId& entity)
     {
         if (entity != GetEntityId())
             return;
@@ -1229,7 +1229,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entity)
+    void PhysicsGrabComponent::OnNetworkTickFinish(const float deltaTime, const bool server, const AZ::EntityId& entity)
     {
         if ((!m_isAutonomousClient && !m_isServer && !m_isHost) || (entity != GetEntityId()))
             return;
@@ -1842,7 +1842,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::ThrowObjectState(const float& deltaTime)
+    void PhysicsGrabComponent::ThrowObjectState(const float deltaTime)
     {
         // ThrowObject() is only executed once. If setting m_throwStateCounter value via ebus, it
         // is recommended to assign a value equal to m_throwStateMaxTime in order to properly execute ThrowObject()
@@ -2841,10 +2841,10 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::OnChargeComplete()
     {
     }
-    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickStart([[maybe_unused]] const float& deltaTime)
+    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickStart([[maybe_unused]] const float deltaTime)
     {
     }
-    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickFinish([[maybe_unused]] const float& deltaTime)
+    void PhysicsGrabComponent::OnNetworkPhysicsGrabTickFinish([[maybe_unused]] const float deltaTime)
     {
     }
 
@@ -2939,7 +2939,7 @@ namespace PhysicsGrab
         return m_stayInIdleState;
     }
 
-    void PhysicsGrabComponent::SetStayInIdleState(const bool& new_stayInIdleState)
+    void PhysicsGrabComponent::SetStayInIdleState(const bool new_stayInIdleState)
     {
         m_stayInIdleState = new_stayInIdleState;
     }
@@ -2949,7 +2949,7 @@ namespace PhysicsGrab
         return m_grabEnableToggle;
     }
 
-    void PhysicsGrabComponent::SetGrabEnableToggle(const bool& new_grabEnableToggle)
+    void PhysicsGrabComponent::SetGrabEnableToggle(const bool new_grabEnableToggle)
     {
         m_grabEnableToggle = new_grabEnableToggle;
     }
@@ -2959,7 +2959,7 @@ namespace PhysicsGrab
         return m_rotateEnableToggle;
     }
 
-    void PhysicsGrabComponent::SetRotateEnableToggle(const bool& new_rotateEnableToggle)
+    void PhysicsGrabComponent::SetRotateEnableToggle(const bool new_rotateEnableToggle)
     {
         m_rotateEnableToggle = new_rotateEnableToggle;
     }
@@ -2969,7 +2969,7 @@ namespace PhysicsGrab
         return m_grabMaintained;
     }
 
-    void PhysicsGrabComponent::SetGrabMaintained(const bool& new_grabMaintained)
+    void PhysicsGrabComponent::SetGrabMaintained(const bool new_grabMaintained)
     {
         m_grabMaintained = new_grabMaintained;
     }
@@ -2979,7 +2979,7 @@ namespace PhysicsGrab
         return m_kinematicWhileHeld;
     }
 
-    void PhysicsGrabComponent::SetKinematicWhileHeld(const bool& new_kinematicWhileHeld)
+    void PhysicsGrabComponent::SetKinematicWhileHeld(const bool new_kinematicWhileHeld)
     {
         m_kinematicWhileHeld = new_kinematicWhileHeld;
     }
@@ -2989,7 +2989,7 @@ namespace PhysicsGrab
         return m_grabKeyValue;
     }
 
-    void PhysicsGrabComponent::SetGrabKeyValue(const float& new_grabKeyValue)
+    void PhysicsGrabComponent::SetGrabKeyValue(const float new_grabKeyValue)
     {
         m_grabKeyValue = new_grabKeyValue;
     }
@@ -2999,7 +2999,7 @@ namespace PhysicsGrab
         return m_throwKeyValue;
     }
 
-    void PhysicsGrabComponent::SetThrowKeyValue(const float& new_throwKeyValue)
+    void PhysicsGrabComponent::SetThrowKeyValue(const float new_throwKeyValue)
     {
         m_throwKeyValue = new_throwKeyValue;
     }
@@ -3009,7 +3009,7 @@ namespace PhysicsGrab
         return m_rotateKeyValue;
     }
 
-    void PhysicsGrabComponent::SetRotateKeyValue(const float& new_rotateKeyValue)
+    void PhysicsGrabComponent::SetRotateKeyValue(const float new_rotateKeyValue)
     {
         m_rotateKeyValue = new_rotateKeyValue;
     }
@@ -3019,7 +3019,7 @@ namespace PhysicsGrab
         return m_pitchKeyValue;
     }
 
-    void PhysicsGrabComponent::SetPitchKeyValue(const float& new_pitchKeyValue, const bool& new_ignorePitchKeyInputValue)
+    void PhysicsGrabComponent::SetPitchKeyValue(const float new_pitchKeyValue, const bool new_ignorePitchKeyInputValue)
     {
         if (new_ignorePitchKeyInputValue)
         {
@@ -3039,7 +3039,7 @@ namespace PhysicsGrab
         return m_yawKeyValue;
     }
 
-    void PhysicsGrabComponent::SetYawKeyValue(const float& new_yawKeyValue, const bool& new_ignoreYawKeyInputValue)
+    void PhysicsGrabComponent::SetYawKeyValue(const float new_yawKeyValue, const bool new_ignoreYawKeyInputValue)
     {
         if (new_ignoreYawKeyInputValue)
         {
@@ -3059,7 +3059,7 @@ namespace PhysicsGrab
         return m_rollKeyValue;
     }
 
-    void PhysicsGrabComponent::SetRollKeyValue(const float& new_rollKeyValue, const bool& new_ignoreRollKeyInputValue)
+    void PhysicsGrabComponent::SetRollKeyValue(const float new_rollKeyValue, const bool new_ignoreRollKeyInputValue)
     {
         if (new_ignoreRollKeyInputValue)
         {
@@ -3104,7 +3104,7 @@ namespace PhysicsGrab
     }
 
     void PhysicsGrabComponent::SetGrabbedDistanceKeyValue(
-        const float& new_grabDistanceKeyValue, const bool& new_ignoreGrabDistanceKeyInputValue)
+        const float new_grabDistanceKeyValue, const bool new_ignoreGrabDistanceKeyInputValue)
     {
         if (new_ignoreGrabDistanceKeyInputValue)
         {
@@ -3124,7 +3124,7 @@ namespace PhysicsGrab
         return m_grabDistance;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectDistance(const float& new_grabDistance)
+    void PhysicsGrabComponent::SetGrabbedObjectDistance(const float new_grabDistance)
     {
         m_grabDistance = AZ::GetClamp(new_grabDistance, m_minGrabDistance, m_maxGrabDistance);
     }
@@ -3134,7 +3134,7 @@ namespace PhysicsGrab
         return m_minGrabDistance;
     }
 
-    void PhysicsGrabComponent::SetMinGrabbedObjectDistance(const float& new_minGrabDistance)
+    void PhysicsGrabComponent::SetMinGrabbedObjectDistance(const float new_minGrabDistance)
     {
         m_minGrabDistance = new_minGrabDistance;
     }
@@ -3144,7 +3144,7 @@ namespace PhysicsGrab
         return m_maxGrabDistance;
     }
 
-    void PhysicsGrabComponent::SetMaxGrabbedObjectDistance(const float& new_maxGrabDistance)
+    void PhysicsGrabComponent::SetMaxGrabbedObjectDistance(const float new_maxGrabDistance)
     {
         m_maxGrabDistance = new_maxGrabDistance;
     }
@@ -3154,7 +3154,7 @@ namespace PhysicsGrab
         return m_grabDistanceSpeed;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectDistanceSpeed(const float& new_grabDistanceSpeed)
+    void PhysicsGrabComponent::SetGrabbedObjectDistanceSpeed(const float new_grabDistanceSpeed)
     {
         m_grabDistanceSpeed = new_grabDistanceSpeed;
     }
@@ -3169,7 +3169,7 @@ namespace PhysicsGrab
         return m_maxDropDistance;
     }
 
-    void PhysicsGrabComponent::SetMaxDropDistance(const float& new_maxDropDistance)
+    void PhysicsGrabComponent::SetMaxDropDistance(const float new_maxDropDistance)
     {
         m_maxDropDistance = AZ::GetMax(new_maxDropDistance, m_maxGrabDistance);
     }
@@ -3179,12 +3179,12 @@ namespace PhysicsGrab
         return m_enableMaxDropDistance;
     }
 
-    void PhysicsGrabComponent::SetEnableMaxDropDistance(const bool& new_enableMaxDropDistance)
+    void PhysicsGrabComponent::SetEnableMaxDropDistance(const bool new_enableMaxDropDistance)
     {
         m_enableMaxDropDistance = new_enableMaxDropDistance;
     }
 
-    void PhysicsGrabComponent::SetGrabResponse(const float& new_grabResponse)
+    void PhysicsGrabComponent::SetGrabResponse(const float new_grabResponse)
     {
         m_grabResponse = new_grabResponse;
     }
@@ -3194,7 +3194,7 @@ namespace PhysicsGrab
         return m_dynamicTidalLock;
     }
 
-    void PhysicsGrabComponent::SetDynamicTidalLock(const bool& new_dynamicTidalLock)
+    void PhysicsGrabComponent::SetDynamicTidalLock(const bool new_dynamicTidalLock)
     {
         m_dynamicTidalLock = new_dynamicTidalLock;
     }
@@ -3204,7 +3204,7 @@ namespace PhysicsGrab
         return m_kinematicTidalLock;
     }
 
-    void PhysicsGrabComponent::SetKinematicTidalLock(const bool& new_kinematicTidalLock)
+    void PhysicsGrabComponent::SetKinematicTidalLock(const bool new_kinematicTidalLock)
     {
         m_kinematicTidalLock = new_kinematicTidalLock;
     }
@@ -3214,7 +3214,7 @@ namespace PhysicsGrab
         return m_tidalLock;
     }
 
-    void PhysicsGrabComponent::SetTidalLock(const bool& new_tidalLock)
+    void PhysicsGrabComponent::SetTidalLock(const bool new_tidalLock)
     {
         m_tidalLock = new_tidalLock;
     }
@@ -3224,7 +3224,7 @@ namespace PhysicsGrab
         return m_useFPControllerForGrab;
     }
 
-    void PhysicsGrabComponent::SetUseFPControllerForGrab(const bool& new_useFPControllerForGrab)
+    void PhysicsGrabComponent::SetUseFPControllerForGrab(const bool new_useFPControllerForGrab)
     {
         m_useFPControllerForGrab = new_useFPControllerForGrab;
     }
@@ -3239,7 +3239,7 @@ namespace PhysicsGrab
         return m_fullTidalLockForFPC;
     }
 
-    void PhysicsGrabComponent::SetFullTidalLockForFPC(const bool& new_fullTidalLockForFPC)
+    void PhysicsGrabComponent::SetFullTidalLockForFPC(const bool new_fullTidalLockForFPC)
     {
         m_fullTidalLockForFPC = new_fullTidalLockForFPC;
     }
@@ -3249,7 +3249,7 @@ namespace PhysicsGrab
         return m_meshSmoothing;
     }
 
-    void PhysicsGrabComponent::SetMeshSmoothing(const bool& new_meshSmoothing)
+    void PhysicsGrabComponent::SetMeshSmoothing(const bool new_meshSmoothing)
     {
         m_meshSmoothing = new_meshSmoothing;
     }
@@ -3259,7 +3259,7 @@ namespace PhysicsGrab
         return m_dynamicYawRotateScale;
     }
 
-    void PhysicsGrabComponent::SetDynamicYawRotateScale(const float& new_dynamicYawRotateScale)
+    void PhysicsGrabComponent::SetDynamicYawRotateScale(const float new_dynamicYawRotateScale)
     {
         m_dynamicYawRotateScale = new_dynamicYawRotateScale;
     }
@@ -3269,7 +3269,7 @@ namespace PhysicsGrab
         return m_dynamicPitchRotateScale;
     }
 
-    void PhysicsGrabComponent::SetDynamicPitchRotateScale(const float& new_dynamicPitchRotateScale)
+    void PhysicsGrabComponent::SetDynamicPitchRotateScale(const float new_dynamicPitchRotateScale)
     {
         m_dynamicPitchRotateScale = new_dynamicPitchRotateScale;
     }
@@ -3279,7 +3279,7 @@ namespace PhysicsGrab
         return m_dynamicRollRotateScale;
     }
 
-    void PhysicsGrabComponent::SetDynamicRollRotateScale(const float& new_dynamicRollRotateScale)
+    void PhysicsGrabComponent::SetDynamicRollRotateScale(const float new_dynamicRollRotateScale)
     {
         m_dynamicRollRotateScale = new_dynamicRollRotateScale;
     }
@@ -3289,7 +3289,7 @@ namespace PhysicsGrab
         return m_kinematicYawRotateScale;
     }
 
-    void PhysicsGrabComponent::SetKinematicYawRotateScale(const float& new_kinematicYawRotateScale)
+    void PhysicsGrabComponent::SetKinematicYawRotateScale(const float new_kinematicYawRotateScale)
     {
         m_kinematicYawRotateScale = new_kinematicYawRotateScale;
     }
@@ -3299,7 +3299,7 @@ namespace PhysicsGrab
         return m_kinematicPitchRotateScale;
     }
 
-    void PhysicsGrabComponent::SetKinematicPitchRotateScale(const float& new_kinematicPitchRotateScale)
+    void PhysicsGrabComponent::SetKinematicPitchRotateScale(const float new_kinematicPitchRotateScale)
     {
         m_kinematicPitchRotateScale = new_kinematicPitchRotateScale;
     }
@@ -3309,7 +3309,7 @@ namespace PhysicsGrab
         return m_kinematicRollRotateScale;
     }
 
-    void PhysicsGrabComponent::SetKinematicRollRotateScale(const float& new_kinematicRollRotateScale)
+    void PhysicsGrabComponent::SetKinematicRollRotateScale(const float new_kinematicRollRotateScale)
     {
         m_kinematicRollRotateScale = new_kinematicRollRotateScale;
     }
@@ -3319,7 +3319,7 @@ namespace PhysicsGrab
         return m_velocityCompensation;
     }
 
-    void PhysicsGrabComponent::SetVelocityCompensation(const bool& new_velocityCompensation)
+    void PhysicsGrabComponent::SetVelocityCompensation(const bool new_velocityCompensation)
     {
         m_velocityCompensation = new_velocityCompensation;
     }
@@ -3329,7 +3329,7 @@ namespace PhysicsGrab
         return m_velocityCompDampRate;
     }
 
-    void PhysicsGrabComponent::SetVelocityCompDampRate(const float& new_velocityCompDampRate)
+    void PhysicsGrabComponent::SetVelocityCompDampRate(const float new_velocityCompDampRate)
     {
         m_velocityCompDampRate = new_velocityCompDampRate;
     }
@@ -3339,7 +3339,7 @@ namespace PhysicsGrab
         return m_smoothDynamicRotation;
     }
 
-    void PhysicsGrabComponent::SetSmoothDynamicRotation(const bool& new_smoothDynamicRotation)
+    void PhysicsGrabComponent::SetSmoothDynamicRotation(const bool new_smoothDynamicRotation)
     {
         m_smoothDynamicRotation = new_smoothDynamicRotation;
     }
@@ -3349,7 +3349,7 @@ namespace PhysicsGrab
         return m_angularVelocityDampRate;
     }
 
-    void PhysicsGrabComponent::SetAngularVelocityDampRate(const float& new_angularVelocityDampRate)
+    void PhysicsGrabComponent::SetAngularVelocityDampRate(const float new_angularVelocityDampRate)
     {
         m_angularVelocityDampRate = new_angularVelocityDampRate;
     }
@@ -3359,7 +3359,7 @@ namespace PhysicsGrab
         return m_throwImpulse;
     }
 
-    void PhysicsGrabComponent::SetThrowImpulse(const float& new_throwImpulse)
+    void PhysicsGrabComponent::SetThrowImpulse(const float new_throwImpulse)
     {
         m_throwImpulse = new_throwImpulse;
     }
@@ -3369,7 +3369,7 @@ namespace PhysicsGrab
         return m_throwStateCounter;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectThrowStateCounter(const float& new_throwStateCounter)
+    void PhysicsGrabComponent::SetGrabbedObjectThrowStateCounter(const float new_throwStateCounter)
     {
         m_throwStateCounter = new_throwStateCounter;
     }
@@ -3379,7 +3379,7 @@ namespace PhysicsGrab
         return m_throwStateMaxTime;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectThrowStateTime(const float& new_throwStateMaxTime)
+    void PhysicsGrabComponent::SetGrabbedObjectThrowStateTime(const float new_throwStateMaxTime)
     {
         m_throwStateMaxTime = new_throwStateMaxTime;
     }
@@ -3389,7 +3389,7 @@ namespace PhysicsGrab
         return m_enableChargeThrow;
     }
 
-    void PhysicsGrabComponent::SetEnableChargeThrow(const bool& new_enableChargeThrow)
+    void PhysicsGrabComponent::SetEnableChargeThrow(const bool new_enableChargeThrow)
     {
         m_enableChargeThrow = new_enableChargeThrow;
     }
@@ -3399,7 +3399,7 @@ namespace PhysicsGrab
         return m_minThrowImpulse;
     }
 
-    void PhysicsGrabComponent::SetMinThrowImpulse(const float& new_minThrowImpulse)
+    void PhysicsGrabComponent::SetMinThrowImpulse(const float new_minThrowImpulse)
     {
         m_minThrowImpulse = new_minThrowImpulse;
     }
@@ -3409,7 +3409,7 @@ namespace PhysicsGrab
         return m_maxThrowImpulse;
     }
 
-    void PhysicsGrabComponent::SetMaxThrowImpulse(const float& new_maxThrowImpulse)
+    void PhysicsGrabComponent::SetMaxThrowImpulse(const float new_maxThrowImpulse)
     {
         m_maxThrowImpulse = new_maxThrowImpulse;
     }
@@ -3424,7 +3424,7 @@ namespace PhysicsGrab
         return m_chargeTime;
     }
 
-    void PhysicsGrabComponent::SetChargeTime(const float& new_chargeTime)
+    void PhysicsGrabComponent::SetChargeTime(const float new_chargeTime)
     {
         m_chargeTime = new_chargeTime;
     }
@@ -3439,7 +3439,7 @@ namespace PhysicsGrab
         return m_enableChargeWhileRotating;
     }
 
-    void PhysicsGrabComponent::SetEnableChargeWhileRotating(const bool& new_enableChargeWhileRotating)
+    void PhysicsGrabComponent::SetEnableChargeWhileRotating(const bool new_enableChargeWhileRotating)
     {
         m_enableChargeWhileRotating = new_enableChargeWhileRotating;
     }
@@ -3454,7 +3454,7 @@ namespace PhysicsGrab
         return m_sphereCastRadius;
     }
 
-    void PhysicsGrabComponent::SetSphereCastRadius(const float& new_sphereCastRadius)
+    void PhysicsGrabComponent::SetSphereCastRadius(const float new_sphereCastRadius)
     {
         m_sphereCastRadius = new_sphereCastRadius;
     }
@@ -3464,7 +3464,7 @@ namespace PhysicsGrab
         return m_sphereCastDistance;
     }
 
-    void PhysicsGrabComponent::SetSphereCastDistance(const float& new_sphereCastDistance)
+    void PhysicsGrabComponent::SetSphereCastDistance(const float new_sphereCastDistance)
     {
         m_sphereCastDistance = new_sphereCastDistance;
     }
@@ -3655,7 +3655,7 @@ namespace PhysicsGrab
         return isObjectKinematic;
     }
 
-    void PhysicsGrabComponent::SetGrabbedObjectKinematicElseDynamic(const bool& isKinematic)
+    void PhysicsGrabComponent::SetGrabbedObjectKinematicElseDynamic(const bool isKinematic)
     {
         Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetKinematic, isKinematic);
     }
@@ -3675,7 +3675,7 @@ namespace PhysicsGrab
         return currentObjectAngularDamping;
     }
 
-    void PhysicsGrabComponent::SetCurrentGrabbedObjectAngularDamping(const float& new_currentObjectAngularDamping)
+    void PhysicsGrabComponent::SetCurrentGrabbedObjectAngularDamping(const float new_currentObjectAngularDamping)
     {
         m_currentObjectAngularDamping = new_currentObjectAngularDamping;
 
@@ -3688,7 +3688,7 @@ namespace PhysicsGrab
         return m_prevObjectAngularDamping;
     }
 
-    void PhysicsGrabComponent::SetPrevGrabbedObjectAngularDamping(const float& new_prevObjectAngularDamping)
+    void PhysicsGrabComponent::SetPrevGrabbedObjectAngularDamping(const float new_prevObjectAngularDamping)
     {
         m_prevObjectAngularDamping = new_prevObjectAngularDamping;
     }
@@ -3698,7 +3698,7 @@ namespace PhysicsGrab
         return m_tempObjectAngularDamping;
     }
 
-    void PhysicsGrabComponent::SetTempGrabbedObjectAngularDamping(const float& new_tempObjectAngularDamping)
+    void PhysicsGrabComponent::SetTempGrabbedObjectAngularDamping(const float new_tempObjectAngularDamping)
     {
         m_tempObjectAngularDamping = new_tempObjectAngularDamping;
         Physics::RigidBodyRequestBus::Event(
@@ -3715,7 +3715,7 @@ namespace PhysicsGrab
         return currentObjectLinearDamping;
     }
 
-    void PhysicsGrabComponent::SetCurrentGrabbedObjectLinearDamping(const float& new_currentObjectLinearDamping)
+    void PhysicsGrabComponent::SetCurrentGrabbedObjectLinearDamping(const float new_currentObjectLinearDamping)
     {
         m_currentObjectLinearDamping = new_currentObjectLinearDamping;
 
@@ -3728,7 +3728,7 @@ namespace PhysicsGrab
         return m_prevObjectLinearDamping;
     }
 
-    void PhysicsGrabComponent::SetPrevGrabbedObjectLinearDamping(const float& new_prevObjectLinearDamping)
+    void PhysicsGrabComponent::SetPrevGrabbedObjectLinearDamping(const float new_prevObjectLinearDamping)
     {
         m_prevObjectLinearDamping = new_prevObjectLinearDamping;
     }
@@ -3738,7 +3738,7 @@ namespace PhysicsGrab
         return m_tempObjectLinearDamping;
     }
 
-    void PhysicsGrabComponent::SetTempGrabbedObjectLinearDamping(const float& new_tempObjectLinearDamping)
+    void PhysicsGrabComponent::SetTempGrabbedObjectLinearDamping(const float new_tempObjectLinearDamping)
     {
         m_tempObjectLinearDamping = new_tempObjectLinearDamping;
         Physics::RigidBodyRequestBus::Event(
@@ -3767,7 +3767,7 @@ namespace PhysicsGrab
         return m_initialAngularVelocityZero;
     }
 
-    void PhysicsGrabComponent::SetInitialAngularVelocityZero(const bool& new_initialAngularVelocityZero)
+    void PhysicsGrabComponent::SetInitialAngularVelocityZero(const bool new_initialAngularVelocityZero)
     {
         m_initialAngularVelocityZero = new_initialAngularVelocityZero;
     }
@@ -3846,7 +3846,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::SetStateLocked(const bool& isLocked)
+    void PhysicsGrabComponent::SetStateLocked(const bool isLocked)
     {
         m_isStateLocked = isLocked;
     }
@@ -3861,7 +3861,7 @@ namespace PhysicsGrab
         return m_holdKeyToCheckUntilHit;
     }
 
-    void PhysicsGrabComponent::SetHoldKeyToCheckUntilHit(const bool& new_holdKeyToCheckUntilHit)
+    void PhysicsGrabComponent::SetHoldKeyToCheckUntilHit(const bool new_holdKeyToCheckUntilHit)
     {
         m_holdKeyToCheckUntilHit = new_holdKeyToCheckUntilHit;
     }
@@ -3871,7 +3871,7 @@ namespace PhysicsGrab
         return m_disableGravityWhileHeld;
     }
 
-    void PhysicsGrabComponent::SetDisableGravityWhileHeld(const bool& new_disableGravityWhileHeld)
+    void PhysicsGrabComponent::SetDisableGravityWhileHeld(const bool new_disableGravityWhileHeld)
     {
         m_disableGravityWhileHeld = new_disableGravityWhileHeld;
     }
@@ -3881,7 +3881,7 @@ namespace PhysicsGrab
         return m_offsetGrab;
     }
 
-    void PhysicsGrabComponent::SetOffsetGrab(const bool& new_offsetGrab)
+    void PhysicsGrabComponent::SetOffsetGrab(const bool new_offsetGrab)
     {
         m_offsetGrab = new_offsetGrab;
     }
@@ -3891,7 +3891,7 @@ namespace PhysicsGrab
         return m_gravityAppliesToPointRotation;
     }
 
-    void PhysicsGrabComponent::SetGravityAppliesToPointRotation(const bool& new_gravityAppliesToPointRotation)
+    void PhysicsGrabComponent::SetGravityAppliesToPointRotation(const bool new_gravityAppliesToPointRotation)
     {
         m_gravityAppliesToPointRotation = new_gravityAppliesToPointRotation;
     }
@@ -3901,7 +3901,7 @@ namespace PhysicsGrab
         return m_massIndependentThrow;
     }
 
-    void PhysicsGrabComponent::SetMassIndependentThrow(const bool& new_massIndependentThrow)
+    void PhysicsGrabComponent::SetMassIndependentThrow(const bool new_massIndependentThrow)
     {
         m_massIndependentThrow = new_massIndependentThrow;
     }
@@ -3916,7 +3916,7 @@ namespace PhysicsGrab
         return m_detectInIdle;
     }
 
-    void PhysicsGrabComponent::SetDetectInIdle(const bool& new_detectInIdle)
+    void PhysicsGrabComponent::SetDetectInIdle(const bool new_detectInIdle)
     {
         m_detectInIdle = new_detectInIdle;
         if (!m_detectInIdle)
@@ -3931,7 +3931,7 @@ namespace PhysicsGrab
         return m_enablePIDHeldDynamics;
     }
 
-    void PhysicsGrabComponent::SetEnablePIDHeldDynamics(const bool& new_enablePIDHeldDynamics)
+    void PhysicsGrabComponent::SetEnablePIDHeldDynamics(const bool new_enablePIDHeldDynamics)
     {
         m_enablePIDHeldDynamics = new_enablePIDHeldDynamics;
     }
@@ -3941,7 +3941,7 @@ namespace PhysicsGrab
         return m_massIndependentHeldPID;
     }
 
-    void PhysicsGrabComponent::SetMassIndependentHeldPID(const bool& new_massIndependentHeldPID)
+    void PhysicsGrabComponent::SetMassIndependentHeldPID(const bool new_massIndependentHeldPID)
     {
         m_massIndependentHeldPID = new_massIndependentHeldPID;
     }
@@ -3951,7 +3951,7 @@ namespace PhysicsGrab
         return m_heldProportionalGain;
     }
 
-    void PhysicsGrabComponent::SetHeldProportionalGain(const float& new_heldProportionalGain)
+    void PhysicsGrabComponent::SetHeldProportionalGain(const float new_heldProportionalGain)
     {
         m_heldProportionalGain = new_heldProportionalGain;
         m_pidController.SetProportionalGain(new_heldProportionalGain);
@@ -3962,7 +3962,7 @@ namespace PhysicsGrab
         return m_heldIntegralGain;
     }
 
-    void PhysicsGrabComponent::SetHeldIntegralGain(const float& new_heldIntegralGain)
+    void PhysicsGrabComponent::SetHeldIntegralGain(const float new_heldIntegralGain)
     {
         m_heldIntegralGain = new_heldIntegralGain;
         m_pidController.SetIntegralGain(new_heldIntegralGain);
@@ -3973,7 +3973,7 @@ namespace PhysicsGrab
         return m_heldDerivativeGain;
     }
 
-    void PhysicsGrabComponent::SetHeldDerivativeGain(const float& new_heldDerivativeGain)
+    void PhysicsGrabComponent::SetHeldDerivativeGain(const float new_heldDerivativeGain)
     {
         m_heldDerivativeGain = new_heldDerivativeGain;
         m_pidController.SetDerivativeGain(new_heldDerivativeGain);
@@ -3984,7 +3984,7 @@ namespace PhysicsGrab
         return m_heldIntegralWindupLimit;
     }
 
-    void PhysicsGrabComponent::SetHeldIntegralWindupLimit(const float& new_heldIntegralWindupLimit)
+    void PhysicsGrabComponent::SetHeldIntegralWindupLimit(const float new_heldIntegralWindupLimit)
     {
         m_heldIntegralWindupLimit = new_heldIntegralWindupLimit;
         m_pidController.SetIntegralWindupLimit(new_heldIntegralWindupLimit);
@@ -3995,7 +3995,7 @@ namespace PhysicsGrab
         return m_heldDerivativeFilterAlpha;
     }
 
-    void PhysicsGrabComponent::SetHeldDerivativeFilterAlpha(const float& new_heldDerivativeFilterAlpha)
+    void PhysicsGrabComponent::SetHeldDerivativeFilterAlpha(const float new_heldDerivativeFilterAlpha)
     {
         m_heldDerivativeFilterAlpha = new_heldDerivativeFilterAlpha;
         m_pidController.SetDerivativeFilterAlpha(new_heldDerivativeFilterAlpha);
@@ -4018,7 +4018,7 @@ namespace PhysicsGrab
         return m_enablePIDTidalLockDynamics;
     }
 
-    void PhysicsGrabComponent::SetEnablePIDTidalLockDynamics(const bool& new_enablePIDTidalLockDynamics)
+    void PhysicsGrabComponent::SetEnablePIDTidalLockDynamics(const bool new_enablePIDTidalLockDynamics)
     {
         m_enablePIDTidalLockDynamics = new_enablePIDTidalLockDynamics;
     }
@@ -4028,7 +4028,7 @@ namespace PhysicsGrab
         return m_massIndependentTidalLock;
     }
 
-    void PhysicsGrabComponent::SetMassIndependentTidalLock(const bool& new_massIndependentTidalLock)
+    void PhysicsGrabComponent::SetMassIndependentTidalLock(const bool new_massIndependentTidalLock)
     {
         m_massIndependentTidalLock = new_massIndependentTidalLock;
     }
@@ -4038,7 +4038,7 @@ namespace PhysicsGrab
         return m_scaleIndependentTidalLock;
     }
 
-    void PhysicsGrabComponent::SetScaleIndependentTidalLock(const bool& new_scaleIndependentTidalLock)
+    void PhysicsGrabComponent::SetScaleIndependentTidalLock(const bool new_scaleIndependentTidalLock)
     {
         m_scaleIndependentTidalLock = new_scaleIndependentTidalLock;
     }
@@ -4048,7 +4048,7 @@ namespace PhysicsGrab
         return m_tidalLockProportionalGain;
     }
 
-    void PhysicsGrabComponent::SetTidalLockProportionalGain(const float& new_tidalLockProportionalGain)
+    void PhysicsGrabComponent::SetTidalLockProportionalGain(const float new_tidalLockProportionalGain)
     {
         m_tidalLockProportionalGain = new_tidalLockProportionalGain;
         m_tidalLockPidController.SetProportionalGain(new_tidalLockProportionalGain);
@@ -4059,7 +4059,7 @@ namespace PhysicsGrab
         return m_tidalLockIntegralGain;
     }
 
-    void PhysicsGrabComponent::SetTidalLockIntegralGain(const float& new_tidalLockIntegralGain)
+    void PhysicsGrabComponent::SetTidalLockIntegralGain(const float new_tidalLockIntegralGain)
     {
         m_tidalLockIntegralGain = new_tidalLockIntegralGain;
         m_tidalLockPidController.SetIntegralGain(new_tidalLockIntegralGain);
@@ -4070,7 +4070,7 @@ namespace PhysicsGrab
         return m_tidalLockDerivativeGain;
     }
 
-    void PhysicsGrabComponent::SetTidalLockDerivativeGain(const float& new_tidalLockDerivativeGain)
+    void PhysicsGrabComponent::SetTidalLockDerivativeGain(const float new_tidalLockDerivativeGain)
     {
         m_tidalLockDerivativeGain = new_tidalLockDerivativeGain;
         m_tidalLockPidController.SetDerivativeGain(new_tidalLockDerivativeGain);
@@ -4081,7 +4081,7 @@ namespace PhysicsGrab
         return m_tidalLockIntegralWindupLimit;
     }
 
-    void PhysicsGrabComponent::SetTidalLockIntegralWindupLimit(const float& new_tidalLockIntegralWindupLimit)
+    void PhysicsGrabComponent::SetTidalLockIntegralWindupLimit(const float new_tidalLockIntegralWindupLimit)
     {
         m_tidalLockIntegralWindupLimit = new_tidalLockIntegralWindupLimit;
         m_tidalLockPidController.SetIntegralWindupLimit(new_tidalLockIntegralWindupLimit);
@@ -4092,7 +4092,7 @@ namespace PhysicsGrab
         return m_tidalLockDerivativeFilterAlpha;
     }
 
-    void PhysicsGrabComponent::SetTidalLockDerivativeFilterAlpha(const float& new_tidalLockDerivativeFilterAlpha)
+    void PhysicsGrabComponent::SetTidalLockDerivativeFilterAlpha(const float new_tidalLockDerivativeFilterAlpha)
     {
         m_tidalLockDerivativeFilterAlpha = new_tidalLockDerivativeFilterAlpha;
         m_tidalLockPidController.SetDerivativeFilterAlpha(new_tidalLockDerivativeFilterAlpha);
@@ -4228,7 +4228,7 @@ namespace PhysicsGrab
         return m_detectMultipleHits;
     }
 
-    void PhysicsGrabComponent::SetDetectMultipleHits(const bool& new_detectMultipleHits)
+    void PhysicsGrabComponent::SetDetectMultipleHits(const bool new_detectMultipleHits)
     {
         m_detectMultipleHits = new_detectMultipleHits;
     }
@@ -4253,7 +4253,7 @@ namespace PhysicsGrab
         return m_networkPhysicsGrabComponentEnabled;
     }
 
-    void PhysicsGrabComponent::SetLocallyEnableNetworkPhysicsGrabComponent(const bool& new_networkPhysicsGrabComponentEnabled)
+    void PhysicsGrabComponent::SetLocallyEnableNetworkPhysicsGrabComponent(const bool new_networkPhysicsGrabComponentEnabled)
     {
         m_networkPhysicsGrabComponentEnabled = new_networkPhysicsGrabComponentEnabled;
 #ifdef NETWORKPHYSICSGRAB

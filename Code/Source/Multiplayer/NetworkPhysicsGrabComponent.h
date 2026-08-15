@@ -39,7 +39,7 @@ namespace PhysicsGrab
         // NetworkPhysicsGrabComponentControllerRequestBus
         bool GetIsNetEntityAutonomous() const override;
         bool GetEnabled() const override;
-        void SetEnabled(const bool& new_enabled) override;
+        void SetEnabled(const bool new_enabled) override;
         void ForceGrabByNetEntityId(const AZStd::string& netEntityIdString) override;
 
         // AZ::InputEventNotificationBus interface
@@ -56,12 +56,12 @@ namespace PhysicsGrab
         void AssignConnectInputEvents();
 
         // NetworkPhysicsGrabComponentControllerNotificationBus
-        void OnNetworkTickStart(const float& deltaTime, const bool& server, const AZ::EntityId& entityId);
-        void OnNetworkTickFinish(const float& deltaTime, const bool& server, const AZ::EntityId& entityId);
+        void OnNetworkTickStart(const float deltaTime, const bool server, const AZ::EntityId& entityId);
+        void OnNetworkTickFinish(const float deltaTime, const bool server, const AZ::EntityId& entityId);
 
         // EnableNetworkPhysicsGrabComponent Changed Event
         AZ::Event<bool>::Handler m_enableNetworkPhysicsGrabComponentChangedEvent;
-        void OnEnableNetworkPhysicsGrabComponentChanged(const bool& enable);
+        void OnEnableNetworkPhysicsGrabComponentChanged(const bool enable);
         bool m_disabled = false;
 
         // Signals when the controller is determined to be autonomous or not
