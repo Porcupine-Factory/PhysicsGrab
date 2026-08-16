@@ -439,12 +439,9 @@ namespace PhysicsGrab
         AzPhysics::CollisionLayer m_tempGrabbedCollisionLayer;
         AZStd::string m_currentGrabbedCollisionLayerName;
 
-        // Stores the previous frame tick deltaTime, previous physics timestep, and previous NetworkFPC tick deltaTime
+        // Stores the physics timestep and accumulated physics timestep for interpolation
         float m_physicsTimeAccumulator = 0.f;
         float m_physicsTimestep = 1.f / 60.f;
-        float m_prevDeltaTime = 1.f / 60.f;
-        float m_prevTimestep = 1.f / 60.f;
-        float m_prevNetworkPhysicsGrabDeltaTime = 1.f / 60.f;
 
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;

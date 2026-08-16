@@ -949,14 +949,11 @@ namespace PhysicsGrab
 
         if (!m_isObjectKinematic && (m_state == PhysicsGrabStates::holdState || m_state == PhysicsGrabStates::rotateState))
         {
-            ProcessStates((physicsTimestep + m_prevTimestep) / 2.f, 1);
+            ProcessStates(physicsTimestep, 1);
         }
 
         // Reset time accumulator
         m_physicsTimeAccumulator = 0.f;
-
-        // Track the current physics timestep to average with the next one
-        m_prevTimestep = physicsTimestep;
     }
 
     void PhysicsGrabComponent::OnSceneSimulationFinish(
@@ -1197,14 +1194,11 @@ namespace PhysicsGrab
 
     void PhysicsGrabComponent::OnTick(float deltaTime, AZ::ScriptTimePoint)
     {
-        ProcessStates((deltaTime + m_prevDeltaTime) / 2.f, 0);
+        ProcessStates(deltaTime, 0);
         if (m_meshSmoothing)
         {
-            InterpolateMeshTransform((deltaTime + m_prevDeltaTime) / 2.f);
+            InterpolateMeshTransform(deltaTime);
         }
-
-        // Track the current deltaTime to average with the next one
-        m_prevDeltaTime = deltaTime;
     }
 
     void PhysicsGrabComponent::OnNetworkTickStart(const float deltaTime, const bool server, const AZ::EntityId& entity)
@@ -1225,7 +1219,7 @@ namespace PhysicsGrab
                 NetworkPhysicsGrabComponentRequestBus::BroadcastResult(
                     m_networkPhysicsGrabComponentEnabled, &NetworkPhysicsGrabComponentRequestBus::Events::GetEnabled);
 #endif
-            ProcessStates(((deltaTime + m_prevNetworkPhysicsGrabDeltaTime) / 2.f), 2);
+            ProcessStates(deltaTime, 2);
         }
     }
 
@@ -1238,7 +1232,6 @@ namespace PhysicsGrab
                 GetEntityId(),
                 &PhysicsGrabNotificationBus::Events::OnNetworkPhysicsGrabTickFinish,
                 deltaTime * m_physicsTimestepScaleFactor);
-        m_prevNetworkPhysicsGrabDeltaTime = deltaTime;
     }
 
     // Smoothly update the visual transform of m_meshEntityPtr based on physics transforms
