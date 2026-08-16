@@ -1545,7 +1545,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::HoldObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork)
+    void PhysicsGrabComponent::HoldObjectState(const float deltaTime, const AZ::u8 tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {
@@ -1668,7 +1668,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::RotateObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork)
+    void PhysicsGrabComponent::RotateObjectState(const float deltaTime, const AZ::u8 tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {
@@ -1869,7 +1869,7 @@ namespace PhysicsGrab
 
     // Perform a spherecast query to check if colliding with a grabbable object, then assign the
     // first returned hit to m_detectedObjectEntityId
-    void PhysicsGrabComponent::CheckForObjects(bool detectionOnly)
+    void PhysicsGrabComponent::CheckForObjects(const bool detectionOnly)
     {
         // Early exit if no valid grabbing entity to prevent null dereference
         if (m_grabbingEntityPtr == nullptr)
@@ -2108,7 +2108,7 @@ namespace PhysicsGrab
 
     // Hold and move object using physics or translation, based on object's
     // starting Rigid Body type, or if KinematicWhileHeld is enabled
-    void PhysicsGrabComponent::HoldObject(float deltaTime)
+    void PhysicsGrabComponent::HoldObject(const float deltaTime)
     {
         // On server, use network camera transform if available
         if (m_isServer)
@@ -2308,7 +2308,7 @@ namespace PhysicsGrab
 
     // Rotate object using physics or transforms, based on object's starting
     // Rigid Body type, or if KinematicWhileHeld is enabled.
-    void PhysicsGrabComponent::RotateObject(float deltaTime)
+    void PhysicsGrabComponent::RotateObject(const float deltaTime)
     {
         if (m_isServer)
         {
@@ -2422,7 +2422,7 @@ namespace PhysicsGrab
     }
 
     // Handles throw transition from hold and rotate
-    void PhysicsGrabComponent::TransitionToThrow(bool isChargeEnabled)
+    void PhysicsGrabComponent::TransitionToThrow(const bool isChargeEnabled)
     {
         // Determine if transitioning from rotate state to handle rotation-specific resets
         const bool fromRotate = (m_state == PhysicsGrabStates::rotateState);
@@ -2479,7 +2479,7 @@ namespace PhysicsGrab
             m_thrownGrabbedObjectEntityId, &Physics::RigidBodyRequestBus::Events::ApplyLinearImpulse, impulse);
     }
 
-    void PhysicsGrabComponent::ReleaseGrabbedObject(bool notifyHoldStop, bool notifyRotateStop)
+    void PhysicsGrabComponent::ReleaseGrabbedObject(const bool notifyHoldStop, const bool notifyRotateStop)
     {
         // Set Object Current Layer variable back to initial layer
         SetCurrentGrabbedCollisionLayer(m_prevGrabbedCollisionLayer);
@@ -2527,7 +2527,7 @@ namespace PhysicsGrab
         }
     }
 
-    bool PhysicsGrabComponent::HandleThrowInput(float deltaTime, bool allowCharging)
+    bool PhysicsGrabComponent::HandleThrowInput(const float deltaTime, const bool allowCharging)
     {
         // Detect initial throw key press to start charging or prepare immediate throw
         if (m_prevThrowKeyValue == 0.f && m_throwKeyValue != 0.f)
@@ -2615,7 +2615,7 @@ namespace PhysicsGrab
     }
 
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
-    void PhysicsGrabComponent::TidalLock(float deltaTime)
+    void PhysicsGrabComponent::TidalLock(const float deltaTime)
     {
         // Initialize local variables for the current entity's rotation quaternion and up vector
         AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
@@ -2725,7 +2725,7 @@ namespace PhysicsGrab
     }
 #endif
 
-    void PhysicsGrabComponent::UpdateGrabDistance(float deltaTime)
+    void PhysicsGrabComponent::UpdateGrabDistance(const float deltaTime)
     {
         // Grab distance value depends on whether grab distance input key is ignored via SetGrabbedDistanceKeyValue()
         const float grabDistanceValue = m_ignoreGrabDistanceKeyInputValue ? m_grabDistanceKeyValue : m_combinedGrabDistance;
@@ -2754,7 +2754,7 @@ namespace PhysicsGrab
         m_grabDistance = AZ::GetClamp(m_grabDistance + grabDistanceChange, m_minGrabDistance, m_maxGrabDistance);
     }
 
-    void PhysicsGrabComponent::ComputeGrabbingEntityVelocity(float deltaTime)
+    void PhysicsGrabComponent::ComputeGrabbingEntityVelocity(const float deltaTime)
     {
         if (m_velocityCompensation)
         {
