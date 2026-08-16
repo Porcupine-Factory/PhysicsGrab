@@ -1141,7 +1141,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::ProcessStates(const float deltaTime, const AZ::u8& tickTimestepNetwork)
+    void PhysicsGrabComponent::ProcessStates(const float deltaTime, const AZ::u8 tickTimestepNetwork)
     {
         // If physics update, skip full FSM transitions and only process hold/rotate on fixed timestep
         if (tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost))
@@ -1545,7 +1545,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::HoldObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork)
+    void PhysicsGrabComponent::HoldObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {
@@ -1668,7 +1668,7 @@ namespace PhysicsGrab
         }
     }
 
-    void PhysicsGrabComponent::RotateObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork)
+    void PhysicsGrabComponent::RotateObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork)
     {
         if (!m_grabMaintained)
         {

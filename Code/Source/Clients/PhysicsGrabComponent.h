@@ -374,11 +374,11 @@ namespace PhysicsGrab
         void AssignConnectInputEvents();
 
         // State machine functions
-        void ProcessStates(const float deltaTime, const AZ::u8& tickTimestepNetwork);
+        void ProcessStates(const float deltaTime, const AZ::u8 tickTimestepNetwork);
         void IdleState();
         void CheckForObjectsState();
-        void HoldObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork = 0);
-        void RotateObjectState(float deltaTime, const AZ::u8& tickTimestepNetwork = 0);
+        void HoldObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork = 0);
+        void RotateObjectState(float deltaTime, const AZ::u8 tickTimestepNetwork = 0);
         void ThrowObjectState(const float deltaTime);
 
         // NetworkPhysicsGrab object
