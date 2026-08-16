@@ -391,10 +391,10 @@ namespace PhysicsGrab
         return !m_disabled;
     }
 
-    void NetworkPhysicsGrabComponentController::SetEnabled(const bool new_enabled)
+    void NetworkPhysicsGrabComponentController::SetEnabled(const bool enabled)
     {
-        m_disabled = !new_enabled;
-        m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = new_enabled;
+        m_disabled = !enabled;
+        m_physicsGrabObject->m_networkPhysicsGrabComponentEnabled = enabled;
         if (!m_disabled)
         {
             m_physicsGrabObject->NetworkPhysicsGrabComponentEnabledIgnoreInputs();
