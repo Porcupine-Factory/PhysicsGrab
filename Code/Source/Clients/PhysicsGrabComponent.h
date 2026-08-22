@@ -347,20 +347,20 @@ namespace PhysicsGrab
 
         AZStd::string m_meshTagName = "GrabMesh";
 
-        void CheckForObjects(bool detectionOnly = false);
+        void CheckForObjects(const bool detectionOnly = false);
         void ValidateClientGrabTarget();
-        void HoldObject(float deltaTime);
-        void RotateObject(float deltaTime);
+        void HoldObject(const float deltaTime);
+        void RotateObject(const float deltaTime);
         void ThrowObject();
-        void TidalLock(float deltaTime);
-        void UpdateGrabDistance(float deltaTime);
-        void ReleaseGrabbedObject(bool notifyHoldStop, bool notifyRotateStop);
-        bool HandleThrowInput(float deltaTime, bool allowCharging);
-        void TransitionToThrow(bool isChargeEnabled);
+        void TidalLock(const float deltaTime);
+        void UpdateGrabDistance(const float deltaTime);
+        void ReleaseGrabbedObject(const bool notifyHoldStop, const bool notifyRotateStop);
+        bool HandleThrowInput(const float deltaTime, const bool allowCharging);
+        void TransitionToThrow(const bool isChargeEnabled);
         AZ::Quaternion GetEffectiveGrabbingRotation() const;
         void ReleaseMesh();
-        void InterpolateMeshTransform(float deltaTime);
-        void ComputeGrabbingEntityVelocity(float deltaTime);
+        void InterpolateMeshTransform(const float deltaTime);
+        void ComputeGrabbingEntityVelocity(const float deltaTime);
         void OnSceneSimulationStart(float physicsTimestep);
         void OnSceneSimulationFinish([[maybe_unused]] AzPhysics::SceneHandle sceneHandle, [[maybe_unused]] float fixedDeltaTime);
 #ifdef FIRST_PERSON_CONTROLLER
