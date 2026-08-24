@@ -777,6 +777,8 @@ namespace PhysicsGrab
                 ->Event("SetRotateRollInputKey", &PhysicsGrabComponentRequests::SetRotateRollInputKey)
                 ->Event("GetGrabDistanceInputKey", &PhysicsGrabComponentRequests::GetGrabDistanceInputKey)
                 ->Event("SetGrabDistanceInputKey", &PhysicsGrabComponentRequests::SetGrabDistanceInputKey)
+                ->Event("Get Physics Timestep Scale Factor", &PhysicsGrabComponentRequests::GetPhysicsTimestepScaleFactor)
+                ->Event("Set Physics Timestep Scale Factor", &PhysicsGrabComponentRequests::SetPhysicsTimestepScaleFactor)
                 ->Event("GetMeshEntityId", &PhysicsGrabComponentRequests::GetMeshEntityId)
                 ->Event("SetMeshEntityId", &PhysicsGrabComponentRequests::SetMeshEntityId)
                 ->Event("GetMeshTagName", &PhysicsGrabComponentRequests::GetMeshTagName)
@@ -3027,6 +3029,16 @@ namespace PhysicsGrab
             m_roll = rollKeyValue + newRoll;
             m_ignoreRollKeyInputValue = false;
         }
+    }
+
+    float PhysicsGrabComponent::GetPhysicsTimestepScaleFactor() const
+    {
+        return m_physicsTimestepScaleFactor;
+    }
+
+    void PhysicsGrabComponent::SetPhysicsTimestepScaleFactor(const float physicsTimestepScaleFactor)
+    {
+        m_physicsTimestepScaleFactor = physicsTimestepScaleFactor;
     }
 
     AZ::EntityId PhysicsGrabComponent::GetMeshEntityId() const

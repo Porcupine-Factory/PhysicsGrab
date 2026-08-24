@@ -67,6 +67,8 @@ namespace PhysicsGrab
         virtual void SetYawKeyValue(const float, const bool) = 0;
         virtual float GetRollKeyValue() const = 0;
         virtual void SetRollKeyValue(const float, const bool) = 0;
+        virtual float GetPhysicsTimestepScaleFactor() const = 0;
+        virtual void SetPhysicsTimestepScaleFactor(const float) = 0;
         virtual AZ::EntityId GetMeshEntityId() const = 0;
         virtual void SetMeshEntityId(const AZ::EntityId&) = 0;
         virtual AZStd::string GetMeshTagName() const = 0;
