@@ -235,10 +235,10 @@ namespace PhysicsGrab
             }
         }
 
-        m_pitchKeyValue = 0.0f;
-        m_yawKeyValue = 0.0f;
-        m_rollKeyValue = 0.0f;
-        m_grabDistanceKeyValue = 0.0f;
+        m_pitchKeyValue = 0.f;
+        m_yawKeyValue = 0.f;
+        m_rollKeyValue = 0.f;
+        m_grabDistanceKeyValue = 0.f;
     }
 
     void NetworkPhysicsGrabComponentController::ProcessInput(Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)
