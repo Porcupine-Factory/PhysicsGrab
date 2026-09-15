@@ -8,6 +8,8 @@
     OverrideInclude="Multiplayer/NetworkPhysicsGrabComponent.h"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+    <ComponentRelation Constraint="Required" HasController="false" Name="PhysicsGrabComponent" Namespace="PhysicsGrab" Include="Clients/PhysicsGrabComponent.h" />
+
 	<NetworkProperty Type="bool" Name="EnableNetworkPhysicsGrabComponent" Init="true" ReplicateFrom="Authority" ReplicateTo="Client" IsRewindable="false" IsPredictable="false" IsPublic="true" Container="Object" ExposeToEditor="false" ExposeToScript="true" GenerateEventBindings="true" Description="Determines whether NetworkNetworkPhysicsGrabComponent is enabled or disabled"/>
     <NetworkProperty Type="AZ::Vector3" Name="GrabbingEntityTranslation" Init="AZ::Vector3::CreateZero()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity translation of the autonomous player, replicated to the server for spherecasts and grab position calculations" />
     <NetworkProperty Type="AZ::Quaternion" Name="GrabbingEntityRotation" Init="AZ::Quaternion::CreateIdentity()" ReplicateFrom="Autonomous" ReplicateTo="Authority" IsRewindable="true" IsPredictable="true" IsPublic="false" Container="Object" ExposeToEditor="false" ExposeToScript="false" GenerateEventBindings="false" Description="Grabbing entity rotation of the autonomous player, replicated to the server for spherecasts and grab orientation calculations" />

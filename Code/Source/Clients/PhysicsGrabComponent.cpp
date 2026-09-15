@@ -1036,6 +1036,7 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
     {
         provided.push_back(AZ_CRC_CE("GrabService"));
+        provided.push_back(AZ_CRC_CE("PhysicsGrabComponent"));
     }
 
     void PhysicsGrabComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
