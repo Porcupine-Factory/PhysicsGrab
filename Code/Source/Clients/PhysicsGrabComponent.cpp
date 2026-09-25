@@ -2620,13 +2620,31 @@ namespace PhysicsGrab
     // Apply tidal lock to grabbed object while grabbing it. This keeps the object facing you in its last rotation while in grabbed state
     void PhysicsGrabComponent::TidalLock(const float deltaTime)
     {
-        // Initialize local variables for the current entity's rotation quaternion and up vector
-        AZ::Quaternion grabbingEntityRotationQuat = AZ::Quaternion::CreateIdentity();
         // Compute the effective grabbing entity rotation quaternion, handling First Person Controller cases if enabled
-        grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
+        const AZ::Quaternion grabbingEntityRotationQuat = GetEffectiveGrabbingRotation();
+
+        // Create a target rotation quaternion
+        AZ::Quaternion targetGrabbedObjectRotation;
 
         // Compute target object rotation based on stored relative
-        AZ::Quaternion targetGrabbedObjectRotation = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
+        // Allow the pitch and roll to move freely with partial tidal lock, gravity enabled, and offset grab enabled
+        if (m_fullTidalLockForFPC || m_disableGravityWhileHeld || !m_offsetGrab)
+            targetGrabbedObjectRotation = grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat;
+        else
+        {
+            // Get the grabbed entity's current rotation
+            AZ::Quaternion grabbedObjectQuat = AZ::Quaternion::CreateIdentity();
+            AZ::TransformBus::EventResult(grabbedObjectQuat, m_grabbedObjectEntityId, &AZ::TransformInterface::GetWorldRotationQuaternion);
+
+            // Extract the forward vectors
+            const AZ::Vector3 targetForward =
+                (grabbingEntityRotationQuat * m_grabbedObjectRelativeQuat).TransformVector(AZ::Vector3::CreateAxisX());
+            const AZ::Vector3 grabbedForward = grabbedObjectQuat.TransformVector(AZ::Vector3::CreateAxisX());
+
+            // Compute yaw delta and apply to the original rotation
+            const float yawDelta = atan2(targetForward.GetY(), targetForward.GetX()) - atan2(grabbedForward.GetY(), grabbedForward.GetX());
+            targetGrabbedObjectRotation = AZ::Quaternion::CreateRotationZ(yawDelta) * grabbedObjectQuat;
+        }
 
         // Get current object rotation
         AZ::Quaternion currentGrabbedObjectRotation = AZ::Quaternion::CreateIdentity();
