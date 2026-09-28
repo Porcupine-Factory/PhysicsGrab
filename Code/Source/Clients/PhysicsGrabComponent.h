@@ -145,6 +145,8 @@ namespace PhysicsGrab
         void SetGrabMaintained(const bool grabMaintained) override;
         bool GetKinematicWhileHeld() const override;
         void SetKinematicWhileHeld(const bool kinematicWhileHeld) override;
+        float GetMaxGrabbableMass() const override;
+        void SetMaxGrabbableMass(const float maxGrabbableMass) override;
         float GetGrabKeyValue() const override;
         void SetGrabKeyValue(const float grabKeyValue) override;
         float GetThrowKeyValue() const override;
@@ -448,6 +450,7 @@ namespace PhysicsGrab
         float m_minGrabDistance = 1.5f;
         float m_maxGrabDistance = 4.5f;
         float m_maxDropDistance = 4.5f;
+        float m_maxGrabbableMass = -1.f;
         float m_grabDistance = 0.f;
         float m_grabDistanceWheelSensitivity = 0.01f;
         float m_velocityCompDampRate = 20.f;

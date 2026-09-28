@@ -61,6 +61,8 @@ namespace PhysicsGrab
                 ->Field("Grab Enable Toggle", &PhysicsGrabComponent::m_grabEnableToggle)
                 ->Field("Maintain Grab", &PhysicsGrabComponent::m_grabMaintained)
                 ->Field("Kinematic While Grabbing", &PhysicsGrabComponent::m_kinematicWhileHeld)
+                ->Field("Max Grabbable Mass", &PhysicsGrabComponent::m_maxGrabbableMass)
+                ->Attribute(AZ::Edit::Attributes::Suffix, " " + Physics::NameConstants::GetMassUnit())
                 ->Field("Disable Gravity", &PhysicsGrabComponent::m_disableGravityWhileHeld)
                 ->Field("Offset Grab", &PhysicsGrabComponent::m_offsetGrab)
                 ->Field("Tidal Lock Grabbed Object", &PhysicsGrabComponent::m_tidalLock)
@@ -251,6 +253,11 @@ namespace PhysicsGrab
                         "Makes held object kinematic (no physics simulation; enable for stable holding, disable for dynamic interactions "
                         "and collisions).")
                     ->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::AttributesAndValues)
+                    ->DataElement(
+                        nullptr,
+                        &PhysicsGrabComponent::m_maxGrabbableMass,
+                        "Max Grabbable Mass",
+                        "The maximum mass that a grabbable entity can have for it to be picked up (a negative number means no limit).")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_disableGravityWhileHeld,
@@ -614,6 +621,8 @@ namespace PhysicsGrab
                 ->Event("Set Grab Maintained", &PhysicsGrabComponentRequests::SetGrabMaintained)
                 ->Event("Get Kinematic While Held", &PhysicsGrabComponentRequests::GetKinematicWhileHeld)
                 ->Event("Set Kinematic While Held", &PhysicsGrabComponentRequests::SetKinematicWhileHeld)
+                ->Event("Get Max Grabbable Mass", &PhysicsGrabComponentRequests::GetMaxGrabbableMass)
+                ->Event("Set Max Grabbable Mass", &PhysicsGrabComponentRequests::SetMaxGrabbableMass)
                 ->Event("Get Grab Key Value", &PhysicsGrabComponentRequests::GetGrabKeyValue)
                 ->Event("Set Grab Key Value", &PhysicsGrabComponentRequests::SetGrabKeyValue)
                 ->Event("Get Throw Key Value", &PhysicsGrabComponentRequests::GetThrowKeyValue)
@@ -1324,6 +1333,20 @@ namespace PhysicsGrab
         if ((m_forceTransition && m_targetState == PhysicsGrabStates::holdState && m_objectSphereCastHit) ||
             (!m_isStateLocked && m_objectSphereCastHit))
         {
+            // Store the mass
+            Physics::RigidBodyRequestBus::EventResult(m_grabbedObjectMass, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
+
+            // Don't pick up anything with a mass greater than m_maxGrabbableMass, when it's not negative
+            if (m_maxGrabbableMass >= 0.f && m_grabbedObjectMass > m_maxGrabbableMass)
+            {
+                m_objectSphereCastHit = false;
+                m_state = PhysicsGrabStates::idleState;
+                PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnTooHeavy);
+                if (m_kinematicWhileHeld)
+                    SetGrabbedObjectKinematicElseDynamic(m_isInitialObjectKinematic);
+                return;
+            }
+
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
             m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
 
@@ -1365,13 +1388,6 @@ namespace PhysicsGrab
                 Physics::RigidBodyRequestBus::EventResult(
                     m_prevGravityEnabled, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::IsGravityEnabled);
                 Physics::RigidBodyRequestBus::Event(m_grabbedObjectEntityId, &Physics::RigidBodyRequests::SetGravityEnabled, false);
-            }
-
-            // Store mass for dynamic objects
-            if (!m_isObjectKinematic)
-            {
-                Physics::RigidBodyRequestBus::EventResult(
-                    m_grabbedObjectMass, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
             }
 
             // Initialize physics transforms for dynamic objects
@@ -1553,6 +1569,15 @@ namespace PhysicsGrab
         if (!m_grabMaintained)
         {
             CheckForObjects();
+        }
+
+        // Drop anything with a mass greater than m_maxGrabbableMass, when it's not negative
+        if (m_maxGrabbableMass >= 0.f && m_grabbedObjectMass > m_maxGrabbableMass)
+        {
+            ReleaseGrabbedObject(true, false);
+            m_forceTransition = false;
+            PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnTooHeavy);
+            return;
         }
 
         if ((tickTimestepNetwork == 1 && (!m_networkPhysicsGrabComponentEnabled || m_isServer || m_isHost)))
@@ -2958,6 +2983,16 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetKinematicWhileHeld(const bool kinematicWhileHeld)
     {
         m_kinematicWhileHeld = kinematicWhileHeld;
+    }
+
+    float PhysicsGrabComponent::GetMaxGrabbableMass() const
+    {
+        return m_maxGrabbableMass;
+    }
+
+    void PhysicsGrabComponent::SetMaxGrabbableMass(const float maxGrabbableMass)
+    {
+        m_maxGrabbableMass = maxGrabbableMass;
     }
 
     float PhysicsGrabComponent::GetGrabKeyValue() const

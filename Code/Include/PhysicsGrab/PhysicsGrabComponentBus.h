@@ -55,6 +55,8 @@ namespace PhysicsGrab
         virtual void SetGrabMaintained(const bool) = 0;
         virtual bool GetKinematicWhileHeld() const = 0;
         virtual void SetKinematicWhileHeld(const bool) = 0;
+        virtual float GetMaxGrabbableMass() const = 0;
+        virtual void SetMaxGrabbableMass(const float) = 0;
         virtual float GetGrabKeyValue() const = 0;
         virtual void SetGrabKeyValue(const float) = 0;
         virtual float GetThrowKeyValue() const = 0;
@@ -273,6 +275,7 @@ namespace PhysicsGrab
         virtual void OnObjectSphereCastHit() = 0;
         virtual void OnHoldStart() = 0;
         virtual void OnHoldStop() = 0;
+        virtual void OnTooHeavy() = 0;
         virtual void OnRotateStart() = 0;
         virtual void OnRotateStop() = 0;
         virtual void OnThrowStart() = 0;
@@ -298,6 +301,7 @@ namespace PhysicsGrab
             OnObjectSphereCastHit,
             OnHoldStart,
             OnHoldStop,
+            OnTooHeavy,
             OnRotateStart,
             OnRotateStop,
             OnThrowStart,
@@ -319,6 +323,10 @@ namespace PhysicsGrab
         void OnHoldStop() override
         {
             Call(FN_OnHoldStop);
+        }
+        void OnTooHeavy() override
+        {
+            Call(FN_OnTooHeavy);
         }
         void OnRotateStart() override
         {
