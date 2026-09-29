@@ -1336,17 +1336,6 @@ namespace PhysicsGrab
             // Store the mass
             Physics::RigidBodyRequestBus::EventResult(m_grabbedObjectMass, m_grabbedObjectEntityId, &Physics::RigidBodyRequests::GetMass);
 
-            // Don't pick up anything with a mass greater than m_maxGrabbableMass, when it's not negative
-            if (m_maxGrabbableMass >= 0.f && m_grabbedObjectMass > m_maxGrabbableMass)
-            {
-                m_objectSphereCastHit = false;
-                m_state = PhysicsGrabStates::idleState;
-                PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnTooHeavy);
-                if (m_kinematicWhileHeld)
-                    SetGrabbedObjectKinematicElseDynamic(m_isInitialObjectKinematic);
-                return;
-            }
-
             // Check if Grabbed Object is a Dynamic Rigid Body when first interacting with it
             m_isInitialObjectKinematic = GetGrabbedObjectKinematicElseDynamic();
 
@@ -1967,6 +1956,13 @@ namespace PhysicsGrab
             [this, &children](const AzPhysics::SimulatedBody* body, [[maybe_unused]] const Physics::Shape* shape)
             {
                 const AZ::EntityId bodyId = body->GetEntityId();
+                float objectMass;
+                Physics::RigidBodyRequestBus::EventResult(objectMass, bodyId, &Physics::RigidBodyRequests::GetMass);
+                if (m_maxGrabbableMass >= 0.f && objectMass > m_maxGrabbableMass)
+                {
+                    PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnTooHeavy);
+                    return AzPhysics::SceneQuery::QueryHitType::None;
+                }
                 if (bodyId == GetEntityId() || bodyId == m_grabbingEntityPtr->GetId())
                     return AzPhysics::SceneQuery::QueryHitType::None;
                 for (const AZ::EntityId& childId : children)
