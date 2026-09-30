@@ -47,7 +47,6 @@ namespace PhysicsGrab
         virtual void SetTempGrabbedCollisionLayerByName(const AZStd::string&) = 0;
         virtual AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const = 0;
         virtual void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer&) = 0;
-        virtual void SetGrabbingEntity(const AZ::EntityId&) = 0;
         virtual bool GetGrabEnableToggle() const = 0;
         virtual void SetGrabEnableToggle(const bool) = 0;
         virtual bool GetRotateEnableToggle() const = 0;

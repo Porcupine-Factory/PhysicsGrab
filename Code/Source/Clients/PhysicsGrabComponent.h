@@ -126,7 +126,6 @@ namespace PhysicsGrab
         void SetTempGrabbedCollisionLayerByName(const AZStd::string& tempGrabbedCollisionLayerName) override;
         AzPhysics::CollisionLayer GetTempGrabbedCollisionLayer() const override;
         void SetTempGrabbedCollisionLayer(const AzPhysics::CollisionLayer& tempGrabbedCollisionLayer) override;
-        void SetGrabbingEntity(const AZ::EntityId& grabbingEntityId) override;
         float GetPhysicsTimestepScaleFactor() const override;
         void SetPhysicsTimestepScaleFactor(const float physicsTimestepScaleFactor) override;
         AZ::EntityId GetMeshEntityId() const override;

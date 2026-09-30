@@ -582,7 +582,6 @@ namespace PhysicsGrab
                 ->Event("Set Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetGrabbedObjectEntityId)
                 ->Event("Get Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::GetThrownGrabbedObjectEntityId)
                 ->Event("Set Thrown Grabbed Object EntityId", &PhysicsGrabComponentRequests::SetThrownGrabbedObjectEntityId)
-                ->Event("Set Grabbing Entity", &PhysicsGrabComponentRequests::SetGrabbingEntity)
                 ->Event("Get Grabbed Collision Group Name", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroupName)
                 ->Event("Set Grabbed Collision Group By Name", &PhysicsGrabComponentRequests::SetGrabbedCollisionGroupByName)
                 ->Event("Get Grabbed Collision Group", &PhysicsGrabComponentRequests::GetGrabbedCollisionGroup)
@@ -2917,11 +2916,6 @@ namespace PhysicsGrab
     void PhysicsGrabComponent::SetThrownGrabbedObjectEntityId(const AZ::EntityId& thrownGrabbedObjectEntityId)
     {
         m_thrownGrabbedObjectEntityId = thrownGrabbedObjectEntityId;
-    }
-
-    void PhysicsGrabComponent::SetGrabbingEntity(const AZ::EntityId& grabbingEntityId)
-    {
-        m_grabbingEntityPtr = GetEntityPtr(grabbingEntityId);
     }
 
     AZStd::string PhysicsGrabComponent::GetStateString() const
