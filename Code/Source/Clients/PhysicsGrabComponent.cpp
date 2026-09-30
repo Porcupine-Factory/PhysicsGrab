@@ -1574,6 +1574,7 @@ namespace PhysicsGrab
         if (m_maxGrabbableMass >= 0.f && m_grabbedObjectMass > m_maxGrabbableMass)
         {
             ReleaseGrabbedObject(true, false);
+            m_state = PhysicsGrabStates::idleState;
             m_forceTransition = false;
             PhysicsGrabNotificationBus::Event(GetEntityId(), &PhysicsGrabNotificationBus::Events::OnTooHeavy);
             return;
