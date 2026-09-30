@@ -574,6 +574,7 @@ namespace PhysicsGrab
                 ->Attribute(AZ::Script::Attributes::Module, "interaction")
                 ->Attribute(AZ::Script::Attributes::Category, "Physics Grab")
                 ->Event("Get Grabbing EntityId", &PhysicsGrabComponentRequests::GetGrabbingEntityId)
+                ->Event("Set Grabbing EntityId", &PhysicsGrabComponentRequests::SetGrabbingEntityId)
                 ->Event("Get Active Camera EntityId", &PhysicsGrabComponentRequests::GetActiveCameraEntityId)
                 ->Event("Get Detected Object EntityId", &PhysicsGrabComponentRequests::GetDetectedObjectEntityId)
                 ->Event("Set Detected Object EntityId", &PhysicsGrabComponentRequests::SetDetectedObjectEntityId)
@@ -2866,7 +2867,16 @@ namespace PhysicsGrab
     // Request Bus getter and setter methods for use in scripts
     AZ::EntityId PhysicsGrabComponent::GetGrabbingEntityId() const
     {
-        return m_grabbingEntityPtr->GetId();
+        return m_grabbingEntityId;
+    }
+
+    void PhysicsGrabComponent::SetGrabbingEntityId(const AZ::EntityId& grabbingEntityId)
+    {
+        if (grabbingEntityId.IsValid())
+        {
+            m_grabbingEntityId = grabbingEntityId;
+            m_grabbingEntityPtr = GetEntityPtr(m_grabbingEntityId);
+        }
     }
 
     AZ::EntityId PhysicsGrabComponent::GetActiveCameraEntityId() const

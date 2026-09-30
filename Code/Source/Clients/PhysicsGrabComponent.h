@@ -100,6 +100,7 @@ namespace PhysicsGrab
 
         // PhysicsGrabComponentRequestBus
         AZ::EntityId GetGrabbingEntityId() const override;
+        void SetGrabbingEntityId(const AZ::EntityId& grabbingEntityId) override;
         AZ::EntityId GetActiveCameraEntityId() const override;
         AZ::EntityId GetDetectedObjectEntityId() const override;
         void SetDetectedObjectEntityId(const AZ::EntityId& detectedObjectEntityId) override;

@@ -21,6 +21,7 @@ namespace PhysicsGrab
         ~PhysicsGrabComponentRequests() override = default;
 
         virtual AZ::EntityId GetGrabbingEntityId() const = 0;
+        virtual void SetGrabbingEntityId(const AZ::EntityId&) = 0;
         virtual AZ::EntityId GetActiveCameraEntityId() const = 0;
         virtual AZ::EntityId GetDetectedObjectEntityId() const = 0;
         virtual void SetDetectedObjectEntityId(const AZ::EntityId&) = 0;
