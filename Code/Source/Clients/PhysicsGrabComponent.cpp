@@ -993,6 +993,16 @@ namespace PhysicsGrab
         }
     }
 
+    void PhysicsGrabComponent::OnChildAdded(AZ::EntityId childId)
+    {
+        m_children.push_back(childId);
+    }
+
+    void PhysicsGrabComponent::OnChildRemoved(AZ::EntityId childId)
+    {
+        AZStd::erase(m_children, childId);
+    }
+
     void PhysicsGrabComponent::OnActiveViewChanged(const AZ::EntityId& activeEntityId)
     {
         if (m_needsCameraFallback)
@@ -1445,17 +1455,17 @@ namespace PhysicsGrab
                     AZ::Entity* grabbedEntity = GetEntityPtr(m_grabbedObjectEntityId);
                     if (grabbedEntity)
                     {
-                        AZStd::vector<AZ::EntityId> children;
-                        AZ::TransformBus::EventResult(children, m_grabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
+                        AZStd::vector<AZ::EntityId> childrenOfGrabbed;
+                        AZ::TransformBus::EventResult(childrenOfGrabbed, m_grabbedObjectEntityId, &AZ::TransformInterface::GetChildren);
                         AZ::Crc32 meshTag = AZ::Crc32(m_meshTagName.c_str());
-                        for (const AZ::EntityId& childId : children)
+                        for (const AZ::EntityId& childOfGrabbedId : childrenOfGrabbed)
                         {
                             bool hasTag = false;
                             LmbrCentral::TagComponentRequestBus::EventResult(
-                                hasTag, childId, &LmbrCentral::TagComponentRequests::HasTag, meshTag);
+                                hasTag, childOfGrabbedId, &LmbrCentral::TagComponentRequests::HasTag, meshTag);
                             if (hasTag)
                             {
-                                m_meshEntityPtr = GetEntityPtr(childId);
+                                m_meshEntityPtr = GetEntityPtr(childOfGrabbedId);
                                 break;
                             }
                         }
@@ -1932,16 +1942,23 @@ namespace PhysicsGrab
                 m_grabbingEntityTransform = m_grabbingEntityPtr->GetTransform()->GetWorldTM();
             }
         }
+
+        // Obtain the child entityIds once, then maintain it via OnChildAdded() and OnChildRemoved()
+        if (!m_obtainedChildIds)
+        {
+            AZ::TransformBus::EventResult(m_children, GetEntityId(), &AZ::TransformBus::Events::GetChildren);
+            m_obtainedChildIds = true;
+        }
+
         // Perform a spherecast query to check if colliding with object
-        AZStd::vector<AZ::EntityId> children;
-        AZ::TransformBus::EventResult(children, GetEntityId(), &AZ::TransformInterface::GetChildren);
+        AZStd::vector<AZ::EntityId> children = m_children;
 
         // If grab entity is a separate hierarchy, also exclude its children
         if (m_grabbingEntityPtr->GetId() != GetEntityId())
         {
-            AZStd::vector<AZ::EntityId> grabChildren;
-            AZ::TransformBus::EventResult(grabChildren, m_grabbingEntityPtr->GetId(), &AZ::TransformInterface::GetChildren);
-            children.insert(children.end(), grabChildren.begin(), grabChildren.end());
+            AZStd::vector<AZ::EntityId> grabbingChildren;
+            AZ::TransformBus::EventResult(grabbingChildren, m_grabbingEntityPtr->GetId(), &AZ::TransformInterface::GetChildren);
+            children.insert(children.end(), grabbingChildren.begin(), grabbingChildren.end());
         }
 
         auto* sceneInterface = AZ::Interface<AzPhysics::SceneInterface>::Get();

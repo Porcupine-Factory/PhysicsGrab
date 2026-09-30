@@ -3,6 +3,7 @@
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/TickBus.h>
+#include <AzCore/Component/TransformBus.h>
 #include <AzCore/Math/Matrix3x3.h>
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Vector3.h>
@@ -53,6 +54,7 @@ namespace PhysicsGrab
 #endif
         , public StartingPointInput::InputEventNotificationBus::MultiHandler
         , public PhysicsGrabComponentRequestBus::Handler
+        , public AZ::TransformNotificationBus::Handler
     {
         friend class NetworkPhysicsGrabComponent;
         friend class NetworkPhysicsGrabComponentController;
@@ -63,7 +65,7 @@ namespace PhysicsGrab
         // Provide runtime reflection
         static void Reflect(AZ::ReflectContext* rc);
 
-        // AZ::Component overrides
+        // AZ::Component interface
         void Activate() override;
         void Deactivate() override;
 
@@ -72,8 +74,12 @@ namespace PhysicsGrab
         static void GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible);
         static void GetDependentServices(AZ::ComponentDescriptor::DependencyArrayType& dependent);
 
-        // AZ::EntityBus overrides
+        // AZ::EntityBus interface
         void OnEntityActivated(const AZ::EntityId& entityId) override;
+
+        // AZ::TransformNotificationBus interface
+        void OnChildAdded(AZ::EntityId childId) override;
+        void OnChildRemoved(AZ::EntityId childId) override;
 
         // Assigns active camera to m_grabbingEntityPtr as fallback
         void OnActiveViewChanged(const AZ::EntityId& activeEntityId);
@@ -435,6 +441,8 @@ namespace PhysicsGrab
         AZ::EntityId m_grabbedObjectEntityId;
         AZ::EntityId m_thrownGrabbedObjectEntityId;
 
+        AZStd::vector<AZ::EntityId> m_children;
+
         AzPhysics::CollisionGroups::Id m_grabbedCollisionGroupId = AzPhysics::CollisionGroups::Id();
         AzPhysics::CollisionGroup m_grabbedCollisionGroup = AzPhysics::CollisionGroup::All;
 
@@ -550,6 +558,7 @@ namespace PhysicsGrab
         bool m_detectInIdle = false;
         bool m_enableMaxDropDistance = true;
         bool m_detectMultipleHits = true;
+        bool m_obtainedChildIds = false;
 
         PhysicsGrabStates m_state = PhysicsGrabStates::idleState;
         PhysicsGrabStates m_targetState = PhysicsGrabStates::idleState;
