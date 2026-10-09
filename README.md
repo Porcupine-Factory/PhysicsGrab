@@ -1,4 +1,4 @@
-# PhysicsGrab
+# Physics Grab
 O3DE Physics Grab Gem is licensed under [MIT](/LICENSE.txt).
 
 ## Installation Instructions
