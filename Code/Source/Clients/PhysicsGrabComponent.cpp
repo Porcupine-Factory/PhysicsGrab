@@ -1680,7 +1680,7 @@ namespace PhysicsGrab
         }
         // Handle throw input and charging logic, transitioning to throw state if triggered
         // Other conditionals prevent state transition with m_isStateLocked or if object was initially kinematic
-        else if (!m_isStateLocked && !m_isInitialObjectKinematic)
+        else if (!m_isStateLocked && (!m_isInitialObjectKinematic || (m_networkPhysicsGrabComponentEnabled && !m_isServer && !m_isHost)))
         {
             // Process throw key input for press, hold (charging), and release events
             // Allow charging in hold state by default
@@ -1846,7 +1846,7 @@ namespace PhysicsGrab
         }
         // Handle throw input and charging logic, transitioning to throw state if triggered
         // Other conditionals prevent state transition with m_isStateLocked or if object was initially kinematic
-        else if (!m_isStateLocked && !m_isInitialObjectKinematic)
+        else if (!m_isStateLocked && (!m_isInitialObjectKinematic || (m_networkPhysicsGrabComponentEnabled && !m_isServer && !m_isHost)))
         {
             // Process throw key input for press, hold (charging), and release events
             // Conditionally allow charging based on rotate state flag
