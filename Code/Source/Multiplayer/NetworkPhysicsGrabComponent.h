@@ -95,6 +95,10 @@ namespace PhysicsGrab
         StartingPointInput::InputEventNotificationId m_grabDistanceEventId;
         AZStd::string m_strGrabDistance = "Grab Distance";
 
+        // Register key/button presses between network ticks
+        bool m_pressedBeforeNetworkTick[7] = { false };
+        bool m_releasedBeforeNetworkTick[7] = { false };
+
         // Array of action names
         AZStd::string* m_inputNames[7] = { &m_strGrab,      &m_strRotate,     &m_strThrow,       &m_strRotatePitch,
                                            &m_strRotateYaw, &m_strRotateRoll, &m_strGrabDistance };

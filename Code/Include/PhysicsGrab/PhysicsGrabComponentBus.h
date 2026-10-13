@@ -272,19 +272,19 @@ namespace PhysicsGrab
     class PhysicsGrabNotifications : public AZ::ComponentBus
     {
     public:
-        virtual void OnObjectSphereCastHit() = 0;
-        virtual void OnHoldStart() = 0;
-        virtual void OnHoldStop() = 0;
-        virtual void OnTooHeavy() = 0;
-        virtual void OnRotateStart() = 0;
-        virtual void OnRotateStop() = 0;
-        virtual void OnThrowStart() = 0;
-        virtual void OnThrowStop() = 0;
-        virtual void OnThrowStateCounterZero() = 0;
-        virtual void OnMaxThrowDistance() = 0;
-        virtual void OnChargeComplete() = 0;
-        virtual void OnNetworkPhysicsGrabTickStart(const float) = 0;
-        virtual void OnNetworkPhysicsGrabTickFinish(const float) = 0;
+        virtual void OnObjectSphereCastHit() {};
+        virtual void OnHoldStart() {};
+        virtual void OnHoldStop() {};
+        virtual void OnTooHeavy() {};
+        virtual void OnRotateStart() {};
+        virtual void OnRotateStop() {};
+        virtual void OnThrowStart() {};
+        virtual void OnThrowStop() {};
+        virtual void OnThrowStateCounterZero() {};
+        virtual void OnMaxThrowDistance() {};
+        virtual void OnChargeComplete() {};
+        virtual void OnNetworkPhysicsGrabTickStart(const float) {};
+        virtual void OnNetworkPhysicsGrabTickFinish(const float) {};
     };
 
     using PhysicsGrabNotificationBus = AZ::EBus<PhysicsGrabNotifications>;

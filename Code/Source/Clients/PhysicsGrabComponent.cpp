@@ -1145,8 +1145,7 @@ namespace PhysicsGrab
             m_throwKeyValue = value;
             // AZ_Printf("Player", "Throw held value %f", value);
         }
-
-        if (*inputId == m_rotatePitchEventId)
+        else if (*inputId == m_rotatePitchEventId)
         {
             m_pitchKeyValue = value;
             // AZ_Printf("Object", "Grab Object pitch held value %f", value);

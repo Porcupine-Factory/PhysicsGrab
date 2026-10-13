@@ -26,8 +26,8 @@ namespace PhysicsGrab
     class NetworkPhysicsGrabComponentNotifications : public AZ::ComponentBus
     {
     public:
-        virtual void OnNetworkTickStart(const float, const bool, const AZ::EntityId&) = 0;
-        virtual void OnNetworkTickFinish(const float, const bool, const AZ::EntityId&) = 0;
+        virtual void OnNetworkTickStart(const float, const bool, const AZ::EntityId&) {};
+        virtual void OnNetworkTickFinish(const float, const bool, const AZ::EntityId&) {};
     };
 
     using NetworkPhysicsGrabComponentNotificationBus = AZ::EBus<NetworkPhysicsGrabComponentNotifications>;

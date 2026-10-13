@@ -52,70 +52,55 @@ namespace PhysicsGrab
             m_pitchKeyValue += value;
             return;
         }
-
-        if (*inputId == m_rotateYawEventId)
+        else if (*inputId == m_rotateYawEventId)
         {
             m_yawKeyValue += value;
             return;
         }
-
-        if (*inputId == m_rotateRollEventId)
+        else if (*inputId == m_rotateRollEventId)
         {
             m_rollKeyValue += value;
             return;
         }
-
-        if (*inputId == m_grabDistanceEventId)
+        else if (*inputId == m_grabDistanceEventId)
         {
             m_grabDistanceKeyValue += value;
             return;
         }
 
+        AZ::u32 eventIndex = 0;
         for (auto& it_event : m_controlMap)
         {
             if (*inputId == *(it_event.first))
             {
+                m_pressedBeforeNetworkTick[eventIndex] = true;
+                m_releasedBeforeNetworkTick[eventIndex] = false;
                 *(it_event.second) = value;
                 // print the local user ID and the action name CRC
                 // AZ_Printf("Pressed", it_event.first->ToString().c_str());
             }
+            eventIndex++;
         }
     }
 
     void NetworkPhysicsGrabComponentController::OnReleased(float value)
     {
         const InputEventNotificationId* inputId = InputEventNotificationBus::GetCurrentBusId();
-        if (inputId == nullptr)
+        if (inputId == nullptr || *inputId == m_rotatePitchEventId || *inputId == m_rotateYawEventId || *inputId == m_rotateRollEventId ||
+            *inputId == m_grabDistanceEventId)
             return;
 
-        if (*inputId == m_rotatePitchEventId)
-        {
-            return;
-        }
-
-        if (*inputId == m_rotateYawEventId)
-        {
-            return;
-        }
-
-        if (*inputId == m_rotateRollEventId)
-        {
-            return;
-        }
-
-        if (*inputId == m_grabDistanceEventId)
-        {
-            return;
-        }
-
+        AZ::u32 eventIndex = 0;
         for (auto& it_event : m_controlMap)
         {
             if (*inputId == *(it_event.first))
             {
+                m_releasedBeforeNetworkTick[eventIndex] = true;
                 *(it_event.second) = value;
                 // print the local user ID and the action name CRC
                 // AZ_Printf("Released", it_event.first->ToString().c_str());
             }
+            eventIndex++;
         }
     }
 
@@ -126,24 +111,13 @@ namespace PhysicsGrab
             return;
 
         if (*inputId == m_rotatePitchEventId)
-        {
             m_pitchKeyValue += value;
-        }
-
-        if (*inputId == m_rotateYawEventId)
-        {
+        else if (*inputId == m_rotateYawEventId)
             m_yawKeyValue += value;
-        }
-
-        if (*inputId == m_rotateRollEventId)
-        {
+        else if (*inputId == m_rotateRollEventId)
             m_rollKeyValue += value;
-        }
-
-        if (*inputId == m_grabDistanceEventId)
-        {
+        else if (*inputId == m_grabDistanceEventId)
             m_grabDistanceKeyValue += value;
-        }
     }
 
     void NetworkPhysicsGrabComponentController::OnActivate([[maybe_unused]] Multiplayer::EntityIsMigrating entityIsMigrating)
@@ -183,6 +157,21 @@ namespace PhysicsGrab
         [[maybe_unused]] Multiplayer::NetworkInput& input, [[maybe_unused]] float deltaTime)
     {
         auto* playerInput = input.FindComponentInput<NetworkPhysicsGrabComponentNetworkInput>();
+
+        // Register when inputs are quickly pressed and released between network ticks
+        AZ::u32 eventIndex = 0;
+        for (auto& it_event : m_controlMap)
+        {
+            if (m_pressedBeforeNetworkTick[eventIndex] && m_releasedBeforeNetworkTick[eventIndex] && *(it_event.second) == 0.f)
+                *(it_event.second) = 1.f;
+            else if (m_pressedBeforeNetworkTick[eventIndex] && m_releasedBeforeNetworkTick[eventIndex] && *(it_event.second) != 0.f)
+            {
+                *(it_event.second) = 0.f;
+                m_pressedBeforeNetworkTick[eventIndex] = false;
+                m_releasedBeforeNetworkTick[eventIndex] = false;
+            }
+            eventIndex++;
+        }
 
         // Assign input values
         playerInput->m_grab = m_grabKeyValue;
