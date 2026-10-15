@@ -341,34 +341,40 @@ namespace PhysicsGrab
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicYawRotateScale,
                         "Dynamic Horizontal Rotate Scale",
-                        "Yaw (horizontal) angular velocity scale for dynamic objects (higher = faster turn).")
+                        "Yaw (horizontal) angular velocity scale for dynamic objects (higher = faster turn). "
+                        "Making this negative will invert the dynamic yaw rotation.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicPitchRotateScale,
                         "Dynamic Vertical Rotate Scale",
-                        "Pitch (vertical) angular velocity scale for dynamic objects (higher = faster turn).")
+                        "Pitch (vertical) angular velocity scale for dynamic objects (higher = faster turn). "
+                        "Making this negative will invert the dynamic pitch rotation.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_dynamicRollRotateScale,
                         "Dynamic Roll Rotate Scale",
-                        "Roll angular velocity scale for dynamic objects (higher = faster turn).")
+                        "Roll angular velocity scale for dynamic objects (higher = faster turn). "
+                        "Making this negative will invert the dynamic roll rotation.")
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicYawRotateScale,
                         "Kinematic Horizontal Rotate Scale",
-                        "Yaw (horizontal) rotation speed scale for kinematic objects (higher = faster turn).")
+                        "Yaw (horizontal) rotation speed scale for kinematic objects (higher = faster turn). "
+                        "Making this negative will invert the kinematic yaw rotation.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicPitchRotateScale,
                         "Kinematic Vertical Rotate Scale",
-                        "Pitch (vertical) rotation speed scale for kinematic objects (higher = faster turn).")
+                        "Pitch (vertical) rotation speed scale for kinematic objects (higher = faster turn). "
+                        "Making this negative will invert the kinematic pitch rotation.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
                     ->DataElement(
                         nullptr,
                         &PhysicsGrabComponent::m_kinematicRollRotateScale,
                         "Kinematic Roll Rotate Scale",
-                        "Roll rotation speed scale for kinematic objects (higher = faster turn).")
+                        "Roll rotation speed scale for kinematic objects (higher = faster turn). "
+                        "Making this negative will invert the kinematic roll rotation.")
                     ->Attribute(AZ::Edit::Attributes::Visibility, &PhysicsGrabComponent::GetKinematicWhileHeld)
 #ifdef FIRST_PERSON_CONTROLLER
                     ->DataElement(
